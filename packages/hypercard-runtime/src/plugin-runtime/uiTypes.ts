@@ -33,4 +33,48 @@ export type UINode =
         headers: string[];
         rows: unknown[][];
       };
+    }
+  | {
+      kind: 'dropdown';
+      props: {
+        options: string[];
+        selected: number;
+        onSelect?: UIEventRef;
+        width?: number | string;
+      };
+    }
+  | {
+      kind: 'selectableTable';
+      props: {
+        headers: string[];
+        rows: unknown[][];
+        selectedRowKeys?: string[];
+        mode?: 'single' | 'multiple';
+        rowKeyIndex?: number;
+        searchable?: boolean;
+        searchText?: string;
+        searchPlaceholder?: string;
+        emptyMessage?: string;
+        onSelectionChange?: UIEventRef;
+        onSearchChange?: UIEventRef;
+        onRowClick?: UIEventRef;
+      };
+    }
+  | {
+      kind: 'gridBoard';
+      props: {
+        rows: number;
+        cols: number;
+        cells?: Array<{
+          value?: string;
+          label?: string;
+          color?: string;
+          disabled?: boolean;
+          style?: string;
+        }>;
+        selectedIndex?: number | null;
+        cellSize?: 'small' | 'medium' | 'large';
+        disabled?: boolean;
+        onSelect?: UIEventRef;
+      };
     };

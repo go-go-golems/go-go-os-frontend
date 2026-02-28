@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Btn } from '@hypercard/engine';
+import { Btn, DropdownMenu, GridBoard, SelectableDataTable } from '@hypercard/engine';
 import type { UIEventRef, UINode } from '../plugin-runtime/uiTypes';
 
 export interface PluginCardRendererProps {
@@ -36,6 +36,23 @@ function eventHandler(ref: UIEventRef | undefined, onEvent: PluginCardRendererPr
 }
 
 export function PluginCardRenderer({ tree, onEvent }: PluginCardRendererProps) {
+  function toSelectableTableRows(node: Extract<UINode, { kind: 'selectableTable' }>) {
+    const rowKeyIndex = node.props.rowKeyIndex ?? Number.NaN;
+    const keyIndex = Number.isFinite(rowKeyIndex) ? Math.max(0, Math.floor(rowKeyIndex)) : 0;
+    return node.props.rows.map((row, rowIndex) => {
+      const rowValues = Array.isArray(row) ? row : [];
+      const entry: Record<string, unknown> = {
+        id: String(rowValues[keyIndex] ?? rowIndex),
+        __rowIndex: rowIndex,
+        __rowValues: rowValues,
+      };
+      node.props.headers.forEach((_, index) => {
+        entry[`c${index}`] = String(rowValues[index] ?? '');
+      });
+      return entry;
+    });
+  }
+
   function renderNode(node: UINode, keyHint: string): ReactNode {
     if (node.kind === 'panel') {
       return (
@@ -84,7 +101,7 @@ export function PluginCardRenderer({ tree, onEvent }: PluginCardRendererProps) {
 
     if (node.kind === 'button') {
       return (
-        <Btn key={keyHint} onClick={() => eventHandler(node.props.onClick, onEvent)}>
+        <Btn key={keyHint} variant={node.props.variant as 'default' | 'primary' | 'danger' | undefined} onClick={() => eventHandler(node.props.onClick, onEvent)}>
           {node.props.label}
         </Btn>
       );
@@ -129,6 +146,82 @@ export function PluginCardRenderer({ tree, onEvent }: PluginCardRendererProps) {
             ))}
           </tbody>
         </table>
+      );
+    }
+
+    if (node.kind === 'dropdown') {
+      const selected = Number.isFinite(node.props.selected) ? Math.max(0, Math.floor(node.props.selected)) : 0;
+      return (
+        <DropdownMenu
+          key={keyHint}
+          options={node.props.options}
+          selected={selected}
+          onSelect={(index) =>
+            eventHandler(node.props.onSelect, onEvent, {
+              index,
+              value: String(node.props.options[index] ?? ''),
+            })
+          }
+          width={node.props.width}
+        />
+      );
+    }
+
+    if (node.kind === 'selectableTable') {
+      const items = toSelectableTableRows(node);
+      const columns = node.props.headers.map((header, index) => ({
+        key: `c${index}`,
+        label: header,
+      }));
+
+      return (
+        <SelectableDataTable
+          key={keyHint}
+          items={items}
+          columns={columns}
+          rowKey="id"
+          selectedRowKeys={node.props.selectedRowKeys ?? []}
+          mode={node.props.mode ?? 'single'}
+          searchable={node.props.searchable}
+          searchText={node.props.searchText}
+          searchPlaceholder={node.props.searchPlaceholder}
+          emptyMessage={node.props.emptyMessage}
+          onSelectionChange={(selectedRowKeys) =>
+            eventHandler(node.props.onSelectionChange, onEvent, {
+              selectedRowKeys,
+            })
+          }
+          onSearchTextChange={
+            node.props.onSearchChange
+              ? (value) =>
+                  eventHandler(node.props.onSearchChange, onEvent, {
+                    value,
+                  })
+              : undefined
+          }
+          onRowClick={(row) =>
+            eventHandler(node.props.onRowClick, onEvent, {
+              rowIndex: Number(row.__rowIndex ?? -1),
+              rowKey: String(row.id ?? ''),
+              rowValues: Array.isArray(row.__rowValues) ? row.__rowValues : [],
+            })
+          }
+        />
+      );
+    }
+
+    if (node.kind === 'gridBoard') {
+      return (
+        <GridBoard
+          key={keyHint}
+          rows={node.props.rows}
+          cols={node.props.cols}
+          cells={node.props.cells}
+          selectedIndex={node.props.selectedIndex}
+          cellSize={node.props.cellSize}
+          disabled={node.props.disabled}
+          onSelect={(selection) => eventHandler(node.props.onSelect, onEvent, selection)}
+        />
       );
     }
 

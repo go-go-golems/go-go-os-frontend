@@ -14,6 +14,11 @@ const DEMO_CARDS: DemoCardMeta[] = [
   { id: 'buttons', title: 'Buttons and Actions', icon: '🖱️' },
   { id: 'inputs', title: 'Inputs', icon: '⌨️' },
   { id: 'tables', title: 'Tables', icon: '📊' },
+  { id: 'dropdowns', title: 'Dropdowns', icon: '🔽' },
+  { id: 'selectableTable', title: 'Selectable Table', icon: '☑️' },
+  { id: 'gridBoard', title: 'Grid Board', icon: '🟦' },
+  { id: 'eventPayloads', title: 'Event Payloads', icon: '🧬' },
+  { id: 'domainIntents', title: 'Domain Intents', icon: '🧩' },
   { id: 'stateNav', title: 'State and Navigation', icon: '🧭' },
   { id: 'playground', title: 'All Widgets Playground', icon: '🧪' },
 ];
@@ -39,6 +44,7 @@ export const STACK: CardStackDefinition = {
   plugin: {
     bundleCode: HYPERCARD_TOOLS_DEMO_PLUGIN_BUNDLE,
     capabilities: {
+      domain: ['app_hypercard_tools'],
       system: ['nav.go', 'nav.back', 'notify', 'window.close'],
     },
   },
