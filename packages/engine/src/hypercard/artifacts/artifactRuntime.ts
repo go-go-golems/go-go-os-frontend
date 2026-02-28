@@ -223,16 +223,12 @@ function sanitizeArtifactKey(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
 }
 
-export function templateToCardId(template: string | undefined): string {
-  const normalized = (template ?? '').trim().toLowerCase();
-  if (normalized === 'itemviewer') {
-    return 'itemViewer';
+function cleanString(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
   }
-  return 'reportViewer';
-}
-
-function templateIcon(template: string | undefined): string {
-  return templateToCardId(template) === 'itemViewer' ? '📦' : '📊';
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
 }
 
 export function buildArtifactOpenWindowPayload(input: {
@@ -246,21 +242,24 @@ export function buildArtifactOpenWindowPayload(input: {
   if (!artifactId) {
     return undefined;
   }
+  const runtimeCardId = cleanString(input.runtimeCardId);
+  if (!runtimeCardId) {
+    return undefined;
+  }
   const safeKey = sanitizeArtifactKey(artifactId);
-  const cardId = input.runtimeCardId ?? templateToCardId(input.template);
   const title = input.title?.trim() || `Artifact ${artifactId}`;
-  const stackId = (input.stackId ?? 'inventory').trim() || 'inventory';
+  const stackId = cleanString(input.stackId) ?? 'runtime';
 
   return {
     id: `window:artifact:${safeKey}`,
     title,
-    icon: input.runtimeCardId ? '🃏' : templateIcon(input.template),
+    icon: '🃏',
     bounds: { x: 220, y: 50, w: 520, h: 420 },
     content: {
       kind: 'card',
       card: {
         stackId,
-        cardId,
+        cardId: runtimeCardId,
         cardSessionId: `artifact-session:${safeKey}`,
         param: artifactId,
       },

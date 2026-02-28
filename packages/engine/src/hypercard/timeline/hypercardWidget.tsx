@@ -9,7 +9,6 @@ import {
   buildArtifactOpenWindowPayload,
   extractArtifactUpsertFromSem,
   normalizeArtifactId,
-  templateToCardId,
 } from '../artifacts/artifactRuntime';
 import { buildCodeEditorWindowPayload } from '../editor/editorLaunch';
 
@@ -46,6 +45,7 @@ function upsertWidgetEntity(ctx: SemContext, ev: SemEvent, status: 'running' | '
       template,
       itemId,
       artifactId: artifactUpdate?.id,
+      runtimeCardId: artifactUpdate?.runtimeCardId,
       rawData: data,
     },
   };
@@ -80,13 +80,15 @@ export function HypercardWidgetRenderer({ e, ctx }: { e: RenderEntity; ctx?: Ren
   const detail = String(e.props.detail ?? '');
   const artifactId = e.props.artifactId ? String(e.props.artifactId) : '';
   const template = e.props.template ? String(e.props.template) : '';
+  const runtimeCardId = e.props.runtimeCardId ? String(e.props.runtimeCardId) : '';
   const hasArtifact = Boolean(normalizeArtifactId(artifactId));
+  const hasRuntimeCard = runtimeCardId.trim().length > 0;
 
   const openArtifact = () => {
     const payload = buildArtifactOpenWindowPayload({
       artifactId,
-      template,
       title,
+      runtimeCardId,
     });
     if (!payload) {
       return;
@@ -94,9 +96,11 @@ export function HypercardWidgetRenderer({ e, ctx }: { e: RenderEntity; ctx?: Ren
     dispatch(openWindow(payload));
   };
 
-  const editTemplate = () => {
-    const cardId = templateToCardId(template);
-    dispatch(openWindow(buildCodeEditorWindowPayload(cardId)));
+  const editCard = () => {
+    if (!hasRuntimeCard) {
+      return;
+    }
+    dispatch(openWindow(buildCodeEditorWindowPayload(runtimeCardId)));
   };
 
   return (
@@ -118,14 +122,12 @@ export function HypercardWidgetRenderer({ e, ctx }: { e: RenderEntity; ctx?: Ren
           {JSON.stringify(e.props, null, 2)}
         </pre>
       )}
-      {(hasArtifact || template.trim().length > 0) && (
+      {hasArtifact && hasRuntimeCard && (
         <div style={{ marginTop: 4, display: 'flex', gap: 6 }}>
-          {hasArtifact && (
-            <button type="button" data-part="btn" onClick={openArtifact}>
-              Open
-            </button>
-          )}
-          <button type="button" data-part="btn" onClick={editTemplate}>
+          <button type="button" data-part="btn" onClick={openArtifact}>
+            Open
+          </button>
+          <button type="button" data-part="btn" onClick={editCard}>
             Edit
           </button>
         </div>

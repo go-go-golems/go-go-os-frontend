@@ -7,17 +7,19 @@ import {
 } from './artifactRuntime';
 
 describe('artifactRuntime', () => {
-  it('builds deduped open-window payload with artifact param', () => {
+  it('builds deduped open-window payload when runtime card id is provided', () => {
     const payload = buildArtifactOpenWindowPayload({
       artifactId: 'detailed_inventory_summary',
-      template: 'reportViewer',
+      runtimeCardId: 'runtimeDetailedInventorySummary',
       title: 'Detailed Inventory Summary',
+      stackId: 'inventory',
     });
 
     expect(payload).toBeTruthy();
     expect(payload?.dedupeKey).toBe('artifact:detailed_inventory_summary');
     expect(payload?.content.kind).toBe('card');
-    expect(payload?.content.card?.cardId).toBe('reportViewer');
+    expect(payload?.content.card?.cardId).toBe('runtimeDetailedInventorySummary');
+    expect(payload?.content.card?.stackId).toBe('inventory');
     expect(payload?.content.card?.param).toBe('detailed_inventory_summary');
     expect(payload?.content.card?.cardSessionId).toBe('artifact-session:detailed_inventory_summary');
   });
@@ -25,12 +27,23 @@ describe('artifactRuntime', () => {
   it('normalizes quoted artifact ids when building open payload', () => {
     const payload = buildArtifactOpenWindowPayload({
       artifactId: '"sales-summary-2026-02-20"',
-      template: 'reportViewer',
+      runtimeCardId: 'runtimeSalesSummary',
       title: "Today's Sales Summary",
+      stackId: 'inventory',
     });
 
     expect(payload?.dedupeKey).toBe('artifact:sales-summary-2026-02-20');
     expect(payload?.content.card?.param).toBe('sales-summary-2026-02-20');
+  });
+
+  it('returns undefined when runtime card id is missing', () => {
+    const payload = buildArtifactOpenWindowPayload({
+      artifactId: 'sales-summary-2026-02-20',
+      title: "Today's Sales Summary",
+      stackId: 'inventory',
+    });
+
+    expect(payload).toBeUndefined();
   });
 
   it('extracts artifact upsert from direct hypercard widget ready events', () => {

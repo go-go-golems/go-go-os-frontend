@@ -78,6 +78,7 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
   const detail = String(e.props.detail ?? '');
   const artifactId = e.props.artifactId ? String(e.props.artifactId) : '';
   const runtimeCardId = e.props.runtimeCardId ? String(e.props.runtimeCardId) : '';
+  const hasRuntimeCard = runtimeCardId.trim().length > 0;
 
   const openArtifact = () => {
     const payload = buildArtifactOpenWindowPayload({
@@ -92,8 +93,7 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
   };
 
   const editArtifact = () => {
-    if (!runtimeCardId) {
-      openArtifact();
+    if (!hasRuntimeCard) {
       return;
     }
     dispatch(openWindow(buildCodeEditorWindowPayload(runtimeCardId)));
@@ -118,7 +118,7 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
           {JSON.stringify(e.props, null, 2)}
         </pre>
       )}
-      {normalizeArtifactId(artifactId) && (
+      {normalizeArtifactId(artifactId) && hasRuntimeCard && (
         <div style={{ marginTop: 4, display: 'flex', gap: 6 }}>
           <button type="button" data-part="btn" onClick={openArtifact}>
             Open
