@@ -7,7 +7,6 @@
   ],
   "scripts": {
     "dev": "npm run dev -w apps/todo",
-    "launcher:frontend:build": "npm run build -w apps/os-launcher",
     "build": "npm run build -w packages/engine && npm run build -w packages/confirm-runtime && npm run build -w packages/desktop-os && npm run build -w apps/todo && npm run build -w apps/crm && npm run build -w apps/book-tracker-debug",
     "storybook": "storybook dev -p 6006 --config-dir ./.storybook",
     "lint": "biome check .",

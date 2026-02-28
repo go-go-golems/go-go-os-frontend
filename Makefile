@@ -1,13 +1,10 @@
-.PHONY: launcher-frontend launcher-ui-sync launcher-build launcher-smoke
+.PHONY: build test storybook-check
 
-launcher-frontend:
-	npm run launcher:frontend:build
+build:
+	npm run build
 
-launcher-ui-sync:
-	npm run launcher:ui:sync
+test:
+	npm run test
 
-launcher-build: launcher-frontend launcher-ui-sync
-	bash ./scripts/build-go-go-os-launcher.sh
-
-launcher-smoke:
-	bash ./scripts/smoke-go-go-os-launcher.sh
+storybook-check:
+	npm run storybook:check
