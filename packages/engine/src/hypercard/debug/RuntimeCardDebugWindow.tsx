@@ -119,7 +119,7 @@ export function RuntimeCardDebugWindow({ stacks = [] }: RuntimeCardDebugWindowPr
                   {new Date(card.registeredAt).toLocaleTimeString()}
                 </span>
                 <button
-                  onClick={() => openCodeEditor(dispatch, card.cardId, card.code)}
+                  onClick={() => openCodeEditor(dispatch, { ownerAppId: 'inventory', cardId: card.cardId }, card.code)}
                   style={{
                     fontSize: 10, padding: '1px 6px', borderRadius: 3,
                     border: '1px solid #999', background: '#f0f0f0', cursor: 'pointer',

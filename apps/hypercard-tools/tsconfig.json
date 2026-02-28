@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "outDir": "dist",
+    "rootDir": "src",
+    "paths": {
+      "react": ["../../packages/engine/node_modules/@types/react/index.d.ts"],
+      "react/jsx-runtime": ["../../packages/engine/node_modules/@types/react/jsx-runtime.d.ts"],
+      "react/jsx-dev-runtime": ["../../packages/engine/node_modules/@types/react/jsx-dev-runtime.d.ts"],
+      "@hypercard/desktop-os": ["../../packages/desktop-os/src"],
+      "@hypercard/desktop-os/*": ["../../packages/desktop-os/src/*"],
+      "@hypercard/engine": ["../../packages/engine/src"],
+      "@hypercard/engine/*": ["../../packages/engine/src/*"]
+    }
+  },
+  "include": ["src"],
+  "references": [{ "path": "../../packages/desktop-os" }, { "path": "../../packages/engine" }]
+}

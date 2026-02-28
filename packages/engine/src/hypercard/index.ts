@@ -4,6 +4,7 @@ export * from './artifacts/artifactsSlice';
 export * from './debug/RuntimeCardDebugWindow';
 export * from './editor/CodeEditorWindow';
 export * from './editor/editorLaunch';
+export * from './editor/runtimeCardRef';
 export * from './timeline/hypercardCard';
 export * from './timeline/hypercardWidget';
 export * from './timeline/registerHypercardTimeline';

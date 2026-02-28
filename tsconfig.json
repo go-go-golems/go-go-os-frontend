@@ -7,6 +7,7 @@
     { "path": "apps/book-tracker-debug" },
     { "path": "apps/todo" },
     { "path": "apps/crm" },
-    { "path": "apps/apps-browser" }
+    { "path": "apps/apps-browser" },
+    { "path": "apps/hypercard-tools" }
   ]
 }

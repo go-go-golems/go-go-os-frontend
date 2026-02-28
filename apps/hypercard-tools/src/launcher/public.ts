@@ -1,0 +1,1 @@
+export { hypercardToolsLauncherModule } from './module';

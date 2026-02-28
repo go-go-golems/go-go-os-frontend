@@ -96,7 +96,7 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
     if (!hasRuntimeCard) {
       return;
     }
-    dispatch(openWindow(buildCodeEditorWindowPayload(runtimeCardId)));
+    dispatch(openWindow(buildCodeEditorWindowPayload({ ownerAppId: 'inventory', cardId: runtimeCardId })));
   };
 
   return (
