@@ -1,4 +1,5 @@
 import { useLazyGetSchemaDocumentQuery } from '../api/appsApi';
+import { useEffect, useRef } from 'react';
 import { isReflectionUnsupported } from '../domain/selectors';
 import type { AppManifestDocument, ReflectionAPI, ReflectionResult, ReflectionSchemaRef } from '../domain/types';
 
@@ -117,6 +118,15 @@ function SchemaDetail({ schema, appId }: SchemaDetailProps) {
   const schemaUrl = schema.uri ?? `/api/apps/${appId}/schemas/${encodeURIComponent(schema.id)}`;
   const [fetchSchema, { data: fetchedSchema, isFetching, isError, error }] = useLazyGetSchemaDocumentQuery();
   const schemaPayload = schema.embedded ?? fetchedSchema;
+  const autoFetchUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (schemaPayload != null || isFetching || autoFetchUrlRef.current === schemaUrl) {
+      return;
+    }
+    autoFetchUrlRef.current = schemaUrl;
+    void fetchSchema(schemaUrl);
+  }, [fetchSchema, isFetching, schemaPayload, schemaUrl]);
 
   return (
     <div data-part="browser-detail">
@@ -140,7 +150,7 @@ function SchemaDetail({ schema, appId }: SchemaDetailProps) {
               disabled={isFetching}
               aria-label={`Fetch schema ${schema.id}`}
             >
-              {isFetching ? 'Fetching schema...' : 'Fetch schema'}
+              {isFetching ? 'Fetching schema...' : 'Fetch schema again'}
             </button>{' '}
             from {schemaUrl} to view the full schema as well.
             {isError && (
