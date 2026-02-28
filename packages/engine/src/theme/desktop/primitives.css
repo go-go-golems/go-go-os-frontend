@@ -363,64 +363,123 @@
 [data-part="dropdown-menu-trigger"] {
   font-family: var(--hc-font-family);
   font-size: 12px;
-  border: 2px solid var(--hc-color-border);
+  border: 1px solid var(--hc-color-border);
   background: var(--hc-color-bg);
-  padding: 3px 6px;
+  padding: 3px 8px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-shadow: var(--hc-dropdown-shadow);
   user-select: none;
+  border-radius: var(--hc-border-radius);
 }
 [data-part="dropdown-menu-panel"] {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 2px);
   left: 0;
-  border: 2px solid var(--hc-color-border);
-  background: var(--hc-color-bg);
+  background: var(--hc-dropdown-panel-bg);
+  border: var(--hc-dropdown-panel-border);
+  border-radius: var(--hc-dropdown-panel-border-radius);
   box-shadow: var(--hc-dropdown-panel-shadow);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
   z-index: 50;
+  padding: var(--hc-dropdown-panel-padding);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  animation: hc-context-menu-in 0.12s ease-out;
 }
 [data-part="dropdown-menu-item"] {
-  padding: 3px 8px;
-  cursor: pointer;
+  padding: var(--hc-context-menu-item-padding);
+  cursor: default;
   font-family: var(--hc-font-family);
-  font-size: 12px;
+  font-size: var(--hc-font-size);
   white-space: nowrap;
+  border-radius: var(--hc-context-menu-item-radius);
 }
 [data-part="dropdown-menu-item"]:hover {
-  background: var(--hc-color-fg);
-  color: var(--hc-color-bg);
+  background: var(--hc-context-menu-item-hover-bg);
+  color: var(--hc-context-menu-item-hover-fg);
 }
 [data-part="dropdown-menu-item"][data-state="selected"] {
-  background: var(--hc-color-fg);
-  color: var(--hc-color-bg);
+  font-weight: 500;
 }
 
 /* ─── ContextMenu ── */
 [data-part="context-menu"] {
   position: fixed;
-  border: 2px solid var(--hc-color-border);
-  background: var(--hc-color-bg);
+  background: var(--hc-context-menu-bg);
+  border: var(--hc-context-menu-border);
+  border-radius: var(--hc-context-menu-border-radius);
   box-shadow: var(--hc-context-menu-shadow);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
   z-index: 100000;
   min-width: var(--hc-context-menu-min-width);
+  padding: var(--hc-context-menu-padding);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  animation: hc-context-menu-in 0.12s ease-out;
+}
+@keyframes hc-context-menu-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
 }
 [data-part="context-menu-item"] {
-  padding: 3px 16px;
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: var(--hc-context-menu-item-padding);
+  cursor: default;
   font-family: var(--hc-font-family);
-  font-size: 12px;
+  font-size: var(--hc-font-size);
   white-space: nowrap;
+  border: none;
+  background: transparent;
+  color: inherit;
+  border-radius: var(--hc-context-menu-item-radius);
+  appearance: none;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+  line-height: 1.4;
 }
-[data-part="context-menu-item"]:hover {
-  background: var(--hc-color-fg);
-  color: var(--hc-color-bg);
+[data-part="context-menu-item"]:hover:not(:disabled),
+[data-part="context-menu-item"][data-state="active"]:not(:disabled) {
+  background: var(--hc-context-menu-item-hover-bg);
+  color: var(--hc-context-menu-item-hover-fg);
+}
+[data-part="context-menu-item"]:hover:not(:disabled) [data-part="context-menu-item-shortcut"],
+[data-part="context-menu-item"][data-state="active"]:not(:disabled) [data-part="context-menu-item-shortcut"] {
+  color: var(--hc-context-menu-item-hover-fg);
+}
+[data-part="context-menu-item"]:disabled {
+  color: var(--hc-context-menu-item-disabled-fg);
+  cursor: default;
+}
+[data-part="context-menu-item-check"] {
+  width: var(--hc-context-menu-check-width);
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+[data-part="context-menu-item-label"] {
+  flex: 1;
+}
+[data-part="context-menu-item-shortcut"] {
+  color: var(--hc-context-menu-shortcut-fg);
+  font-size: var(--hc-font-size);
+  margin-left: 24px;
+  flex-shrink: 0;
 }
 [data-part="context-menu-separator"] {
-  border-top: 1px dashed var(--hc-color-border);
-  margin: 2px 0;
+  height: 1px;
+  background: var(--hc-context-menu-separator-color);
+  margin: 3px 8px;
 }
 
 /* ─── AlertDialog ── */

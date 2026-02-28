@@ -62,51 +62,60 @@
   background: var(--hc-menu-hover-bg);
   color: var(--hc-menu-hover-fg);
   border-color: transparent;
+  border-radius: var(--hc-menu-item-radius);
 }
 [data-part="windowing-menu-panel"] {
   position: absolute;
   top: calc(100% + 2px);
   left: 0;
   min-width: 180px;
-  padding: 4px;
+  padding: var(--hc-context-menu-padding);
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  border: 2px solid var(--hc-color-border);
-  box-shadow: 2px 2px 0 var(--hc-color-border);
-  background: #fff;
+  gap: 1px;
+  background: var(--hc-menu-panel-bg);
+  border: var(--hc-menu-panel-border);
+  border-radius: var(--hc-menu-panel-border-radius);
+  box-shadow: var(--hc-menu-panel-shadow);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
   z-index: var(--hc-desktop-menubar-z);
+  animation: hc-context-menu-in 0.12s ease-out;
 }
 [data-part="windowing-menu-item"] {
   font-family: var(--hc-font-family);
-  font-size: 11px;
-  border: 1px solid transparent;
+  font-size: var(--hc-font-size);
+  border: none;
   background: transparent;
   color: var(--hc-color-fg);
-  padding: 4px 6px;
+  padding: var(--hc-context-menu-item-padding);
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  cursor: pointer;
+  cursor: default;
   text-align: left;
+  border-radius: var(--hc-menu-item-radius);
 }
 [data-part="windowing-menu-item"]:hover {
   background: var(--hc-menu-hover-bg);
   color: var(--hc-menu-hover-fg);
-  border-color: transparent;
 }
 [data-part="windowing-menu-item"]:hover [data-part="windowing-menu-shortcut"] {
   color: var(--hc-menu-hover-fg);
 }
+[data-part="windowing-menu-item"]:disabled {
+  color: var(--hc-context-menu-item-disabled-fg);
+  cursor: default;
+}
 [data-part="windowing-menu-separator"] {
   height: 1px;
-  background: var(--hc-color-muted);
-  margin: 2px 8px;
+  background: var(--hc-context-menu-separator-color);
+  margin: 3px 8px;
 }
 [data-part="windowing-menu-shortcut"] {
-  color: var(--hc-color-muted);
-  font-size: 10px;
+  color: var(--hc-context-menu-shortcut-fg);
+  font-size: 12px;
 }
 [data-part="windowing-icon-layer"] {
   position: absolute;

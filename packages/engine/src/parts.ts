@@ -89,6 +89,9 @@ export const PARTS = {
   // ContextMenu
   contextMenu: 'context-menu',
   contextMenuItem: 'context-menu-item',
+  contextMenuItemCheck: 'context-menu-item-check',
+  contextMenuItemLabel: 'context-menu-item-label',
+  contextMenuItemShortcut: 'context-menu-item-shortcut',
   contextMenuSeparator: 'context-menu-separator',
   // AlertDialog
   alertDialog: 'alert-dialog',

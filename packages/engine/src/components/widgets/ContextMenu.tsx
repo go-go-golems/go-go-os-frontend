@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PARTS } from '../../parts';
 
 export interface ContextMenuActionEntry {
@@ -33,6 +33,23 @@ function isActionEntry(entry: ContextMenuEntry): entry is ContextMenuActionEntry
 
 export function ContextMenu({ x, y, items, onSelect, onAction, onClose }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(-1);
+
+  // Clamp menu position to stay within the viewport
+  const [pos, setPos] = useState({ left: x, top: y });
+  useEffect(() => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    let left = x;
+    let top = y;
+    if (left + rect.width > vw - 8) left = vw - rect.width - 8;
+    if (top + rect.height > vh - 8) top = vh - rect.height - 8;
+    if (left < 8) left = 8;
+    if (top < 8) top = 8;
+    setPos({ left, top });
+  }, [x, y]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -52,11 +69,27 @@ export function ContextMenu({ x, y, items, onSelect, onAction, onClose }: Contex
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
 
+  // Determine if any item has a checkmark or shortcut for layout columns
+  const hasChecks = items.some(
+    (e) => isActionEntry(e) && e.checked !== undefined,
+  );
+  const hasShortcuts = items.some(
+    (e) => isActionEntry(e) && e.shortcut,
+  );
+
   return (
-    <div data-part={PARTS.contextMenu} ref={ref} role="menu" style={{ left: x, top: y }} tabIndex={-1}>
+    <div
+      data-part={PARTS.contextMenu}
+      ref={ref}
+      role="menu"
+      style={{ left: pos.left, top: pos.top }}
+      tabIndex={-1}
+      data-has-checks={hasChecks || undefined}
+      data-has-shortcuts={hasShortcuts || undefined}
+    >
       {items.map((entry, i) =>
         isSeparator(entry) ? (
-          <div key={`sep-${i}`} data-part={PARTS.contextMenuSeparator} />
+          <div key={`sep-${i}`} data-part={PARTS.contextMenuSeparator} role="separator" />
         ) : isActionEntry(entry) ? (
           <button
             key={entry.id}
@@ -65,7 +98,11 @@ export function ContextMenu({ x, y, items, onSelect, onAction, onClose }: Contex
             role="menuitem"
             disabled={entry.disabled}
             aria-checked={entry.checked ? true : undefined}
+            data-state={activeIndex === i ? 'active' : undefined}
+            onMouseEnter={() => setActiveIndex(i)}
+            onMouseLeave={() => setActiveIndex(-1)}
             onClick={() => {
+              if (entry.disabled) return;
               if (onAction) {
                 onAction(entry);
               } else if (entry.commandId) {
@@ -74,8 +111,13 @@ export function ContextMenu({ x, y, items, onSelect, onAction, onClose }: Contex
               onClose();
             }}
           >
-            <span>{entry.checked ? '✓ ' : ''}{entry.label}</span>
-            {entry.shortcut ? <span data-part={PARTS.windowingMenuShortcut}>{entry.shortcut}</span> : null}
+            <span data-part={PARTS.contextMenuItemCheck}>
+              {entry.checked ? '✓' : ''}
+            </span>
+            <span data-part={PARTS.contextMenuItemLabel}>{entry.label}</span>
+            {entry.shortcut ? (
+              <span data-part={PARTS.contextMenuItemShortcut}>{entry.shortcut}</span>
+            ) : null}
           </button>
         ) : (
           <button
@@ -83,12 +125,16 @@ export function ContextMenu({ x, y, items, onSelect, onAction, onClose }: Contex
             data-part={PARTS.contextMenuItem}
             type="button"
             role="menuitem"
+            data-state={activeIndex === i ? 'active' : undefined}
+            onMouseEnter={() => setActiveIndex(i)}
+            onMouseLeave={() => setActiveIndex(-1)}
             onClick={() => {
               onSelect(entry);
               onClose();
             }}
           >
-            {entry}
+            {hasChecks ? <span data-part={PARTS.contextMenuItemCheck} /> : null}
+            <span data-part={PARTS.contextMenuItemLabel}>{entry}</span>
           </button>
         ),
       )}

@@ -81,11 +81,31 @@
 
   /* ── DropdownMenu ── */
   --hc-dropdown-shadow: 1px 1px 0 var(--hc-color-border);
-  --hc-dropdown-panel-shadow: 2px 2px 0 var(--hc-color-border);
+  --hc-dropdown-panel-bg: rgba(255, 255, 255, 0.88);
+  --hc-dropdown-panel-border: 1px solid rgba(0, 0, 0, 0.12);
+  --hc-dropdown-panel-border-radius: 6px;
+  --hc-dropdown-panel-shadow:
+    0 10px 38px -10px rgba(22, 23, 24, 0.25),
+    0 10px 20px -15px rgba(22, 23, 24, 0.15);
+  --hc-dropdown-panel-padding: 4px;
 
   /* ── ContextMenu ── */
-  --hc-context-menu-shadow: 2px 2px 0 var(--hc-color-border);
-  --hc-context-menu-min-width: 170px;
+  --hc-context-menu-bg: rgba(255, 255, 255, 0.88);
+  --hc-context-menu-border: 1px solid rgba(0, 0, 0, 0.12);
+  --hc-context-menu-border-radius: 6px;
+  --hc-context-menu-shadow:
+    0 10px 38px -10px rgba(22, 23, 24, 0.25),
+    0 10px 20px -15px rgba(22, 23, 24, 0.15);
+  --hc-context-menu-min-width: 180px;
+  --hc-context-menu-padding: 4px;
+  --hc-context-menu-item-padding: 4px 10px;
+  --hc-context-menu-item-radius: 4px;
+  --hc-context-menu-item-hover-bg: #0a6cff;
+  --hc-context-menu-item-hover-fg: #fff;
+  --hc-context-menu-item-disabled-fg: rgba(0, 0, 0, 0.30);
+  --hc-context-menu-separator-color: rgba(0, 0, 0, 0.10);
+  --hc-context-menu-shortcut-fg: rgba(0, 0, 0, 0.40);
+  --hc-context-menu-check-width: 18px;
 
   /* ── AlertDialog ── */
   --hc-alert-shadow: 3px 3px 0 var(--hc-color-border);
@@ -134,8 +154,15 @@
   --hc-window-title-stripe-bg: var(--hc-color-bg);
   --hc-window-body-bg: #fff;
   --hc-window-body-padding: 0;
-  --hc-menu-hover-bg: var(--hc-color-fg);
-  --hc-menu-hover-fg: var(--hc-color-bg);
+  --hc-menu-hover-bg: #0a6cff;
+  --hc-menu-hover-fg: #fff;
+  --hc-menu-panel-bg: rgba(255, 255, 255, 0.88);
+  --hc-menu-panel-border: 1px solid rgba(0, 0, 0, 0.12);
+  --hc-menu-panel-border-radius: 6px;
+  --hc-menu-panel-shadow:
+    0 10px 38px -10px rgba(22, 23, 24, 0.25),
+    0 10px 20px -15px rgba(22, 23, 24, 0.15);
+  --hc-menu-item-radius: 4px;
   --hc-icon-selected-bg: var(--hc-color-fg);
   --hc-icon-selected-fg: var(--hc-color-bg);
 
