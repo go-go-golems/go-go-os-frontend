@@ -71,28 +71,32 @@ function createAppsBrowserAdapter(): WindowContentAdapter {
       window.content.appKey.startsWith('apps-browser:'),
     render: (window) => {
       const appKey = window.content.appKey as string;
+      let content: ReactNode = null;
 
       if (appKey === APP_KEY_FOLDER) {
-        return <AppsFolderWindow />;
+        content = <AppsFolderWindow />;
       }
 
-      if (appKey.startsWith(APP_KEY_BROWSER)) {
+      if (content == null && appKey.startsWith(APP_KEY_BROWSER)) {
         const initialAppId = appKey.split(':').slice(2).join(':') || undefined;
-        return <ModuleBrowserWindow initialAppId={initialAppId} />;
+        content = <ModuleBrowserWindow initialAppId={initialAppId} />;
       }
 
-      if (appKey === APP_KEY_HEALTH) {
-        return <HealthDashboardWindow />;
+      if (content == null && appKey === APP_KEY_HEALTH) {
+        content = <HealthDashboardWindow />;
       }
 
-      if (appKey.startsWith(APP_KEY_GET_INFO_PREFIX)) {
+      if (content == null && appKey.startsWith(APP_KEY_GET_INFO_PREFIX)) {
         const appId = appKey.slice(APP_KEY_GET_INFO_PREFIX.length);
         if (appId) {
-          return <GetInfoWindowByAppId appId={appId} />;
+          content = <GetInfoWindowByAppId appId={appId} />;
         }
       }
 
-      return null;
+      if (content == null) {
+        return null;
+      }
+      return <AppsBrowserHost>{content}</AppsBrowserHost>;
     },
   };
 }
