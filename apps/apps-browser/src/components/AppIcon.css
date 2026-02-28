@@ -1,0 +1,104 @@
+/* ─── AppIcon ── */
+[data-part="app-icon"] {
+  width: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 2px solid transparent;
+  padding: 4px;
+  cursor: pointer;
+  font-family: var(--hc-font-family);
+}
+
+[data-part="app-icon"][data-state="selected"] {
+  background: var(--hc-icon-selected-bg, #000);
+  border-color: var(--hc-icon-selected-bg, #000);
+  border-radius: 4px;
+}
+
+[data-part="app-icon-frame"] {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Health dot (top-right) ── */
+[data-part="app-icon-health"] {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 10px;
+  line-height: 1;
+}
+[data-part="app-icon-health"][data-variant="healthy"] {
+  color: #060;
+}
+[data-part="app-icon-health"][data-variant="unhealthy"] {
+  color: #a00;
+}
+
+/* ─── Required badge (top-left) ── */
+[data-part="app-icon-required"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--hc-color-fg, #000);
+}
+
+/* ─── Module glyph (center) ── */
+[data-part="app-icon-glyph"] {
+  font-size: 20px;
+  line-height: 1;
+  border: 2px solid var(--hc-color-border, #000);
+  padding: 4px 6px;
+  background: var(--hc-color-bg, #fff);
+}
+[data-part="app-icon-glyph"][data-variant="unhealthy"] {
+  opacity: 0.5;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--hc-color-bg, #fff),
+    var(--hc-color-bg, #fff) 2px,
+    var(--hc-color-muted, #777) 2px,
+    var(--hc-color-muted, #777) 3px
+  );
+}
+[data-part="app-icon"][data-state="selected"] [data-part="app-icon-glyph"] {
+  filter: grayscale(1) brightness(0) invert(1) contrast(1.2);
+}
+
+/* ─── Reflection star (bottom-center) ── */
+[data-part="app-icon-reflection"] {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  line-height: 1;
+  color: var(--hc-color-fg, #000);
+}
+
+/* ─── Label ── */
+[data-part="app-icon-label"] {
+  font-size: 10px;
+  text-align: center;
+  word-break: break-word;
+  line-height: 1.2;
+  color: var(--hc-color-fg, #000);
+}
+[data-part="app-icon"][data-state="selected"] [data-part="app-icon-label"] {
+  color: var(--hc-icon-selected-fg, #fff);
+}
+[data-part="app-icon-label"][data-variant="unhealthy"] {
+  color: #a00;
+}
+[data-part="app-icon"][data-state="selected"] [data-part="app-icon-label"][data-variant="unhealthy"] {
+  color: var(--hc-icon-selected-fg, #fff);
+}
