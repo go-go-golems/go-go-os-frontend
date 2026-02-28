@@ -63,6 +63,8 @@ export type {
   DesktopActionSection,
   DesktopActionVisibility,
   DesktopActionVisibilityContext,
+  DesktopVisibilityContextResolver,
+  DesktopVisibilityContextResolverArgs,
   DesktopContextMenuOpenRequest,
   DesktopCommandInvocation,
   DesktopCommandSource,

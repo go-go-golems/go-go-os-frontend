@@ -12,7 +12,11 @@ import { windowingReducer } from '../../../desktop/core/state/windowingSlice';
 import { notificationsReducer } from '../../../features/notifications/notificationsSlice';
 import { DesktopShell } from './DesktopShell';
 import { useRegisterWindowContextActions, useRegisterWindowMenuSections } from './desktopMenuRuntime';
-import type { DesktopActionEntry, DesktopActionSection } from './types';
+import type {
+  DesktopActionEntry,
+  DesktopActionSection,
+  DesktopVisibilityContextResolver,
+} from './types';
 
 const roots: Root[] = [];
 const containers: HTMLElement[] = [];
@@ -52,6 +56,18 @@ const APP_MENU_SECTIONS: DesktopActionSection[] = [
   },
 ];
 
+const POLICY_CONTEXT_ACTIONS: DesktopActionEntry[] = [
+  {
+    id: 'admin-export',
+    label: 'Admin Export',
+    commandId: 'runtime.admin.export',
+    visibility: {
+      allowedRoles: ['admin'],
+      unauthorized: 'hide',
+    },
+  },
+];
+
 function createTestStore() {
   return configureStore({
     reducer: {
@@ -76,6 +92,15 @@ function RuntimeMenuWindow() {
   return (
     <section style={{ padding: 8 }}>
       <strong>Runtime Menu Window</strong>
+    </section>
+  );
+}
+
+function RuntimePolicyWindow() {
+  useRegisterWindowContextActions(POLICY_CONTEXT_ACTIONS);
+  return (
+    <section style={{ padding: 8 }}>
+      <strong>Runtime Policy Window</strong>
     </section>
   );
 }
@@ -352,6 +377,74 @@ describe('desktop shell context-menu invocation metadata', () => {
           messageId: 'msg-runtime-1',
           content: 'Runtime message payload',
         }),
+      }),
+    );
+  });
+
+  it('applies externally injected visibility resolver context for context actions', async () => {
+    const store = createTestStore();
+    const onCommand = vi.fn();
+    const visibilityContextResolver: DesktopVisibilityContextResolver = ({ target }) => ({
+      target,
+      roles: ['admin'],
+    });
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const root = createRoot(container);
+    roots.push(root);
+    await act(async () => {
+      root.render(
+        <Provider store={store}>
+          <DesktopShell
+            stack={TEST_STACK}
+            renderAppWindow={(appKey) => (appKey === 'runtime-tools:policy' ? <RuntimePolicyWindow /> : null)}
+            visibilityContextResolver={visibilityContextResolver}
+            onCommand={onCommand}
+          />
+        </Provider>,
+      );
+    });
+
+    const runtimeWindowId = 'window:runtime:policy';
+    await act(async () => {
+      store.dispatch(
+        openWindow({
+          id: runtimeWindowId,
+          title: 'Runtime Policy',
+          icon: '🛡️',
+          bounds: { x: 220, y: 72, w: 440, h: 320 },
+          content: {
+            kind: 'app',
+            appKey: 'runtime-tools:policy',
+          },
+        }),
+      );
+    });
+
+    const titleBar = container.querySelector('[data-part="windowing-window-title-bar"]');
+    expect(titleBar).not.toBeNull();
+    fireContextMenu(titleBar as Element);
+
+    const contextMenu = container.querySelector('[data-part="context-menu"]');
+    expect(contextMenu).not.toBeNull();
+    const adminExportAction = Array.from(contextMenu?.querySelectorAll('button') ?? []).find((button) =>
+      button.textContent?.includes('Admin Export'),
+    );
+    expect(adminExportAction).not.toBeUndefined();
+
+    act(() => {
+      adminExportAction?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+
+    expect(onCommand).toHaveBeenCalledWith(
+      'runtime.admin.export',
+      expect.objectContaining({
+        source: 'context-menu',
+        menuId: 'window-context',
+        windowId: runtimeWindowId,
       }),
     );
   });

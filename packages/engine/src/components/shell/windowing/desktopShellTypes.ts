@@ -1,7 +1,12 @@
 import type { ReactNode } from 'react';
 import type { CardStackDefinition } from '../../../cards';
 import type { DesktopContribution } from './desktopContributions';
-import type { DesktopCommandInvocation, DesktopIconDef, DesktopMenuSection } from './types';
+import type {
+  DesktopCommandInvocation,
+  DesktopIconDef,
+  DesktopMenuSection,
+  DesktopVisibilityContextResolver,
+} from './types';
 
 export interface DesktopShellProps {
   stack: CardStackDefinition;
@@ -21,6 +26,8 @@ export interface DesktopShellProps {
   renderAppWindow?: (appKey: string, windowId: string) => ReactNode;
   /** Called for menu/icon commands not handled by the built-in command set. */
   onCommand?: (commandId: string, invocation?: DesktopCommandInvocation) => void;
+  /** Optional resolver used to inject action-visibility context from external modules. */
+  visibilityContextResolver?: DesktopVisibilityContextResolver;
   /** Optional contribution bundles used to compose menus/icons/commands/adapters. */
   contributions?: DesktopContribution[];
 }

@@ -68,6 +68,7 @@ import type {
   DesktopContextMenuOpenRequest,
   DesktopContextTargetRef,
   DesktopActionVisibilityContext,
+  DesktopVisibilityContextResolver,
   DesktopIconDef,
   DesktopIconKind,
   DesktopMenuSection,
@@ -195,98 +196,9 @@ function resolveFolderMemberIconIds(
     .map((icon) => icon.id);
 }
 
-function normalizeStringValue(value: unknown): string | undefined {
-  const normalized = String(value ?? '').trim();
-  return normalized.length > 0 ? normalized : undefined;
-}
-
-function normalizeStringList(values: unknown): string[] {
-  if (!Array.isArray(values)) {
-    return [];
-  }
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const value of values) {
-    const normalized = normalizeStringValue(value);
-    if (!normalized || seen.has(normalized)) {
-      continue;
-    }
-    seen.add(normalized);
-    out.push(normalized);
-  }
-  return out;
-}
-
-interface ChatProfileLike {
-  slug?: string;
-  extensions?: Record<string, unknown>;
-}
-
-interface ChatProfilesStateLike {
-  availableProfiles?: ChatProfileLike[];
-  selectedProfile?: string | null;
-  selectedRegistry?: string | null;
-  selectedByScope?: Record<string, { profile?: string | null; registry?: string | null }>;
-}
-
-function readChatProfilesState(state: unknown): ChatProfilesStateLike | null {
-  if (!state || typeof state !== 'object' || Array.isArray(state)) {
-    return null;
-  }
-  const root = state as Record<string, unknown>;
-  const chatProfiles = root.chatProfiles;
-  if (!chatProfiles || typeof chatProfiles !== 'object' || Array.isArray(chatProfiles)) {
-    return null;
-  }
-  return chatProfiles as ChatProfilesStateLike;
-}
-
-function resolveProfileRoles(profile: ChatProfileLike | undefined): string[] {
-  if (!profile?.extensions || typeof profile.extensions !== 'object' || Array.isArray(profile.extensions)) {
-    return [];
-  }
-  const extensions = profile.extensions;
-  const explicitRoles = normalizeStringList(extensions.roles);
-  if (explicitRoles.length > 0) {
-    return explicitRoles;
-  }
-  const explicitRole = normalizeStringValue(extensions.role);
-  return explicitRole ? [explicitRole] : [];
-}
-
-function resolveActionVisibilityContext(
-  state: unknown,
-  target: DesktopContextTargetRef,
-): DesktopActionVisibilityContext {
-  const context: DesktopActionVisibilityContext = {
-    target,
-  };
-  const chatProfiles = readChatProfilesState(state);
-  if (!chatProfiles) {
-    return context;
-  }
-
-  const conversationId = normalizeStringValue(target.conversationId);
-  const scopeKey = conversationId ? `conv:${conversationId}` : undefined;
-  const scopedSelection = scopeKey ? chatProfiles.selectedByScope?.[scopeKey] : undefined;
-  const profile =
-    normalizeStringValue(scopedSelection?.profile) ??
-    normalizeStringValue(chatProfiles.selectedProfile);
-  const registry =
-    normalizeStringValue(scopedSelection?.registry) ??
-    normalizeStringValue(chatProfiles.selectedRegistry);
-  const selectedProfile = (chatProfiles.availableProfiles ?? []).find(
-    (entry) => normalizeStringValue(entry.slug) === profile,
-  );
-  const roles = resolveProfileRoles(selectedProfile);
-
-  return {
-    profile,
-    registry,
-    roles: roles.length > 0 ? roles : undefined,
-    target,
-  };
-}
+const resolveDefaultActionVisibilityContext: DesktopVisibilityContextResolver = ({ target }) => {
+  return { target };
+};
 
 function buildRawContextMenuItemsForTarget(args: {
   target: DesktopContextTargetRef;
@@ -431,6 +343,7 @@ export function useDesktopShellController({
   icons: iconsProp,
   renderAppWindow,
   onCommand: onCommandProp,
+  visibilityContextResolver,
   contributions,
 }: DesktopShellProps): DesktopShellControllerResult {
   const dispatch = useDispatch();
@@ -893,7 +806,7 @@ export function useDesktopShellController({
   );
 
   const resolveContextMenuItemsForTarget = useCallback(
-    (target: DesktopContextTargetRef): DesktopActionEntry[] => {
+    (target: DesktopContextTargetRef, invocation?: DesktopCommandInvocation): DesktopActionEntry[] => {
       const precedenceKeys = resolveContextActionPrecedenceKeys(target);
       const matchedPrecedence = precedenceKeys
         .map((key) => ({ key, count: contextActionsByTargetKey[key]?.actions.length ?? 0 }))
@@ -914,7 +827,13 @@ export function useDesktopShellController({
       if (rawItems.length === 0) {
         return rawItems;
       }
-      const visibilityContext = resolveActionVisibilityContext(store.getState(), target);
+      const visibilityContext: DesktopActionVisibilityContext = (
+        visibilityContextResolver ?? resolveDefaultActionVisibilityContext
+      )({
+        state: store.getState(),
+        target,
+        invocation,
+      });
       const visibleItems = applyActionVisibility(rawItems, visibilityContext);
       contextActionResolveLog(
         'target=%o visibleItems=%d roles=%o profile=%s registry=%s',
@@ -926,14 +845,14 @@ export function useDesktopShellController({
       );
       return visibleItems;
     },
-    [contextActionsByTargetKey, iconsById, store, windowsById],
+    [contextActionsByTargetKey, iconsById, store, visibilityContextResolver, windowsById],
   );
 
   const routeCommand = useCallback(
     (commandId: string, invocation: DesktopCommandInvocation = { source: 'programmatic' }) => {
       if (invocation.source === 'context-menu' && invocation.contextTarget) {
         const target = normalizeContextTargetRef(invocation.contextTarget);
-        const targetItems = resolveContextMenuItemsForTarget(target);
+        const targetItems = resolveContextMenuItemsForTarget(target, invocation);
         if (!isContextCommandAllowed(targetItems, commandId)) {
           return;
         }

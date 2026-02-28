@@ -37,6 +37,16 @@ export interface DesktopActionVisibilityContext {
   target?: DesktopContextTargetRef;
 }
 
+export interface DesktopVisibilityContextResolverArgs {
+  state: unknown;
+  target: DesktopContextTargetRef;
+  invocation?: DesktopCommandInvocation;
+}
+
+export type DesktopVisibilityContextResolver = (
+  args: DesktopVisibilityContextResolverArgs,
+) => DesktopActionVisibilityContext;
+
 export interface DesktopActionVisibility {
   /**
    * Only allow this action when the active profile slug matches one of these values.
