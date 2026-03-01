@@ -1,10 +1,15 @@
-import { MOCK_APPS_DEFAULT, MOCK_GEPA_REFLECTION } from '../fixtures/apps';
+import { MOCK_APPS_DEFAULT, MOCK_GEPA_DOCS, MOCK_GEPA_REFLECTION, MOCK_INVENTORY_DOCS } from '../fixtures/apps';
 import { type AppsHandlerData, createAppsHandlers } from './createAppsHandlers';
 
 export const defaultAppsHandlerData: AppsHandlerData = {
   apps: MOCK_APPS_DEFAULT,
   reflections: { gepa: MOCK_GEPA_REFLECTION },
   unsupportedReflection: ['inventory'],
+  docsByApp: {
+    inventory: MOCK_INVENTORY_DOCS,
+    gepa: MOCK_GEPA_DOCS,
+  },
+  docsEndpointErrors: [],
 };
 
 export function createDefaultAppsHandlers(

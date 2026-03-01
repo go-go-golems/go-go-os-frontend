@@ -15,8 +15,16 @@ export interface AppManifestDocument {
     url?: string;
     version?: string;
   };
+  docs?: AppManifestDocsHint;
   healthy: boolean;
   health_error?: string;
+}
+
+export interface AppManifestDocsHint {
+  available: boolean;
+  url?: string;
+  count?: number;
+  version?: string;
 }
 
 // --- Reflection response (GET /api/os/apps/{id}/reflection) ---
@@ -69,3 +77,61 @@ export interface ReflectionSchemaRef {
 export type ReflectionResult =
   | (ModuleReflectionDocument & { _unsupported?: false })
   | { _unsupported: true; app_id: string };
+
+// --- Module docs response (GET /api/apps/{id}/docs and /docs/{slug}) ---
+
+export interface ModuleDocsTOCResponse {
+  module_id: string;
+  docs: ModuleDocDocument[];
+}
+
+export interface ModuleDocDocument {
+  module_id: string;
+  slug: string;
+  title: string;
+  doc_type: string;
+  topics?: string[];
+  summary?: string;
+  see_also?: string[];
+  order?: number;
+  content?: string;
+}
+
+// --- Aggregated docs response (GET /api/os/docs) ---
+
+export interface OSDocsResponse {
+  total: number;
+  results: OSDocResult[];
+  facets: {
+    topics: OSDocFacet[];
+    doc_types: OSDocFacet[];
+    modules: OSDocModuleFacet[];
+  };
+}
+
+export interface OSDocResult {
+  module_id: string;
+  slug: string;
+  title: string;
+  doc_type: string;
+  topics?: string[];
+  summary?: string;
+  url: string;
+}
+
+export interface OSDocFacet {
+  slug: string;
+  count: number;
+}
+
+export interface OSDocModuleFacet {
+  id: string;
+  count: number;
+}
+
+export interface OSDocsQuery {
+  query?: string;
+  topics?: string[];
+  doc_type?: string[];
+  module?: string[];
+}

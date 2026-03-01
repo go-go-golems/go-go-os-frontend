@@ -111,6 +111,14 @@
   background: #fff0f0;
 }
 
+[data-part="get-info-docs-error"] {
+  color: #a00;
+  font-size: 10px;
+  padding: 4px 8px;
+  border: 1px solid #a00;
+  background: #fff0f0;
+}
+
 /* ─── Footer ── */
 [data-part="get-info-footer"] {
   display: flex;

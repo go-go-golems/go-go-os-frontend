@@ -1,4 +1,4 @@
-import type { AppManifestDocument, ModuleReflectionDocument } from '../../domain/types';
+import type { AppManifestDocument, ModuleDocDocument, ModuleReflectionDocument } from '../../domain/types';
 
 export const MOCK_INVENTORY: AppManifestDocument = {
   app_id: 'inventory',
@@ -6,6 +6,7 @@ export const MOCK_INVENTORY: AppManifestDocument = {
   description: 'Inventory chat runtime, profiles, timeline, and confirm APIs',
   required: true,
   capabilities: ['chat', 'ws', 'timeline', 'profiles', 'confirm'],
+  docs: { available: true, url: '/api/apps/inventory/docs', count: 2, version: 'v1' },
   healthy: true,
 };
 
@@ -16,6 +17,7 @@ export const MOCK_GEPA: AppManifestDocument = {
   required: false,
   capabilities: ['script-runner', 'events', 'timeline', 'schemas', 'reflection'],
   reflection: { available: true, url: '/api/os/apps/gepa/reflection', version: 'v1' },
+  docs: { available: true, url: '/api/apps/gepa/docs', count: 2, version: 'v1' },
   healthy: true,
 };
 
@@ -117,3 +119,49 @@ export const MOCK_RUN_REQUEST_SCHEMA = {
   },
   required: ['script_name'],
 };
+
+export const MOCK_INVENTORY_DOCS: ModuleDocDocument[] = [
+  {
+    module_id: 'inventory',
+    slug: 'overview',
+    title: 'Inventory Overview',
+    doc_type: 'overview',
+    topics: ['inventory', 'chat'],
+    summary: 'High-level component and route overview for inventory backend.',
+    order: 10,
+    content: '# Inventory Overview\n\nInventory module docs.',
+  },
+  {
+    module_id: 'inventory',
+    slug: 'api-reference',
+    title: 'Inventory API Reference',
+    doc_type: 'api-reference',
+    topics: ['inventory', 'api'],
+    summary: 'HTTP and websocket endpoint contract for inventory.',
+    order: 20,
+    content: '# Inventory API Reference\n\nList of endpoints.',
+  },
+];
+
+export const MOCK_GEPA_DOCS: ModuleDocDocument[] = [
+  {
+    module_id: 'gepa',
+    slug: 'overview',
+    title: 'GEPA Overview',
+    doc_type: 'overview',
+    topics: ['gepa', 'scripts'],
+    summary: 'Execution model, lifecycle, and script ownership.',
+    order: 10,
+    content: '# GEPA Overview\n\nGEPA module docs.',
+  },
+  {
+    module_id: 'gepa',
+    slug: 'scripts-and-runs',
+    title: 'Scripts And Runs',
+    doc_type: 'guide',
+    topics: ['gepa', 'scripts'],
+    summary: 'How scripts are discovered and executed.',
+    order: 20,
+    content: '# Scripts And Runs\n\nRun model and events.',
+  },
+];

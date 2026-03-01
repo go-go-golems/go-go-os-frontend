@@ -1,4 +1,4 @@
-import { useGetReflectionQuery } from '../api/appsApi';
+import { useGetModuleDocsQuery, useGetReflectionQuery } from '../api/appsApi';
 import { isReflectionUnsupported } from '../domain/selectors';
 import type { AppManifestDocument, ReflectionResult } from '../domain/types';
 import { AppIcon } from './AppIcon';
@@ -7,6 +7,127 @@ import './GetInfoWindow.css';
 export interface GetInfoWindowProps {
   app: AppManifestDocument;
   onOpenInBrowser?: () => void;
+}
+
+function formatDocsFetchError(error: unknown): string {
+  if (!error) {
+    return 'Unknown error';
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  if (typeof error === 'object') {
+    const withStatus = error as { status?: unknown; data?: unknown; message?: unknown };
+    if (withStatus.status !== undefined) {
+      return `Request failed (${String(withStatus.status)})`;
+    }
+    if (typeof withStatus.message === 'string' && withStatus.message.trim().length > 0) {
+      return withStatus.message;
+    }
+    if (typeof withStatus.data === 'string' && withStatus.data.trim().length > 0) {
+      return withStatus.data;
+    }
+  }
+  return 'Failed to load documentation';
+}
+
+function buildDocURL(appId: string, slug: string): string {
+  return `/api/apps/${appId}/docs/${encodeURIComponent(slug)}`;
+}
+
+function DocumentationSection({ app }: { app: AppManifestDocument }) {
+  if (app.docs?.available !== true) {
+    return (
+      <>
+        <div data-part="get-info-section">Documentation</div>
+        <dl data-part="get-info-fields">
+          <dt>Available:</dt>
+          <dd>No</dd>
+        </dl>
+        <div data-part="get-info-note">This module does not publish structured docs metadata yet.</div>
+      </>
+    );
+  }
+  return <DocumentationDataSection app={app} />;
+}
+
+function DocumentationDataSection({ app }: { app: AppManifestDocument }) {
+  const { data: toc, isLoading, isError, error } = useGetModuleDocsQuery(app.app_id);
+
+  if (isLoading) {
+    return (
+      <>
+        <div data-part="get-info-section">Documentation</div>
+        <div data-part="get-info-note">Loading module docs index&hellip;</div>
+      </>
+    );
+  }
+
+  if (isError) {
+    return (
+      <>
+        <div data-part="get-info-section">Documentation</div>
+        <dl data-part="get-info-fields">
+          <dt>Available:</dt>
+          <dd>
+            {'\u2605'} Yes ({app.docs?.version ?? '?'})
+          </dd>
+          {app.docs?.url && (
+            <>
+              <dt>Index URL:</dt>
+              <dd style={{ fontFamily: 'monospace', fontSize: 10 }}>{app.docs.url}</dd>
+            </>
+          )}
+        </dl>
+        <div data-part="get-info-docs-error">Docs endpoint failed: {formatDocsFetchError(error)}</div>
+      </>
+    );
+  }
+
+  const docs = toc?.docs ?? [];
+  const effectiveModuleID = toc?.module_id || app.app_id;
+
+  return (
+    <>
+      <div data-part="get-info-section">Documentation</div>
+      <dl data-part="get-info-fields">
+        <dt>Available:</dt>
+        <dd>
+          {'\u2605'} Yes ({app.docs?.version ?? '?'})
+        </dd>
+        <dt>Pages:</dt>
+        <dd>{docs.length}</dd>
+        {app.docs?.url && (
+          <>
+            <dt>Index URL:</dt>
+            <dd style={{ fontFamily: 'monospace', fontSize: 10 }}>
+              <a href={app.docs.url} target="_blank" rel="noreferrer">
+                {app.docs.url}
+              </a>
+            </dd>
+          </>
+        )}
+      </dl>
+
+      {docs.length > 0 ? (
+        <ul data-part="get-info-api-list">
+          {docs.map((entry) => (
+            <li key={entry.slug} data-part="get-info-api-item">
+              <span data-part="get-info-api-method">{entry.doc_type}</span>
+              <span data-part="get-info-api-path">
+                <a href={buildDocURL(effectiveModuleID, entry.slug)} target="_blank" rel="noreferrer">
+                  {entry.title}
+                </a>
+              </span>
+              <span data-part="get-info-api-summary">{entry.summary ?? '\u2014'}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div data-part="get-info-note">Docs index is available but currently empty.</div>
+      )}
+    </>
+  );
 }
 
 function ReflectionSection({ appId, hasReflection }: { appId: string; hasReflection: boolean }) {
@@ -167,6 +288,8 @@ export function GetInfoWindow({ app, onOpenInBrowser }: GetInfoWindowProps) {
           )}
         </div>
       )}
+
+      <DocumentationSection app={app} />
 
       <ReflectionSection appId={app.app_id} hasReflection={hasReflection} />
 
