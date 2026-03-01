@@ -116,6 +116,7 @@ export const {
   useGetAppsQuery,
   useGetReflectionQuery,
   useGetModuleDocsQuery,
+  useGetModuleDocQuery,
   useLazyGetModuleDocQuery,
   useGetOSDocsQuery,
   useLazyGetSchemaDocumentQuery,

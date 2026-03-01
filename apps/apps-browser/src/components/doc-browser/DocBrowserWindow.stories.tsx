@@ -69,3 +69,38 @@ export const PreSelectedDoc: Story = {
     msw: { handlers: createDefaultAppsHandlers() },
   },
 };
+
+export const ReaderApiReference: Story = {
+  args: { initialModuleId: 'inventory', initialSlug: 'api-reference' },
+  parameters: {
+    msw: { handlers: createDefaultAppsHandlers() },
+  },
+};
+
+export const ReaderWithSeeAlso: Story = {
+  args: { initialModuleId: 'arc-agi', initialSlug: 'runtime-modes' },
+  parameters: {
+    msw: { handlers: createDefaultAppsHandlers() },
+  },
+};
+
+export const ReaderTroubleshooting: Story = {
+  args: { initialModuleId: 'inventory', initialSlug: 'troubleshooting' },
+  parameters: {
+    msw: { handlers: createDefaultAppsHandlers() },
+  },
+};
+
+export const ReaderArcAgiSessionLifecycle: Story = {
+  args: { initialModuleId: 'arc-agi', initialSlug: 'session-lifecycle' },
+  parameters: {
+    msw: { handlers: createDefaultAppsHandlers() },
+  },
+};
+
+export const ReaderDocNotFound: Story = {
+  args: { initialModuleId: 'inventory', initialSlug: 'nonexistent' },
+  parameters: {
+    msw: { handlers: createDefaultAppsHandlers() },
+  },
+};

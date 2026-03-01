@@ -1,9 +1,12 @@
 import { DocBrowserProvider, useDocBrowser } from './DocBrowserContext';
 import { DocCenterHome } from './DocCenterHome';
+import { DocReaderScreen } from './DocReaderScreen';
 import './DocBrowserWindow.css';
 
 function DocBrowserToolbar() {
-  const { location, canGoBack, goBack, goHome, openSearch } = useDocBrowser();
+  const { location, canGoBack, goBack, goHome, openSearch, openModuleDocs } = useDocBrowser();
+
+  const showModuleBtn = (location.screen === 'reader' || location.screen === 'module-docs') && location.moduleId;
 
   return (
     <div data-part="doc-browser-toolbar">
@@ -32,6 +35,16 @@ function DocBrowserToolbar() {
       >
         Search
       </button>
+      {showModuleBtn && (
+        <button
+          type="button"
+          data-part="doc-browser-nav-btn"
+          data-state={location.screen === 'module-docs' ? 'active' : undefined}
+          onClick={() => openModuleDocs(location.moduleId!)}
+        >
+          Module
+        </button>
+      )}
       <div data-part="doc-browser-toolbar-spacer" />
     </div>
   );
@@ -48,7 +61,11 @@ function DocBrowserScreenRouter() {
     case 'module-docs':
       return <PlaceholderScreen label="Module Docs" detail={location.moduleId} />;
     case 'reader':
-      return <PlaceholderScreen label="Doc Reader" detail={`${location.moduleId}/${location.slug}`} />;
+      return location.moduleId && location.slug ? (
+        <DocReaderScreen moduleId={location.moduleId} slug={location.slug} />
+      ) : (
+        <PlaceholderScreen label="Doc Reader" detail="Missing moduleId or slug" />
+      );
     case 'topic-browser':
       return <PlaceholderScreen label="Topic Browser" detail={location.topic} />;
   }
