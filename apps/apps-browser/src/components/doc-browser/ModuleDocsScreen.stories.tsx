@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Provider } from 'react-redux';
 import { createAppsBrowserStore } from '../../app/store';
-import { MOCK_APPS_MANY } from '../../mocks/fixtures/apps';
 import { createDefaultAppsHandlers } from '../../mocks/msw/defaultHandlers';
 import { DocBrowserWindow } from './DocBrowserWindow';
 
@@ -15,43 +14,26 @@ function StoreDecorator(Story: React.ComponentType) {
 }
 
 const meta = {
-  title: 'Apps/AppsBrowser/DocBrowser/Home',
+  title: 'Apps/AppsBrowser/DocBrowser/ModuleDocs',
   component: DocBrowserWindow,
   decorators: [StoreDecorator],
   parameters: {
     layout: 'fullscreen',
+    msw: { handlers: createDefaultAppsHandlers() },
   },
 } satisfies Meta<typeof DocBrowserWindow>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
-  parameters: {
-    msw: { handlers: createDefaultAppsHandlers() },
-  },
+export const Inventory: Story = {
+  args: { initialModuleId: 'inventory' },
 };
 
-export const Empty: Story = {
-  parameters: {
-    msw: {
-      handlers: createDefaultAppsHandlers({ apps: [], docsByApp: {} }),
-    },
-  },
+export const ArcAgi: Story = {
+  args: { initialModuleId: 'arc-agi' },
 };
 
-export const Loading: Story = {
-  parameters: {
-    msw: {
-      handlers: createDefaultAppsHandlers({}, { delayMs: 60000 }),
-    },
-  },
-};
-
-export const ManyModulesNoDocs: Story = {
-  parameters: {
-    msw: {
-      handlers: createDefaultAppsHandlers({ apps: MOCK_APPS_MANY, docsByApp: {} }),
-    },
-  },
+export const Gepa: Story = {
+  args: { initialModuleId: 'gepa' },
 };

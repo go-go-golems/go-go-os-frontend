@@ -6,7 +6,7 @@ export const MOCK_INVENTORY: AppManifestDocument = {
   description: 'Inventory chat runtime, profiles, timeline, and confirm APIs',
   required: true,
   capabilities: ['chat', 'ws', 'timeline', 'profiles', 'confirm'],
-  docs: { available: true, url: '/api/apps/inventory/docs', count: 4, version: 'v1' },
+  docs: { available: true, url: '/api/apps/inventory/docs', count: 5, version: 'v1' },
   healthy: true,
 };
 
@@ -178,6 +178,163 @@ export const MOCK_INVENTORY_DOCS: ModuleDocDocument[] = [
     order: 4,
     content:
       '# Inventory Troubleshooting\n\n## Common Issues\n\n### Chat endpoint returns 502\n\nThis usually means the LLM backend is unreachable. Check:\n\n1. Backend process is running\n2. Network connectivity to the LLM provider\n3. API key configuration\n\n### Profiles not loading\n\nEnsure the embedded profile store has valid YAML frontmatter.',
+  },
+  {
+    module_id: 'inventory',
+    slug: 'integration-guide',
+    title: 'Integration Guide',
+    doc_type: 'guide',
+    topics: ['backend', 'api', 'onboarding'],
+    summary: 'Step-by-step guide for integrating with the inventory module, with code examples.',
+    see_also: ['inventory/api-reference', 'inventory/overview'],
+    order: 5,
+    content: `# Integration Guide
+
+## Quick Start
+
+Install the client SDK and configure the connection:
+
+\`\`\`bash
+npm install @wesen-os/inventory-client
+export INVENTORY_URL=http://localhost:8091
+\`\`\`
+
+## TypeScript Client
+
+Here is a complete TypeScript client for the inventory API:
+
+\`\`\`typescript
+import { InventoryClient } from '@wesen-os/inventory-client';
+
+interface Profile {
+  id: string;
+  name: string;
+  model: string;
+  temperature: number;
+  systemPrompt: string;
+}
+
+async function main() {
+  const client = new InventoryClient({
+    baseUrl: process.env.INVENTORY_URL ?? 'http://localhost:8091',
+    timeout: 5000,
+  });
+
+  // List all profiles
+  const profiles = await client.listProfiles();
+  console.log(\`Found \${profiles.length} profiles\`);
+
+  // Create a new profile
+  const newProfile: Profile = {
+    id: 'custom-1',
+    name: 'Custom Profile',
+    model: 'claude-sonnet-4-20250514',
+    temperature: 0.7,
+    systemPrompt: 'You are a helpful assistant.',
+  };
+  await client.createProfile(newProfile);
+}
+
+main().catch(console.error);
+\`\`\`
+
+## Go Backend Integration
+
+Register the inventory module with the backend host:
+
+\`\`\`go
+package main
+
+import (
+    "context"
+    "log"
+
+    "github.com/go-go-golems/go-go-os-backend/pkg/backendhost"
+    inventory "github.com/go-go-golems/go-go-app-inventory/pkg/backendmodule"
+)
+
+func main() {
+    ctx := context.Background()
+
+    // Create and initialize the module
+    mod, err := inventory.NewModule(inventory.Config{
+        DataDir: "./data",
+        LLMProvider: "anthropic",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Register with the backend host
+    host := backendhost.New()
+    host.Register(mod)
+
+    if err := host.Start(ctx, ":8091"); err != nil {
+        log.Fatal(err)
+    }
+}
+\`\`\`
+
+## JSON Payload Examples
+
+### Create Profile Request
+
+\`\`\`json
+{
+  "id": "custom-1",
+  "name": "Custom Profile",
+  "model": "claude-sonnet-4-20250514",
+  "temperature": 0.7,
+  "system_prompt": "You are a helpful assistant."
+}
+\`\`\`
+
+### Timeline Entry Response
+
+\`\`\`json
+{
+  "entries": [
+    {
+      "id": "evt-001",
+      "timestamp": "2026-03-01T12:00:00Z",
+      "type": "chat_message",
+      "payload": {
+        "role": "user",
+        "content": "Hello, world!"
+      }
+    }
+  ],
+  "total": 1,
+  "has_more": false
+}
+\`\`\`
+
+## YAML Configuration
+
+\`\`\`yaml
+inventory:
+  data_dir: ./data
+  llm:
+    provider: anthropic
+    model: claude-sonnet-4-20250514
+    temperature: 0.7
+    max_tokens: 4096
+  profiles:
+    default: custom-1
+    auto_load: true
+  timeline:
+    max_entries: 10000
+    retention_days: 30
+\`\`\`
+
+## Inline Code
+
+Use \`client.listProfiles()\` to fetch all profiles. The \`timeout\` option
+accepts milliseconds. Configuration is loaded from \`./config.yaml\` by default.
+
+> **Note:** Always check the \`health\` endpoint before making API calls.
+> Use \`curl http://localhost:8091/api/apps/inventory/health\` to verify.
+`,
   },
 ];
 

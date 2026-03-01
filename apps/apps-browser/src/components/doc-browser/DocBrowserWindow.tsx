@@ -2,10 +2,12 @@ import { DocBrowserProvider, useDocBrowser } from './DocBrowserContext';
 import { DocCenterHome } from './DocCenterHome';
 import { DocReaderScreen } from './DocReaderScreen';
 import { DocSearchScreen } from './DocSearchScreen';
+import { ModuleDocsScreen } from './ModuleDocsScreen';
+import { TopicBrowserScreen } from './TopicBrowserScreen';
 import './DocBrowserWindow.css';
 
 function DocBrowserToolbar() {
-  const { location, canGoBack, goBack, goHome, openSearch, openModuleDocs } = useDocBrowser();
+  const { location, canGoBack, goBack, goHome, openSearch, openModuleDocs, openTopicBrowser } = useDocBrowser();
 
   const showModuleBtn = (location.screen === 'reader' || location.screen === 'module-docs') && location.moduleId;
 
@@ -36,6 +38,14 @@ function DocBrowserToolbar() {
       >
         Search
       </button>
+      <button
+        type="button"
+        data-part="doc-browser-nav-btn"
+        data-state={location.screen === 'topic-browser' ? 'active' : undefined}
+        onClick={() => openTopicBrowser()}
+      >
+        Topics
+      </button>
       {showModuleBtn && (
         <button
           type="button"
@@ -60,47 +70,52 @@ function DocBrowserScreenRouter() {
     case 'search':
       return <DocSearchScreen initialQuery={location.query} />;
     case 'module-docs':
-      return <PlaceholderScreen label="Module Docs" detail={location.moduleId} />;
+      return location.moduleId ? (
+        <ModuleDocsScreen moduleId={location.moduleId} />
+      ) : (
+        <div data-part="doc-center-home">
+          <div data-part="doc-center-message">No module selected.</div>
+        </div>
+      );
     case 'reader':
       return location.moduleId && location.slug ? (
         <DocReaderScreen moduleId={location.moduleId} slug={location.slug} />
       ) : (
-        <PlaceholderScreen label="Doc Reader" detail="Missing moduleId or slug" />
+        <div data-part="doc-center-home">
+          <div data-part="doc-center-message">No document selected.</div>
+        </div>
       );
     case 'topic-browser':
-      return <PlaceholderScreen label="Topic Browser" detail={location.topic} />;
+      return <TopicBrowserScreen initialTopic={location.topic} />;
   }
 }
 
-function PlaceholderScreen({ label, detail }: { label: string; detail?: string }) {
-  return (
-    <div data-part="doc-center-home">
-      <div data-part="doc-center-message">
-        {label}
-        {detail && (
-          <>
-            <br />
-            <span style={{ fontSize: 10, fontFamily: 'monospace' }}>{detail}</span>
-          </>
-        )}
-        <br />
-        <span style={{ fontSize: 10, fontStyle: 'italic' }}>(not yet implemented)</span>
-      </div>
-    </div>
-  );
-}
-
 export interface DocBrowserWindowProps {
+  initialScreen?: 'home' | 'search' | 'module-docs' | 'reader' | 'topic-browser';
   initialModuleId?: string;
   initialSlug?: string;
+  initialQuery?: string;
+  initialTopic?: string;
 }
 
-export function DocBrowserWindow({ initialModuleId, initialSlug }: DocBrowserWindowProps) {
-  const initialScreen = initialModuleId && initialSlug ? 'reader' : initialModuleId ? 'module-docs' : 'home';
-  const initialParams = initialModuleId ? { moduleId: initialModuleId, slug: initialSlug } : undefined;
+export function DocBrowserWindow({
+  initialScreen: screen,
+  initialModuleId,
+  initialSlug,
+  initialQuery,
+  initialTopic,
+}: DocBrowserWindowProps) {
+  const resolvedScreen =
+    screen ?? (initialModuleId && initialSlug ? 'reader' : initialModuleId ? 'module-docs' : 'home');
+  const initialParams = {
+    moduleId: initialModuleId,
+    slug: initialSlug,
+    query: initialQuery,
+    topic: initialTopic,
+  };
 
   return (
-    <DocBrowserProvider initialScreen={initialScreen} initialParams={initialParams}>
+    <DocBrowserProvider initialScreen={resolvedScreen} initialParams={initialParams}>
       <div data-part="doc-browser">
         <DocBrowserToolbar />
         <div data-part="doc-browser-content">

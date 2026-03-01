@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Provider } from 'react-redux';
 import { createAppsBrowserStore } from '../../app/store';
-import { MOCK_APPS_MANY } from '../../mocks/fixtures/apps';
 import { createDefaultAppsHandlers } from '../../mocks/msw/defaultHandlers';
 import { DocBrowserWindow } from './DocBrowserWindow';
 
@@ -15,43 +14,26 @@ function StoreDecorator(Story: React.ComponentType) {
 }
 
 const meta = {
-  title: 'Apps/AppsBrowser/DocBrowser/Home',
+  title: 'Apps/AppsBrowser/DocBrowser/Search',
   component: DocBrowserWindow,
   decorators: [StoreDecorator],
   parameters: {
     layout: 'fullscreen',
+    msw: { handlers: createDefaultAppsHandlers() },
   },
 } satisfies Meta<typeof DocBrowserWindow>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
-  parameters: {
-    msw: { handlers: createDefaultAppsHandlers() },
-  },
+export const EmptySearch: Story = {
+  args: { initialScreen: 'search' },
 };
 
-export const Empty: Story = {
-  parameters: {
-    msw: {
-      handlers: createDefaultAppsHandlers({ apps: [], docsByApp: {} }),
-    },
-  },
+export const PreFilledQuery: Story = {
+  args: { initialScreen: 'search', initialQuery: 'api' },
 };
 
-export const Loading: Story = {
-  parameters: {
-    msw: {
-      handlers: createDefaultAppsHandlers({}, { delayMs: 60000 }),
-    },
-  },
-};
-
-export const ManyModulesNoDocs: Story = {
-  parameters: {
-    msw: {
-      handlers: createDefaultAppsHandlers({ apps: MOCK_APPS_MANY, docsByApp: {} }),
-    },
-  },
+export const NoResults: Story = {
+  args: { initialScreen: 'search', initialQuery: 'xyznonexistent' },
 };
