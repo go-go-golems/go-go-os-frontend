@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { useCallback, useState } from 'react';
 import { defaultResponseMatcher, tokenize } from './storyFakeResponses';
-import type { ChatMessage } from '../../types';
+import type { ChatMessage } from './types';
 import { StreamingChatView } from './StreamingChatView';
 
 // ── Helper: simulate streaming in a standalone story ──
@@ -89,7 +89,7 @@ function StreamingChatDemo() {
 }
 
 const meta = {
-  title: 'Engine/Widgets/StreamingChatView',
+  title: 'ChatRuntime/Components/StreamingChatView',
   component: StreamingChatDemo,
 } satisfies Meta<typeof StreamingChatDemo>;
 

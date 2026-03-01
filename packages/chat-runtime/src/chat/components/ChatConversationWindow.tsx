@@ -1,6 +1,5 @@
 import { type MouseEvent, type ReactNode, useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { ChatWindow } from '@hypercard/engine';
 import {
   useDesktopWindowId,
   useOpenDesktopContextMenu,
@@ -42,6 +41,7 @@ import {
   resolveProfileSelectionChange,
   resolveProfileSelectorValue,
 } from './profileSelectorState';
+import { ChatWindow } from './ChatWindow';
 import { StatsFooter } from './StatsFooter';
 
 export interface ChatConversationWindowProps {

@@ -1,4 +1,3 @@
-export { ChatSidebar, type ChatSidebarProps } from '../../components/shell/ChatSidebar';
 export { RuntimeDebugPane, type RuntimeDebugPaneProps } from '../../components/shell/RuntimeDebugPane';
 export {
   DesktopIconLayer,

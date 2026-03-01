@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from 'react';
-import type { ChatMessage } from '../../types';
-import { StreamingChatView } from '../widgets/StreamingChatView';
+import type { ChatMessage } from './types';
+import { StreamingChatView } from './StreamingChatView';
 
 export interface ChatSidebarProps {
   messages: ChatMessage[];

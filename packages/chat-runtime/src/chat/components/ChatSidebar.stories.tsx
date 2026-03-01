@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { useCallback, useState } from 'react';
-import { defaultResponseMatcher, tokenize } from '../widgets/storyFakeResponses';
-import type { ChatMessage } from '../../types';
+import { defaultResponseMatcher, tokenize } from './storyFakeResponses';
+import type { ChatMessage } from './types';
 import { ChatSidebar } from './ChatSidebar';
 
 function ChatSidebarDemo() {
@@ -89,7 +89,7 @@ function ChatSidebarDemo() {
 }
 
 const meta = {
-  title: 'Engine/Shell/ChatSidebar',
+  title: 'ChatRuntime/Components/ChatSidebar',
   component: ChatSidebarDemo,
   parameters: { layout: 'fullscreen' },
 } satisfies Meta<typeof ChatSidebarDemo>;

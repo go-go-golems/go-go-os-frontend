@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
-import type { ChatMessage } from '../../types';
+import type { ChatMessage } from './types';
 import { ChatView } from './ChatView';
 
 function ChatDemo() {
@@ -26,7 +26,7 @@ function ChatDemo() {
 }
 
 const meta = {
-  title: 'Engine/Widgets/ChatView',
+  title: 'ChatRuntime/Components/ChatView',
   component: ChatDemo,
 } satisfies Meta<typeof ChatDemo>;
 

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ChatMessage } from '../../types';
-import { Btn } from './Btn';
-import { Chip } from './Chip';
+import { Btn, Chip } from '@hypercard/engine';
+import type { ChatMessage } from './types';
 
 export interface StreamingChatViewProps {
   messages: ChatMessage[];

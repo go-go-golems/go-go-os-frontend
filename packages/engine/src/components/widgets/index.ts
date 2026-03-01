@@ -1,10 +1,5 @@
 export { AlertDialog, type AlertDialogProps, type AlertDialogType, type AlertDialogAction } from './AlertDialog';
 export { Btn, type BtnProps } from './Btn';
-export { ChatView, type ChatViewProps } from './ChatView';
-export {
-  ChatWindow,
-  type ChatWindowProps,
-} from './ChatWindow';
 export { Checkbox, type CheckboxProps } from './Checkbox';
 export { Chip, type ChipProps } from './Chip';
 export { ContextMenu, type ContextMenuActionEntry, type ContextMenuProps, type ContextMenuEntry } from './ContextMenu';
@@ -41,7 +36,6 @@ export { ReportView, type ReportViewProps } from './ReportView';
 export { FilePickerDropzone, type FilePickerDropzoneProps, type RejectedFile } from './FilePickerDropzone';
 export { ImageChoiceGrid, type ImageChoiceGridProps, type ImageChoiceItem, type ImageChoiceMode } from './ImageChoiceGrid';
 export { SelectableDataTable, type SelectableDataTableProps, type SelectableTableMode } from './SelectableDataTable';
-export { StreamingChatView, type StreamingChatViewProps } from './StreamingChatView';
 export { TabControl, type TabControlProps } from './TabControl';
 export { Toast, type ToastProps } from './Toast';
 export { ToolPalette, type ToolPaletteProps, type ToolDef } from './ToolPalette';
