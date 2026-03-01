@@ -1,6 +1,6 @@
-# go-go-os
+# go-go-os-frontend
 
-`go-go-os` is the platform repository for shared desktop frontend packages.
+`go-go-os-frontend` is the platform repository for shared desktop frontend packages used by the go-go-os desktop runtime.
 
 It no longer owns:
 - the inventory frontend app (`go-go-app-inventory/apps/inventory`)
@@ -20,7 +20,7 @@ It no longer owns:
 ## Repository Layout
 
 ```text
-go-go-os/
+go-go-os-frontend/
   apps/
     todo/
     crm/

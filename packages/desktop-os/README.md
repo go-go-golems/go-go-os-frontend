@@ -1,6 +1,6 @@
 # @hypercard/desktop-os
 
-OS-level launcher composition package for go-go-os.
+OS-level launcher composition package for go-go-os frontend runtime integration.
 
 ## Boundary Rule
 

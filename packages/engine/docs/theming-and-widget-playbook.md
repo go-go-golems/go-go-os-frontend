@@ -905,7 +905,7 @@ Add these rules after the token block in `macos-aqua.css`:
 The fastest way to see your theme is in Storybook. Start it:
 
 ```bash
-cd go-go-os/apps/inventory
+cd go-go-os-frontend/apps/inventory
 npx storybook dev -p 6006 --config-dir ../../.storybook --no-open
 ```
 
@@ -1961,14 +1961,14 @@ Storybook is the primary development, testing, and review tool. Every widget and
 
 ```bash
 # From the monorepo root:
-cd go-go-os/apps/inventory
+cd go-go-os-frontend/apps/inventory
 npx storybook dev -p 6006 --config-dir ../../.storybook --no-open
 ```
 
 Or using tmux for background operation:
 
 ```bash
-tmux new-session -d -s storybook -c go-go-os/apps/inventory \
+tmux new-session -d -s storybook -c go-go-os-frontend/apps/inventory \
   "npx storybook dev -p 6006 --config-dir ../../.storybook --no-open"
 ```
 
