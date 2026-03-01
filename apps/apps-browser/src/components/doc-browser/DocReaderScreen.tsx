@@ -7,6 +7,7 @@ import 'highlight.js/styles/github.css';
 import { useGetAppsQuery, useGetModuleDocQuery, useGetModuleDocsQuery } from '../../api/appsApi';
 import type { ModuleDocDocument } from '../../domain/types';
 import { useDocBrowser } from './DocBrowserContext';
+import { createDocLinkHandlers } from './docLinkInteraction';
 
 interface DocReaderScreenProps {
   moduleId: string;
@@ -117,7 +118,7 @@ function MetadataBar({ moduleId, doc }: { moduleId: string; doc: ModuleDocDocume
 }
 
 function SeeAlsoSection({ seeAlso }: { seeAlso: string[] }) {
-  const { openDoc } = useDocBrowser();
+  const { openDoc, openDocNewWindow, showDocLinkMenu } = useDocBrowser();
 
   return (
     <div data-part="doc-see-also">
@@ -125,20 +126,29 @@ function SeeAlsoSection({ seeAlso }: { seeAlso: string[] }) {
       <ul data-part="doc-see-also-list">
         {seeAlso.map((ref) => {
           const parsed = parseSeeAlso(ref);
+          if (!parsed.moduleId) {
+            return (
+              <li key={ref}>
+                <span data-part="doc-see-also-link-slug">{parsed.slug}</span>
+              </li>
+            );
+          }
+          const handlers = createDocLinkHandlers(
+            { moduleId: parsed.moduleId, slug: parsed.slug },
+            openDoc,
+            openDocNewWindow,
+            showDocLinkMenu,
+          );
           return (
             <li key={ref}>
               <button
                 type="button"
                 data-part="doc-see-also-link"
-                onClick={() => {
-                  if (parsed.moduleId) {
-                    openDoc(parsed.moduleId, parsed.slug);
-                  }
-                }}
+                onClick={handlers.onClick}
+                onAuxClick={handlers.onAuxClick}
+                onContextMenu={handlers.onContextMenu}
               >
-                {parsed.moduleId && (
-                  <span data-part="doc-see-also-link-module">{parsed.moduleId}</span>
-                )}
+                <span data-part="doc-see-also-link-module">{parsed.moduleId}</span>
                 <span data-part="doc-see-also-link-slug">{parsed.slug}</span>
                 <span data-part="doc-see-also-link-arrow">{'\u203A'}</span>
               </button>

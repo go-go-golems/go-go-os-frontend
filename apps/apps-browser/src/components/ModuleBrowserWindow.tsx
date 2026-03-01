@@ -18,6 +18,7 @@ export interface ModuleBrowserWindowProps {
   initialAppId?: string;
   onOpenDocs?: (moduleId?: string) => void;
   onOpenDocsCenter?: () => void;
+  onOpenDoc?: (moduleId: string, slug: string, newWindow?: boolean) => void;
 }
 
 function ReflectionLoader({
@@ -83,7 +84,7 @@ function ModuleContextRegistration({ app, windowId }: { app: AppManifestDocument
   return null;
 }
 
-export function ModuleBrowserWindow({ initialAppId, onOpenDocs, onOpenDocsCenter }: ModuleBrowserWindowProps) {
+export function ModuleBrowserWindow({ initialAppId, onOpenDocs, onOpenDocsCenter, onOpenDoc }: ModuleBrowserWindowProps) {
   const { data: apps, refetch } = useGetAppsQuery();
   const sorted = useMemo(() => sortApps(apps ?? []), [apps]);
   const openContextMenu = useOpenDesktopContextMenu();
@@ -168,6 +169,7 @@ export function ModuleBrowserWindow({ initialAppId, onOpenDocs, onOpenDocsCenter
           selectedSchema={selectedSchema}
           reflection={reflection}
           reflectionLoading={reflectionLoading}
+          onOpenDoc={onOpenDoc}
         />
       </>
     );

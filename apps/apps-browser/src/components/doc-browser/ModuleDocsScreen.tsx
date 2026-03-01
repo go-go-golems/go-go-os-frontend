@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useGetAppsQuery, useGetModuleDocsQuery } from '../../api/appsApi';
 import type { ModuleDocDocument } from '../../domain/types';
 import { useDocBrowser } from './DocBrowserContext';
+import { createDocLinkHandlers } from './docLinkInteraction';
 
 interface ModuleDocsScreenProps {
   moduleId: string;
@@ -49,13 +50,21 @@ function groupByDocType(docs: ModuleDocDocument[]): Array<{ docType: string; doc
 }
 
 function DocEntryCard({ doc, moduleId }: { doc: ModuleDocDocument; moduleId: string }) {
-  const { openDoc, openSearch } = useDocBrowser();
+  const { openDoc, openSearch, openDocNewWindow, showDocLinkMenu } = useDocBrowser();
+  const handlers = createDocLinkHandlers(
+    { moduleId, slug: doc.slug },
+    openDoc,
+    openDocNewWindow,
+    showDocLinkMenu,
+  );
 
   return (
     <button
       type="button"
       data-part="doc-entry-card"
-      onClick={() => openDoc(moduleId, doc.slug)}
+      onClick={handlers.onClick}
+      onAuxClick={handlers.onAuxClick}
+      onContextMenu={handlers.onContextMenu}
     >
       <div data-part="doc-entry-card-header">
         <span data-part="doc-entry-card-order">{doc.order ?? ''}</span>

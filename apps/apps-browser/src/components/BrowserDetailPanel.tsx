@@ -3,13 +3,15 @@ import { useLazyGetSchemaDocumentQuery } from '../api/appsApi';
 import { useEffect, useRef, useState } from 'react';
 import { isReflectionUnsupported } from '../domain/selectors';
 import type { AppManifestDocument, ReflectionAPI, ReflectionResult, ReflectionSchemaRef } from '../domain/types';
+import { isNewWindowClick, parseModuleDocUrl } from './doc-browser/docLinkInteraction';
 
 interface ModuleDetailProps {
   app: AppManifestDocument;
   reflection?: ReflectionResult;
+  onOpenDoc?: (moduleId: string, slug: string, newWindow?: boolean) => void;
 }
 
-function ModuleDetail({ app, reflection }: ModuleDetailProps) {
+function ModuleDetail({ app, reflection, onOpenDoc }: ModuleDetailProps) {
   const unsupported = isReflectionUnsupported(reflection);
   const doc = reflection && !reflection._unsupported ? reflection : undefined;
   const reflectionLabel = unsupported
@@ -44,26 +46,44 @@ function ModuleDetail({ app, reflection }: ModuleDetailProps) {
         {doc?.docs && doc.docs.length > 0 && (
           <div data-part="browser-detail-api-schemas">
             <div data-part="browser-detail-section-title">Documentation</div>
-            {doc.docs.map((entry) => (
-              <div key={entry.id} data-part="browser-detail-api-schema">
-                <div data-part="browser-detail-api-schema-header">
-                  <span data-part="browser-detail-api-schema-label">{entry.title}</span>
-                  <span data-part="browser-detail-api-schema-id">doc:{entry.id}</span>
-                </div>
-                {entry.url ? (
-                  <div data-part="browser-detail-mono">
-                    <a href={entry.url} target="_blank" rel="noreferrer">
-                      {entry.url}
-                    </a>
+            {doc.docs.map((entry) => {
+              const parsed = entry.url ? parseModuleDocUrl(entry.url) : undefined;
+              const canOpen = onOpenDoc && parsed;
+              return (
+                <div key={entry.id} data-part="browser-detail-api-schema">
+                  <div data-part="browser-detail-api-schema-header">
+                    {canOpen ? (
+                      <button
+                        type="button"
+                        data-part="browser-detail-doc-link"
+                        onClick={(e) => onOpenDoc(parsed.moduleId, parsed.slug, isNewWindowClick(e.nativeEvent))}
+                        onAuxClick={(e) => {
+                          if (e.button === 1) {
+                            e.preventDefault();
+                            onOpenDoc(parsed.moduleId, parsed.slug, true);
+                          }
+                        }}
+                      >
+                        {entry.title}
+                      </button>
+                    ) : (
+                      <span data-part="browser-detail-api-schema-label">{entry.title}</span>
+                    )}
+                    <span data-part="browser-detail-api-schema-id">doc:{entry.id}</span>
                   </div>
-                ) : entry.path ? (
-                  <div data-part="browser-detail-mono">{entry.path}</div>
-                ) : (
-                  <div data-part="browser-detail-mono">No URL/path provided</div>
-                )}
-                {entry.description && <div>{entry.description}</div>}
-              </div>
-            ))}
+                  {entry.url && !canOpen ? (
+                    <div data-part="browser-detail-mono">
+                      <a href={entry.url} target="_blank" rel="noreferrer">
+                        {entry.url}
+                      </a>
+                    </div>
+                  ) : entry.path && !canOpen ? (
+                    <div data-part="browser-detail-mono">{entry.path}</div>
+                  ) : null}
+                  {entry.description && <div>{entry.description}</div>}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -296,6 +316,7 @@ export interface BrowserDetailPanelProps {
   selectedSchema?: ReflectionSchemaRef;
   reflection?: ReflectionResult;
   reflectionLoading?: boolean;
+  onOpenDoc?: (moduleId: string, slug: string, newWindow?: boolean) => void;
 }
 
 export function BrowserDetailPanel({
@@ -304,6 +325,7 @@ export function BrowserDetailPanel({
   selectedSchema,
   reflection,
   reflectionLoading,
+  onOpenDoc,
 }: BrowserDetailPanelProps) {
   if (!selectedApp) {
     return (
@@ -333,5 +355,5 @@ export function BrowserDetailPanel({
     return <APIDetail api={selectedApi} appId={selectedApp.app_id} schemas={schemas} />;
   }
 
-  return <ModuleDetail app={selectedApp} reflection={reflection} />;
+  return <ModuleDetail app={selectedApp} reflection={reflection} onOpenDoc={onOpenDoc} />;
 }

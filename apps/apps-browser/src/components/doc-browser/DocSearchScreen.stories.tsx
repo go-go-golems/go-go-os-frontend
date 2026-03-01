@@ -37,3 +37,20 @@ export const PreFilledQuery: Story = {
 export const NoResults: Story = {
   args: { initialScreen: 'search', initialQuery: 'xyznonexistent' },
 };
+
+/** Search results with new-window callback. Ctrl/Cmd-click or right-click result cards. */
+export const SearchWithNewWindow: Story = {
+  args: {
+    initialScreen: 'search',
+    initialQuery: 'api',
+    onOpenDocNewWindow: (...args: unknown[]) => console.log("[story] onOpenDocNewWindow", ...args),
+  },
+};
+
+/** Empty search with new-window callback wired for subsequent searches. */
+export const EmptySearchWithNewWindow: Story = {
+  args: {
+    initialScreen: 'search',
+    onOpenDocNewWindow: (...args: unknown[]) => console.log("[story] onOpenDocNewWindow", ...args),
+  },
+};

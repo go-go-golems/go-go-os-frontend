@@ -55,3 +55,13 @@ export const ManyModulesNoDocs: Story = {
     },
   },
 };
+
+/** Home screen with new-window callback wired. Ctrl/Cmd-click or right-click a doc card link to trigger. */
+export const WithNewWindowCallback: Story = {
+  args: {
+    onOpenDocNewWindow: (...args: unknown[]) => console.log('[story] onOpenDocNewWindow', ...args),
+  },
+  parameters: {
+    msw: { handlers: createDefaultAppsHandlers() },
+  },
+};

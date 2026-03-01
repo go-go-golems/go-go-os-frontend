@@ -96,6 +96,7 @@ export interface DocBrowserWindowProps {
   initialSlug?: string;
   initialQuery?: string;
   initialTopic?: string;
+  onOpenDocNewWindow?: (moduleId: string, slug: string) => void;
 }
 
 export function resolveInitialDocBrowserScreen({
@@ -119,12 +120,52 @@ export function resolveInitialDocBrowserScreen({
   return 'home';
 }
 
+function DocLinkContextMenu() {
+  const { docLinkMenu, closeDocLinkMenu, openDoc, openDocNewWindow } = useDocBrowser();
+
+  if (!docLinkMenu) return null;
+
+  return (
+    <>
+      <div data-part="doc-link-menu-backdrop" onClick={closeDocLinkMenu} onContextMenu={(e) => { e.preventDefault(); closeDocLinkMenu(); }} />
+      <div
+        data-part="doc-link-menu"
+        style={{ left: docLinkMenu.x, top: docLinkMenu.y }}
+      >
+        <button
+          type="button"
+          data-part="doc-link-menu-item"
+          onClick={() => {
+            openDoc(docLinkMenu.target.moduleId, docLinkMenu.target.slug);
+            closeDocLinkMenu();
+          }}
+        >
+          Open in This Window
+        </button>
+        {openDocNewWindow && (
+          <button
+            type="button"
+            data-part="doc-link-menu-item"
+            onClick={() => {
+              openDocNewWindow(docLinkMenu.target.moduleId, docLinkMenu.target.slug);
+              closeDocLinkMenu();
+            }}
+          >
+            Open in New Window
+          </button>
+        )}
+      </div>
+    </>
+  );
+}
+
 export function DocBrowserWindow({
   initialScreen: screen,
   initialModuleId,
   initialSlug,
   initialQuery,
   initialTopic,
+  onOpenDocNewWindow,
 }: DocBrowserWindowProps) {
   const resolvedScreen = resolveInitialDocBrowserScreen({
     screen,
@@ -139,12 +180,13 @@ export function DocBrowserWindow({
   };
 
   return (
-    <DocBrowserProvider initialScreen={resolvedScreen} initialParams={initialParams}>
+    <DocBrowserProvider initialScreen={resolvedScreen} initialParams={initialParams} onOpenDocNewWindow={onOpenDocNewWindow}>
       <div data-part="doc-browser">
         <DocBrowserToolbar />
         <div data-part="doc-browser-content">
           <DocBrowserScreenRouter />
         </div>
+        <DocLinkContextMenu />
       </div>
     </DocBrowserProvider>
   );

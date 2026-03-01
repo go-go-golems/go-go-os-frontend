@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useMemo, useReducer } from 'react';
+import { createContext, useCallback, useContext, useMemo, useReducer, useState } from 'react';
 import type { ReactNode } from 'react';
+import type { DocLinkTarget } from './docLinkInteraction';
 
 export type DocBrowserScreen = 'home' | 'search' | 'module-docs' | 'reader' | 'topic-browser';
 
@@ -38,6 +39,12 @@ export function docBrowserReducer(state: DocBrowserState, action: DocBrowserActi
   }
 }
 
+export interface DocLinkMenuState {
+  x: number;
+  y: number;
+  target: DocLinkTarget;
+}
+
 interface DocBrowserContextValue {
   location: DocBrowserLocation;
   canGoBack: boolean;
@@ -48,6 +55,10 @@ interface DocBrowserContextValue {
   openModuleDocs: (moduleId: string) => void;
   openDoc: (moduleId: string, slug: string) => void;
   openTopicBrowser: (topic?: string) => void;
+  openDocNewWindow?: (moduleId: string, slug: string) => void;
+  docLinkMenu: DocLinkMenuState | null;
+  showDocLinkMenu: (x: number, y: number, target: DocLinkTarget) => void;
+  closeDocLinkMenu: () => void;
 }
 
 const DocBrowserContext = createContext<DocBrowserContextValue | null>(null);
@@ -63,14 +74,16 @@ export function useDocBrowser(): DocBrowserContextValue {
 export interface DocBrowserProviderProps {
   initialScreen?: DocBrowserScreen;
   initialParams?: Omit<DocBrowserLocation, 'screen'>;
+  onOpenDocNewWindow?: (moduleId: string, slug: string) => void;
   children: ReactNode;
 }
 
-export function DocBrowserProvider({ initialScreen = 'home', initialParams, children }: DocBrowserProviderProps) {
+export function DocBrowserProvider({ initialScreen = 'home', initialParams, onOpenDocNewWindow, children }: DocBrowserProviderProps) {
   const [state, dispatch] = useReducer(docBrowserReducer, {
     current: { screen: initialScreen, ...initialParams },
     history: [],
   });
+  const [docLinkMenu, setDocLinkMenu] = useState<DocLinkMenuState | null>(null);
 
   const navigateTo = useCallback(
     (screen: DocBrowserScreen, params?: Omit<DocBrowserLocation, 'screen'>) => {
@@ -113,6 +126,17 @@ export function DocBrowserProvider({ initialScreen = 'home', initialParams, chil
     [],
   );
 
+  const showDocLinkMenu = useCallback(
+    (x: number, y: number, target: DocLinkTarget) => {
+      setDocLinkMenu({ x, y, target });
+    },
+    [],
+  );
+
+  const closeDocLinkMenu = useCallback(() => {
+    setDocLinkMenu(null);
+  }, []);
+
   const value = useMemo<DocBrowserContextValue>(
     () => ({
       location: state.current,
@@ -124,8 +148,12 @@ export function DocBrowserProvider({ initialScreen = 'home', initialParams, chil
       openModuleDocs,
       openDoc,
       openTopicBrowser,
+      openDocNewWindow: onOpenDocNewWindow,
+      docLinkMenu,
+      showDocLinkMenu,
+      closeDocLinkMenu,
     }),
-    [state.current, state.history.length, navigateTo, goBack, goHome, openSearch, openModuleDocs, openDoc, openTopicBrowser],
+    [state.current, state.history.length, navigateTo, goBack, goHome, openSearch, openModuleDocs, openDoc, openTopicBrowser, onOpenDocNewWindow, docLinkMenu, showDocLinkMenu, closeDocLinkMenu],
   );
 
   return <DocBrowserContext.Provider value={value}>{children}</DocBrowserContext.Provider>;

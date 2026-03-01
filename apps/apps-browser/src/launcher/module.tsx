@@ -65,11 +65,14 @@ export function buildHealthWindowPayload(): OpenWindowPayload {
   };
 }
 
+let docWindowCounter = 0;
+
 export function buildDocBrowserWindowPayload(opts?: {
   screen?: 'home' | 'search';
   moduleId?: string;
   slug?: string;
   query?: string;
+  newWindow?: boolean;
 }): OpenWindowPayload {
   const moduleId = asNonEmptyString(opts?.moduleId);
   const slug = asNonEmptyString(opts?.slug);
@@ -83,6 +86,20 @@ export function buildDocBrowserWindowPayload(opts?: {
         ? `${DOC_ROUTE_SEARCH}:${encodeDocRoutePart(query)}`
         : DOC_ROUTE_SEARCH
       : DOC_ROUTE_HOME;
+  if (opts?.newWindow) {
+    const counter = ++docWindowCounter;
+    return {
+      id: `window:apps-browser:docs:new-${counter}:${suffix}`,
+      title: 'Documentation',
+      icon: '\uD83D\uDCD6',
+      bounds: { x: 160 + (counter % 5) * 20, y: 60 + (counter % 5) * 20, w: 700, h: 520 },
+      content: {
+        kind: APP_CONTENT_KIND,
+        appKey: `${APP_KEY_DOCS_PREFIX}${suffix}`,
+      },
+      dedupeKey: `apps-browser:docs:new-${counter}`,
+    };
+  }
   return {
     id: `window:apps-browser:docs:${suffix}`,
     title: 'Documentation',
@@ -139,6 +156,9 @@ function createAppsBrowserAdapter(hostContext: LauncherHostContext): WindowConte
               hostContext.openWindow(buildDocBrowserWindowPayload(moduleId ? { moduleId } : undefined))
             }
             onOpenDocsCenter={() => hostContext.openWindow(buildDocBrowserWindowPayload())}
+            onOpenDoc={(moduleId, slug, newWindow) =>
+              hostContext.openWindow(buildDocBrowserWindowPayload({ moduleId, slug, newWindow }))
+            }
           />
         );
       }
@@ -150,7 +170,14 @@ function createAppsBrowserAdapter(hostContext: LauncherHostContext): WindowConte
       if (content == null && appKey.startsWith(APP_KEY_DOCS_PREFIX)) {
         const suffix = appKey.slice(APP_KEY_DOCS_PREFIX.length);
         const parsed = parseDocBrowserSuffix(suffix);
-        content = <DocBrowserWindow {...parsed} />;
+        content = (
+          <DocBrowserWindow
+            {...parsed}
+            onOpenDocNewWindow={(moduleId, slug) =>
+              hostContext.openWindow(buildDocBrowserWindowPayload({ moduleId, slug, newWindow: true }))
+            }
+          />
+        );
       }
 
       if (content == null && appKey.startsWith(APP_KEY_GET_INFO_PREFIX)) {

@@ -54,3 +54,30 @@ export const DocNotFound: Story = {
 export const CodeBlocksAndSyntaxHighlighting: Story = {
   args: { initialModuleId: 'inventory', initialSlug: 'integration-guide' },
 };
+
+/** Reader with see-also links that support Ctrl/Cmd-click to open in new window. Check Actions panel. */
+export const SeeAlsoWithNewWindow: Story = {
+  args: {
+    initialModuleId: 'arc-agi',
+    initialSlug: 'runtime-modes',
+    onOpenDocNewWindow: (...args: unknown[]) => console.log("[story] onOpenDocNewWindow", ...args),
+  },
+};
+
+/** API reference page with new-window callback. Right-click see-also links for context menu. */
+export const ApiReferenceWithNewWindow: Story = {
+  args: {
+    initialModuleId: 'inventory',
+    initialSlug: 'api-reference',
+    onOpenDocNewWindow: (...args: unknown[]) => console.log("[story] onOpenDocNewWindow", ...args),
+  },
+};
+
+/** Prev/next navigation with new-window support. Navigate between pages and test context menus. */
+export const NavigationWithNewWindow: Story = {
+  args: {
+    initialModuleId: 'inventory',
+    initialSlug: 'overview',
+    onOpenDocNewWindow: (...args: unknown[]) => console.log("[story] onOpenDocNewWindow", ...args),
+  },
+};

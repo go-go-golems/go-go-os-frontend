@@ -285,3 +285,21 @@
   font-size: 10px;
   color: var(--hc-color-muted, #777);
 }
+
+[data-part="browser-detail-doc-link"] {
+  font-family: var(--hc-font-family);
+  font-weight: bold;
+  font-size: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--hc-color-fg, #000);
+  text-decoration: underline;
+  text-decoration-color: var(--hc-color-muted, #777);
+  text-underline-offset: 2px;
+}
+[data-part="browser-detail-doc-link"]:hover {
+  text-decoration-color: var(--hc-color-fg, #000);
+  background: var(--hc-btn-hover-bg, #eee);
+}

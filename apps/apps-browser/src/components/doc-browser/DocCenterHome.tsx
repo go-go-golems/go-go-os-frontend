@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useGetAppsQuery, useGetOSDocsQuery } from '../../api/appsApi';
 import type { AppManifestDocument, OSDocResult, OSDocsResponse } from '../../domain/types';
 import { useDocBrowser } from './DocBrowserContext';
+import { createDocLinkHandlers } from './docLinkInteraction';
 
 interface ModuleCardData {
   app: AppManifestDocument;
@@ -26,7 +27,7 @@ function buildModuleCards(apps: AppManifestDocument[], docsResponse: OSDocsRespo
 }
 
 function ModuleCard({ card }: { card: ModuleCardData }) {
-  const { openModuleDocs, openDoc } = useDocBrowser();
+  const { openModuleDocs, openDoc, openDocNewWindow, showDocLinkMenu } = useDocBrowser();
 
   return (
     <div data-part="doc-module-card">
@@ -45,19 +46,29 @@ function ModuleCard({ card }: { card: ModuleCardData }) {
         {card.docs.length} page{card.docs.length !== 1 ? 's' : ''}
       </div>
       <ul data-part="doc-module-card-list">
-        {card.docs.map((doc) => (
-          <li key={doc.slug}>
-            <button
-              type="button"
-              data-part="doc-module-card-link"
-              onClick={() => openDoc(card.app.app_id, doc.slug)}
-            >
-              <span data-part="doc-module-card-link-type">{doc.doc_type}</span>
-              <span data-part="doc-module-card-link-title">{doc.title}</span>
-              <span data-part="doc-module-card-link-arrow">{'\u203A'}</span>
-            </button>
-          </li>
-        ))}
+        {card.docs.map((doc) => {
+          const handlers = createDocLinkHandlers(
+            { moduleId: card.app.app_id, slug: doc.slug },
+            openDoc,
+            openDocNewWindow,
+            showDocLinkMenu,
+          );
+          return (
+            <li key={doc.slug}>
+              <button
+                type="button"
+                data-part="doc-module-card-link"
+                onClick={handlers.onClick}
+                onAuxClick={handlers.onAuxClick}
+                onContextMenu={handlers.onContextMenu}
+              >
+                <span data-part="doc-module-card-link-type">{doc.doc_type}</span>
+                <span data-part="doc-module-card-link-title">{doc.title}</span>
+                <span data-part="doc-module-card-link-arrow">{'\u203A'}</span>
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

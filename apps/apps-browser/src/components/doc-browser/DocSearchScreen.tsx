@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useGetOSDocsQuery } from '../../api/appsApi';
 import type { OSDocResult, OSDocsQuery } from '../../domain/types';
 import { useDocBrowser } from './DocBrowserContext';
+import { createDocLinkHandlers } from './docLinkInteraction';
 
 interface DocSearchScreenProps {
   initialQuery?: string;
@@ -77,13 +78,21 @@ function FilterSection({
 }
 
 function ResultCard({ result }: { result: OSDocResult }) {
-  const { openDoc } = useDocBrowser();
+  const { openDoc, openDocNewWindow, showDocLinkMenu } = useDocBrowser();
+  const handlers = createDocLinkHandlers(
+    { moduleId: result.module_id, slug: result.slug },
+    openDoc,
+    openDocNewWindow,
+    showDocLinkMenu,
+  );
 
   return (
     <button
       type="button"
       data-part="doc-result-card"
-      onClick={() => openDoc(result.module_id, result.slug)}
+      onClick={handlers.onClick}
+      onAuxClick={handlers.onAuxClick}
+      onContextMenu={handlers.onContextMenu}
     >
       <div data-part="doc-result-card-badges">
         <span data-part="doc-badge" data-variant="doc-type">{result.doc_type}</span>

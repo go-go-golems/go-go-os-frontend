@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useGetOSDocsQuery } from '../../api/appsApi';
 import type { OSDocResult } from '../../domain/types';
 import { useDocBrowser } from './DocBrowserContext';
+import { createDocLinkHandlers } from './docLinkInteraction';
 
 interface TopicBrowserScreenProps {
   initialTopic?: string;
@@ -21,7 +22,7 @@ function groupByModule(results: OSDocResult[]): Array<{ moduleId: string; docs: 
 
 export function TopicBrowserScreen({ initialTopic }: TopicBrowserScreenProps) {
   const [selectedTopic, setSelectedTopic] = useState<string | undefined>(initialTopic);
-  const { openDoc } = useDocBrowser();
+  const { openDoc, openDocNewWindow, showDocLinkMenu } = useDocBrowser();
 
   // Fetch unfiltered for topic list
   const { data: allDocs } = useGetOSDocsQuery({});
@@ -92,18 +93,28 @@ export function TopicBrowserScreen({ initialTopic }: TopicBrowserScreenProps) {
                     {group.moduleId.toUpperCase()}
                     <span data-part="doc-topic-module-count"> ({group.docs.length})</span>
                   </div>
-                  {group.docs.map((doc) => (
-                    <button
-                      key={doc.slug}
-                      type="button"
-                      data-part="doc-topic-doc-row"
-                      onClick={() => openDoc(doc.module_id, doc.slug)}
-                    >
-                      <span data-part="doc-topic-doc-type">{doc.doc_type}</span>
-                      <span data-part="doc-topic-doc-title">{doc.title}</span>
-                      <span data-part="doc-topic-doc-arrow">{'\u203A'}</span>
-                    </button>
-                  ))}
+                  {group.docs.map((doc) => {
+                    const handlers = createDocLinkHandlers(
+                      { moduleId: doc.module_id, slug: doc.slug },
+                      openDoc,
+                      openDocNewWindow,
+                      showDocLinkMenu,
+                    );
+                    return (
+                      <button
+                        key={doc.slug}
+                        type="button"
+                        data-part="doc-topic-doc-row"
+                        onClick={handlers.onClick}
+                        onAuxClick={handlers.onAuxClick}
+                        onContextMenu={handlers.onContextMenu}
+                      >
+                        <span data-part="doc-topic-doc-type">{doc.doc_type}</span>
+                        <span data-part="doc-topic-doc-title">{doc.title}</span>
+                        <span data-part="doc-topic-doc-arrow">{'\u203A'}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               ))
             )}

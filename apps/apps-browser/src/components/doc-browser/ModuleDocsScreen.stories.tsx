@@ -37,3 +37,27 @@ export const ArcAgi: Story = {
 export const Gepa: Story = {
   args: { initialModuleId: 'gepa' },
 };
+
+/** Inventory module docs with new-window callback. Ctrl/Cmd-click or right-click doc entry cards. */
+export const InventoryWithNewWindow: Story = {
+  args: {
+    initialModuleId: 'inventory',
+    onOpenDocNewWindow: (...args: unknown[]) => console.log("[story] onOpenDocNewWindow", ...args),
+  },
+};
+
+/** ARC-AGI module docs with new-window callback. Right-click for context menu on doc entries. */
+export const ArcAgiWithNewWindow: Story = {
+  args: {
+    initialModuleId: 'arc-agi',
+    onOpenDocNewWindow: (...args: unknown[]) => console.log("[story] onOpenDocNewWindow", ...args),
+  },
+};
+
+/** GEPA module docs with new-window callback. */
+export const GepaWithNewWindow: Story = {
+  args: {
+    initialModuleId: 'gepa',
+    onOpenDocNewWindow: (...args: unknown[]) => console.log("[story] onOpenDocNewWindow", ...args),
+  },
+};
