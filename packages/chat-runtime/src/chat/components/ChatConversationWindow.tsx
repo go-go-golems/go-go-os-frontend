@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   useDesktopWindowId,
   useOpenDesktopContextMenu,
-  useRegisterConversationContextActions,
   type DesktopActionEntry,
 } from '@hypercard/engine/desktop-react';
 import {
@@ -37,6 +36,7 @@ import { useConversation } from '../runtime/useConversation';
 import { useCurrentProfile } from '../runtime/useCurrentProfile';
 import { useProfiles } from '../runtime/useProfiles';
 import { useSetProfile } from '../runtime/useSetProfile';
+import { useRegisterConversationContextActions } from '../runtime/contextActions';
 import {
   resolveProfileSelectionChange,
   resolveProfileSelectorValue,
@@ -302,7 +302,7 @@ export function ChatConversationWindow({
         y: event.clientY,
         menuId: 'conversation-context',
         target: {
-          kind: 'conversation',
+          kind: 'chat.conversation',
           conversationId: convId,
           windowId: runtimeWindowId ?? undefined,
         },

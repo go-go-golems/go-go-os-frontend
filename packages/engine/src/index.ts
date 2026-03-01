@@ -1,7 +1,7 @@
 // @hypercard/engine — barrel exports
 //
 // USAGE:
-//   import { DataTable, createAppStore, ... } from '@hypercard/engine';
+//   import { DataTable, Btn, ... } from '@hypercard/engine';
 //   import { DesktopShell } from '@hypercard/engine/desktop-react';
 //   import { openWindow } from '@hypercard/engine/desktop-core';
 //   import '@hypercard/engine/theme';                    // load default desktop/widget css packs

@@ -27,6 +27,7 @@ export * from './runtime/profileTypes';
 export * from './runtime/registerChatModules';
 export * from './runtime/useCurrentProfile';
 export * from './runtime/useConversation';
+export * from './runtime/contextActions';
 export * from './runtime/useProfiles';
 export * from './runtime/useSetProfile';
 export * from './state/profileSlice';

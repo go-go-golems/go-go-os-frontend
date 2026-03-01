@@ -44,16 +44,6 @@ export const PARTS = {
   // Report
   reportView: 'report-view',
   reportRow: 'report-row',
-  // Chat
-  chatView: 'chat-view',
-  chatTimeline: 'chat-timeline',
-  chatMessage: 'chat-message',
-  chatComposer: 'chat-composer',
-  chatInput: 'chat-input',
-  chatSuggestions: 'chat-suggestions',
-  // AI panel
-  aiPanel: 'ai-panel',
-  aiPanelHeader: 'ai-panel-header',
   // Desktop windowing shell
   windowingDesktopShell: 'windowing-desktop-shell',
   windowingMenuBar: 'windowing-menu-bar',

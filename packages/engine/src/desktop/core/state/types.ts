@@ -47,7 +47,7 @@ export interface SessionNav {
   nav: NavEntry[];
 }
 
-export type DesktopContextMenuTargetKind = 'window' | 'icon' | 'widget' | 'message' | 'conversation';
+export type DesktopContextMenuTargetKind = 'window' | 'icon' | 'widget' | (string & {});
 export type DesktopContextMenuIconKind = 'app' | 'folder';
 
 export interface DesktopContextMenuTarget {

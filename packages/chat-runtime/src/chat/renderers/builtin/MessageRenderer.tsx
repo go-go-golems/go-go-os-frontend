@@ -2,9 +2,9 @@ import { type MouseEvent, useMemo } from 'react';
 import {
   useDesktopWindowId,
   useOpenDesktopContextMenu,
-  useRegisterMessageContextActions,
 } from '@hypercard/engine/desktop-react';
 import type { RenderContext, RenderEntity } from '../types';
+import { useRegisterMessageContextActions } from '../../runtime/contextActions';
 
 function StreamingCursor() {
   return (
@@ -79,7 +79,7 @@ export function MessageRenderer({ e, ctx }: { e: RenderEntity; ctx?: RenderConte
       y: event.clientY,
       menuId: 'message-context',
       target: {
-        kind: 'message',
+        kind: 'chat.message',
         conversationId: convId,
         messageId: e.id,
         windowId: windowId ?? undefined,
