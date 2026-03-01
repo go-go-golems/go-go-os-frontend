@@ -880,14 +880,14 @@ export function useDesktopShellController({
         return;
       }
 
-      if (commandId === 'chat.message.copy') {
-        const content = String(invocation.payload?.content ?? '').trim();
-        if (!content) {
+      if (commandId === 'clipboard.copy-text') {
+        const text = String(invocation.payload?.text ?? invocation.payload?.content ?? '').trim();
+        if (!text) {
           return;
         }
-        void copyTextToClipboard(content)
+        void copyTextToClipboard(text)
           .then((copied) => {
-            dispatch(showToast(copied ? 'Copied message text' : 'Clipboard unavailable'));
+            dispatch(showToast(copied ? 'Copied text' : 'Clipboard unavailable'));
           })
           .catch(() => {
             dispatch(showToast('Copy failed'));

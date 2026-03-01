@@ -528,7 +528,7 @@ describe('windowing selectors', () => {
           menuId: 'message-context',
           windowId: 'w1',
           target: { kind: 'message', conversationId: 'conv-1', messageId: 'msg-1' },
-          items: [{ id: 'copy', label: 'Copy', commandId: 'chat.message.copy' }],
+          items: [{ id: 'copy', label: 'Copy', commandId: 'clipboard.copy-text' }],
         }),
       );
       expect(selectDesktopContextMenu(s)).toEqual({
@@ -537,7 +537,7 @@ describe('windowing selectors', () => {
         menuId: 'message-context',
         windowId: 'w1',
         target: { kind: 'message', conversationId: 'conv-1', messageId: 'msg-1' },
-        items: [{ id: 'copy', label: 'Copy', commandId: 'chat.message.copy' }],
+        items: [{ id: 'copy', label: 'Copy', commandId: 'clipboard.copy-text' }],
       });
     });
   });

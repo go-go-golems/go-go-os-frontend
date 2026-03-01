@@ -60,7 +60,7 @@ export function MessageRenderer({ e, ctx }: { e: RenderEntity; ctx?: RenderConte
 
     return [
       { id: `chat-message.reply.${e.id}`, label: 'Reply', commandId: 'chat.message.reply', payload },
-      { id: `chat-message.copy.${e.id}`, label: 'Copy', commandId: 'chat.message.copy', payload },
+      { id: `chat-message.copy.${e.id}`, label: 'Copy', commandId: 'clipboard.copy-text', payload: { ...payload, text: content } },
       { id: `chat-message.create-task.${e.id}`, label: 'Create Task', commandId: 'chat.message.create-task', payload },
       { id: `chat-message.debug-event.${e.id}`, label: 'Debug Event', commandId: 'chat.message.debug-event', payload },
     ];

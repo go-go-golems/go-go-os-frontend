@@ -1,20 +1,26 @@
 // @vitest-environment jsdom
-import { act } from 'react';
+import { act, type MouseEvent, useMemo } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { CardStackDefinition } from '../../../cards/types';
-import { MessageRenderer } from '../../../chat/renderers/builtin/MessageRenderer';
 import { debugReducer } from '../../../debug/debugSlice';
 import { focusWindow, openWindow } from '../../../desktop/core/state/windowingSlice';
 import { windowingReducer } from '../../../desktop/core/state/windowingSlice';
 import { notificationsReducer } from '../../../features/notifications/notificationsSlice';
 import { DesktopShell } from './DesktopShell';
-import { useRegisterWindowContextActions, useRegisterWindowMenuSections } from './desktopMenuRuntime';
+import {
+  useDesktopWindowId,
+  useOpenDesktopContextMenu,
+  useRegisterContextActions,
+  useRegisterWindowContextActions,
+  useRegisterWindowMenuSections,
+} from './desktopMenuRuntime';
 import type {
   DesktopActionEntry,
   DesktopActionSection,
+  DesktopContextTargetRef,
   DesktopVisibilityContextResolver,
 } from './types';
 
@@ -106,21 +112,86 @@ function RuntimePolicyWindow() {
 }
 
 function RuntimeMessageWindow() {
+  const runtimeWindowId = useDesktopWindowId();
+  const openContextMenu = useOpenDesktopContextMenu();
+  const messageTarget: DesktopContextTargetRef = useMemo(
+    () => ({
+      kind: 'message',
+      conversationId: 'conv-runtime',
+      messageId: 'msg-runtime-1',
+      windowId: runtimeWindowId ?? undefined,
+    }),
+    [runtimeWindowId],
+  );
+  const messageContextActions: DesktopActionEntry[] = useMemo(
+    () => [
+      {
+        id: 'chat-message.reply.msg-runtime-1',
+        label: 'Reply',
+        commandId: 'chat.message.reply',
+        payload: {
+          conversationId: 'conv-runtime',
+          messageId: 'msg-runtime-1',
+          role: 'assistant',
+          content: 'Runtime message payload',
+        },
+      },
+      {
+        id: 'chat-message.copy.msg-runtime-1',
+        label: 'Copy',
+        commandId: 'clipboard.copy-text',
+        payload: {
+          conversationId: 'conv-runtime',
+          messageId: 'msg-runtime-1',
+          role: 'assistant',
+          content: 'Runtime message payload',
+          text: 'Runtime message payload',
+        },
+      },
+      {
+        id: 'chat-message.create-task.msg-runtime-1',
+        label: 'Create Task',
+        commandId: 'chat.message.create-task',
+        payload: {
+          conversationId: 'conv-runtime',
+          messageId: 'msg-runtime-1',
+          role: 'assistant',
+          content: 'Runtime message payload',
+        },
+      },
+      {
+        id: 'chat-message.debug-event.msg-runtime-1',
+        label: 'Debug Event',
+        commandId: 'chat.message.debug-event',
+        payload: {
+          conversationId: 'conv-runtime',
+          messageId: 'msg-runtime-1',
+          role: 'assistant',
+          content: 'Runtime message payload',
+        },
+      },
+    ],
+    [],
+  );
+  useRegisterContextActions(messageTarget, messageContextActions);
+
+  const onContextMenu = (event: MouseEvent<HTMLElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+      menuId: 'message-context',
+      target: messageTarget,
+    });
+  };
+
   return (
-    <section style={{ padding: 8 }}>
-      <MessageRenderer
-        e={{
-          id: 'msg-runtime-1',
-          kind: 'message',
-          createdAt: Date.now(),
-          props: {
-            role: 'assistant',
-            content: 'Runtime message payload',
-            streaming: false,
-          },
-        }}
-        ctx={{ mode: 'normal', convId: 'conv-runtime' }}
-      />
+    <section style={{ padding: 8 }} onContextMenu={onContextMenu}>
+      <div data-part="chat-message" data-role="assistant">
+        <div data-part="chat-role">AI:</div>
+        <div style={{ fontSize: 11, whiteSpace: 'pre-wrap' }}>Runtime message payload</div>
+      </div>
     </section>
   );
 }
