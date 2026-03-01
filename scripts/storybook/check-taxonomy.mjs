@@ -111,7 +111,9 @@ function checkPlacement(relPath) {
       return 'app story must not live in flat src/stories; move under src/app/stories or src/features/**/stories';
     }
     const ok =
-      /^apps\/[^/]+\/src\/(app\/stories|features\/.+\/stories|components)\/[^/]+\.stories\.(ts|tsx)$/.test(relPath);
+      /^apps\/[^/]+\/src\/(app\/stories\/.+|features\/.+\/stories\/.+|components\/.+)\.stories\.(ts|tsx)$/.test(
+        relPath,
+      );
     if (!ok) {
       return 'app story path must match src/app/stories/*, src/features/**/stories/*, or src/components/*';
     }

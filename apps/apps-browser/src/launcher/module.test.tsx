@@ -108,6 +108,7 @@ describe('apps-browser docs command routing', () => {
     expect(outcome).toBe('handled');
     expect(hostContext.openWindow).toHaveBeenCalledWith(
       expect.objectContaining({
+        dedupeKey: 'apps-browser:docs:module:inventory',
         content: expect.objectContaining({ appKey: 'apps-browser:docs:apps:module:inventory' }),
       }),
     );
@@ -125,6 +126,7 @@ describe('apps-browser docs command routing', () => {
     expect(outcome).toBe('handled');
     expect(hostContext.openWindow).toHaveBeenCalledWith(
       expect.objectContaining({
+        dedupeKey: 'apps-browser:docs:doc:arc-agi:session%20lifecycle',
         content: expect.objectContaining({
           appKey: 'apps-browser:docs:apps:doc:arc-agi:session%20lifecycle',
         }),
@@ -176,7 +178,7 @@ describe('apps-browser docs command routing', () => {
       expect.objectContaining({
         title: 'Help',
         content: expect.objectContaining({ appKey: 'apps-browser:docs:help:home' }),
-        dedupeKey: 'apps-browser:help',
+        dedupeKey: 'apps-browser:help:home',
       }),
     );
   });

@@ -136,7 +136,7 @@ export function buildDocBrowserWindowPayload(opts?: {
       kind: APP_CONTENT_KIND,
       appKey: `${APP_KEY_DOCS_PREFIX}${suffix}`,
     },
-    dedupeKey: dedupeBase,
+    dedupeKey: `${dedupeBase}:${routePart}`,
   };
 }
 

@@ -8,6 +8,8 @@ interface DocSearchScreenProps {
   initialQuery?: string;
 }
 
+const HELP_MODULE_ID = 'wesen-os';
+
 interface FilterState {
   query: string;
   modules: Set<string>;
@@ -107,10 +109,14 @@ function ResultCard({ result }: { result: OSDocResult }) {
 }
 
 export function DocSearchScreen({ initialQuery = '' }: DocSearchScreenProps) {
-  const { openSearch } = useDocBrowser();
+  const { mode } = useDocBrowser();
+  const isHelpMode = mode === 'help';
 
   // First, fetch unfiltered to get the full facet lists
-  const { data: unfilteredDocs } = useGetOSDocsQuery({});
+  const unfilteredQuery = useMemo<OSDocsQuery>(() => (
+    isHelpMode ? { module: [HELP_MODULE_ID] } : {}
+  ), [isHelpMode]);
+  const { data: unfilteredDocs } = useGetOSDocsQuery(unfilteredQuery);
 
   const allModules = useMemo(
     () => (unfilteredDocs?.facets?.modules ?? []).map((m) => m.id),
@@ -133,8 +139,14 @@ export function DocSearchScreen({ initialQuery = '' }: DocSearchScreenProps) {
   });
 
   const apiQuery = useMemo(
-    () => buildQuery(filter, allModules, allDocTypes, allTopics),
-    [filter, allModules, allDocTypes, allTopics],
+    () => {
+      const query = buildQuery(filter, allModules, allDocTypes, allTopics);
+      if (isHelpMode) {
+        query.module = [HELP_MODULE_ID];
+      }
+      return query;
+    },
+    [filter, allModules, allDocTypes, allTopics, isHelpMode],
   );
 
   const { data: filteredDocs, isLoading } = useGetOSDocsQuery(apiQuery);
