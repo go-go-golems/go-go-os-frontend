@@ -1,4 +1,10 @@
-import { MOCK_APPS_DEFAULT, MOCK_GEPA_DOCS, MOCK_GEPA_REFLECTION, MOCK_INVENTORY_DOCS } from '../fixtures/apps';
+import {
+  MOCK_ARC_AGI_DOCS,
+  MOCK_APPS_DEFAULT,
+  MOCK_GEPA_DOCS,
+  MOCK_GEPA_REFLECTION,
+  MOCK_INVENTORY_DOCS,
+} from '../fixtures/apps';
 import { type AppsHandlerData, createAppsHandlers } from './createAppsHandlers';
 
 export const defaultAppsHandlerData: AppsHandlerData = {
@@ -8,6 +14,7 @@ export const defaultAppsHandlerData: AppsHandlerData = {
   docsByApp: {
     inventory: MOCK_INVENTORY_DOCS,
     gepa: MOCK_GEPA_DOCS,
+    'arc-agi': MOCK_ARC_AGI_DOCS,
   },
   docsEndpointErrors: [],
 };
