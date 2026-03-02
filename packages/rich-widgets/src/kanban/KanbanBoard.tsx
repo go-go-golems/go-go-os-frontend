@@ -6,8 +6,8 @@ import { TAG_LABELS, PRIORITY_LABELS, ALL_TAGS, ALL_PRIORITIES } from './types';
 import { INITIAL_COLUMNS, INITIAL_TASKS } from './sampleData';
 
 // ── ID generator ──
-let nextId = 20;
-const mkId = () => `task-${nextId++}`;
+let idSeq = 0;
+const mkId = () => `task-${Date.now()}-${++idSeq}`;
 
 // ── TaskCard ─────────────────────────────────────────────────────────
 function TaskCard({

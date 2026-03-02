@@ -3,7 +3,7 @@ import { Btn, Checkbox } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
 import type { ResearchStep, DepthLevel } from './types';
 import { DEPTH_LEVELS } from './types';
-import { DEMO_STEPS, generateReport } from './sampleData';
+import { DEMO_STEPS, generateReport, WEB_ONLY_INDICES, ACADEMIC_INDICES } from './sampleData';
 
 // ── Source Card ──────────────────────────────────────────────────────
 function SourceCard({
@@ -85,16 +85,23 @@ export function DeepResearch({ initialSteps }: DeepResearchProps) {
     setReport('');
     setProgress(0);
 
+    // Filter demo steps based on web search and academic toggles
+    const filteredSteps = DEMO_STEPS.filter((_step, idx) => {
+      if (academicOnly && WEB_ONLY_INDICES.has(idx)) return false;
+      if (!webSearch && !ACADEMIC_INDICES.has(idx) && DEMO_STEPS[idx].type === 'source') return false;
+      return true;
+    });
+
     let i = 0;
     timerRef.current = setInterval(() => {
-      if (i < DEMO_STEPS.length) {
-        const step = DEMO_STEPS[i];
+      if (i < filteredSteps.length) {
+        const step = filteredSteps[i];
         setSteps((prev) => [...prev, step]);
-        setProgress(((i + 1) / DEMO_STEPS.length) * 100);
+        setProgress(((i + 1) / filteredSteps.length) * 100);
         if (step.type === 'done') {
           if (timerRef.current) clearInterval(timerRef.current);
           setIsResearching(false);
-          setReport(generateReport(query, depthLevel));
+          setReport(generateReport(query, depthLevel, { webSearch, academicOnly }));
         }
         i++;
       }

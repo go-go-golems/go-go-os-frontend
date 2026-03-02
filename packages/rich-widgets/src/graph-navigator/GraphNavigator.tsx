@@ -44,6 +44,8 @@ function useForceGraph(
     setPositions({ ...pos });
   }, [nodes, width, height]);
 
+  const stepFnRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
     if (!posRef.current) return;
     let running = true;
@@ -90,23 +92,32 @@ function useForceGraph(
         vel[a.id].y = (vel[a.id].y + fy) * damping;
       });
 
+      let totalEnergy = 0;
       nodes.forEach((n) => {
         if (dragRef.current === n.id) return;
         pos[n.id].x += vel[n.id].x;
         pos[n.id].y += vel[n.id].y;
         pos[n.id].x = Math.max(30, Math.min(width - 30, pos[n.id].x));
         pos[n.id].y = Math.max(30, Math.min(height - 30, pos[n.id].y));
+        totalEnergy += Math.abs(vel[n.id].x) + Math.abs(vel[n.id].y);
       });
 
       setPositions({ ...pos });
-      frameRef.current = requestAnimationFrame(step);
+      // Stop animating once the graph has settled
+      if (totalEnergy > 0.1) {
+        frameRef.current = requestAnimationFrame(step);
+      } else {
+        frameRef.current = 0;
+      }
     };
+    stepFnRef.current = step;
     frameRef.current = requestAnimationFrame(step);
     return () => {
       running = false;
       cancelAnimationFrame(frameRef.current);
+      stepFnRef.current = null;
     };
-  }, [nodes, edges, width, height]);
+  }, [nodes, edges, width, height, stepFnRef]);
 
   const setDrag = useCallback((id: string | null, x: number, y: number) => {
     dragRef.current = id;
@@ -122,6 +133,17 @@ function useForceGraph(
 
   const endDrag = useCallback(() => {
     dragRef.current = null;
+    // Perturb neighbors slightly to restart simulation after drag
+    if (velRef.current) {
+      for (const key of Object.keys(velRef.current)) {
+        velRef.current[key].x += (Math.random() - 0.5) * 2;
+        velRef.current[key].y += (Math.random() - 0.5) * 2;
+      }
+    }
+    // Restart animation if it had stopped
+    if (!frameRef.current && stepFnRef.current) {
+      frameRef.current = requestAnimationFrame(stepFnRef.current);
+    }
   }, []);
 
   return { positions, setDrag, endDrag };

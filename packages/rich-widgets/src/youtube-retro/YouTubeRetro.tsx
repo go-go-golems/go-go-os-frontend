@@ -209,16 +209,17 @@ export const YouTubeRetro: FC<YouTubeRetroProps> = ({
     return true;
   });
 
-  const relatedVideos = useMemo(
-    () =>
-      currentVideo
-        ? videos
-            .filter(v => v.id !== currentVideo.id)
-            .sort(() => 0.5 - Math.random())
-            .slice(0, 6)
-        : [],
-    [currentVideo, videos],
-  );
+  const relatedVideos = useMemo(() => {
+    if (!currentVideo) return [];
+    const others = videos.filter(v => v.id !== currentVideo.id);
+    // Deterministic shuffle seeded by video ID for stable memoization
+    const seed = currentVideo.id;
+    return others
+      .map((v, i) => ({ v, sort: Math.sin(seed + i) }))
+      .sort((a, b) => a.sort - b.sort)
+      .map(x => x.v)
+      .slice(0, 6);
+  }, [currentVideo, videos]);
 
   const allComments = [...userComments, ...COMMENTS];
 

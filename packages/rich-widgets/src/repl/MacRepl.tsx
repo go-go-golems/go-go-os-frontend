@@ -32,7 +32,7 @@ export function MacRepl({
     SHELL: '/bin/msh',
   });
   const [aliases, setAliases] = useState<Record<string, string>>({});
-  const [startTime] = useState(Date.now());
+  const startTime = useRef(Date.now());
   const [showCompletion, setShowCompletion] = useState(false);
   const [completions, setCompletions] = useState<string[]>([]);
   const [completionIdx, setCompletionIdx] = useState(0);
@@ -220,7 +220,7 @@ export function MacRepl({
           addLines([{ type: 'output', text: envVars.USER }]);
           break;
         case 'uptime': {
-          const secs = Math.floor((Date.now() - startTime) / 1000);
+          const secs = Math.floor((Date.now() - startTime.current) / 1000);
           const mins = Math.floor(secs / 60);
           const hrs = Math.floor(mins / 60);
           addLines([
@@ -338,7 +338,7 @@ export function MacRepl({
           ]);
       }
     },
-    [aliases, envVars, historyStack, lines, startTime],
+    [aliases, envVars, historyStack, lines],
   );
 
   const handleSubmit = () => {

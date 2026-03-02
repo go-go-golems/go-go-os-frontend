@@ -50,7 +50,7 @@ export function fmtDate(d: Date): string {
   return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
-let nextId = 100;
+let evtSeq = 0;
 export function mkEventId(): string {
-  return `evt-${nextId++}`;
+  return `evt-${Date.now()}-${++evtSeq}`;
 }

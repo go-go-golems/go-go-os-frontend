@@ -15,8 +15,7 @@ export interface SystemModelerProps {
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
-let idCounter = 1;
-const uid = () => `blk_${idCounter++}`;
+// idCounter moved to useRef inside SystemModeler component
 
 function getPortPos(block: BlockInstance, isInput: boolean, portIdx: number): Point {
   const portCount = isInput ? block.inputs : block.outputs;
@@ -333,6 +332,8 @@ export function SystemModeler({
   const [simProgress, setSimProgress] = useState(0);
   const [showPalette, setShowPalette] = useState(true);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const idCounterRef = useRef(1);
+  const uid = useCallback(() => `blk_${idCounterRef.current++}`, []);
 
   // Simulation timer
   useEffect(() => {

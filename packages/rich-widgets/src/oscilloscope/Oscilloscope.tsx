@@ -110,8 +110,17 @@ export function Oscilloscope({
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const W = canvas.width;
-    const H = canvas.height;
+    // HiDPI scaling
+    const dpr = window.devicePixelRatio || 1;
+    const logicalW = canvasWidth;
+    const logicalH = canvasHeight;
+    if (canvas.width !== logicalW * dpr || canvas.height !== logicalH * dpr) {
+      canvas.width = logicalW * dpr;
+      canvas.height = logicalH * dpr;
+      ctx.scale(dpr, dpr);
+    }
+    const W = logicalW;
+    const H = logicalH;
     const midY = H / 2 + offsetY;
 
     // CRT fade effect
@@ -250,6 +259,8 @@ export function Oscilloscope({
     phosphor,
     triggerLevel,
     thickness,
+    canvasWidth,
+    canvasHeight,
   ]);
 
   useEffect(() => {
