@@ -23,6 +23,7 @@ import { RetroMusicPlayer } from '../music-player/RetroMusicPlayer';
 import { StreamLauncher } from '../stream-launcher/StreamLauncher';
 import { SteamLauncher } from '../steam-launcher/SteamLauncher';
 import { YouTubeRetro } from '../youtube-retro/YouTubeRetro';
+import { ChatBrowser } from '../chat-browser/ChatBrowser';
 
 // ---------------------------------------------------------------------------
 // Widget registry for the story
@@ -55,6 +56,7 @@ const WIDGETS: WidgetDef[] = [
   { id: 'stream-launcher', name: 'Streams', icon: '\uD83D\uDCFA', w: 900, h: 640, render: () => <StreamLauncher /> },
   { id: 'steam-launcher', name: 'Game Library', icon: '\uD83D\uDD79\uFE0F', w: 960, h: 680, render: () => <SteamLauncher /> },
   { id: 'youtube-retro', name: 'RetroTube', icon: '\uD83C\uDFAC', w: 960, h: 680, render: () => <YouTubeRetro /> },
+  { id: 'chat-browser', name: 'Chat Browser', icon: '\uD83D\uDDC4\uFE0F', w: 900, h: 600, render: () => <ChatBrowser /> },
 ];
 
 const WIDGET_MAP = new Map(WIDGETS.map((w) => [w.id, w]));

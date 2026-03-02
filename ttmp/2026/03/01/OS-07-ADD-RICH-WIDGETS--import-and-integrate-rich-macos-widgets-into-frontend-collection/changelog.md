@@ -2,6 +2,9 @@
 
 ## 2026-03-02
 
+- Completed ChatBrowser widget port: conversation list with quick filter, message viewer, advanced search (text/model/tags/date), 33 CSS rules, 3 stories — new widget from imports/mac-chat-browser.jsx
+- Fixed DesktopShell icon double-click: added DesktopCommandHandler contributions so all widgets open on icon double-click
+- Fixed ChartView crashing in desktop demo: added default sample data when no `data` prop provided
 - Added DesktopShell integration stories (task 24): 4 stories showing all widgets as desktop icons with startup window support, verified SteamLauncher renders fully inside DesktopShell window
 - Added LaunchableAppModule definitions for all 17 widgets (task 23): launcher/modules.tsx with RICH_WIDGET_MODULES array, ./launcher export path, @hypercard/desktop-os peer dep
 - **ALL 17 WIDGET IMPORTS PORTED** — complete set of rich macOS-style widgets now in packages/rich-widgets

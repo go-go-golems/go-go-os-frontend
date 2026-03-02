@@ -300,3 +300,38 @@ With StreamLauncher, SteamLauncher, and YouTubeRetro complete, all 17 imported J
 **Total lines ported:** ~11,000+ JSX → ~3,850 new lines (this commit) + previous commits.
 
 **Remaining tasks:** Task 23 (register as launchable apps) and Task 24 (integration testing).
+
+## Step 14: Desktop Integration Bugfixes
+
+### What was done
+1. **Fixed icon double-click not opening windows** — The DesktopShell integration story had desktop icons but no `DesktopCommandHandler` contributions to handle `icon.open.*` commands. Added command handlers for all widgets with `priority: 200` that dispatch `openWindow` with correct payloads.
+2. **Fixed ChartView crashing without props** — `ChartView` required a `data` prop but was rendered as `<ChartView />` from the desktop story. Added default `SAMPLE_DATASETS['Quarterly Revenue']` fallback.
+
+### Verification
+- Storybook: All widgets open correctly on icon double-click, 0 errors
+- TypeScript: clean
+
+## Step 15: ChatBrowser Widget Port
+
+### What was done
+Ported `imports/mac-chat-browser.jsx` (629 lines) → `packages/rich-widgets/src/chat-browser/ChatBrowser.tsx`.
+
+**Files created:**
+- `chat-browser/types.ts` — Conversation, ChatMessage, SearchParams, EMPTY_SEARCH
+- `chat-browser/sampleData.ts` — CONVERSATIONS (10 conversations), getAllTags(), getAllModels()
+- `chat-browser/ChatBrowser.tsx` — Main component + ConvoRow + MessageBubble + SearchPanel
+- `chat-browser/ChatBrowser.stories.tsx` — 3 stories (Default, Compact, FewConversations)
+- `theme/chat-browser.css` — 33 data-part rules
+
+**Features:** Conversation sidebar with quick filter, conversation viewer with user/assistant message bubbles and pre-wrapped text, advanced search panel with text/model/tag/date filters, engine Btn and Checkbox integration.
+
+### Key decisions
+- Removed window chrome (DraggableWindow, MacScrollbar, about dialog, menu bar, desktop)
+- Collapsed the three-window layout (browser, viewer, search) into a single panel: sidebar + main area
+- Search panel toggles in place of the conversation viewer (not a separate window)
+- Used engine `Btn` (children pattern, `active` prop) and `Checkbox` (label/checked/onChange)
+
+### Verification
+- TypeScript: clean
+- Storybook: all 3 stories render correctly, conversation selection and viewer verified
+- Registered in launcher modules and desktop integration story

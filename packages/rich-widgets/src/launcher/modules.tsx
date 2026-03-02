@@ -19,6 +19,7 @@ import { RetroMusicPlayer } from '../music-player/RetroMusicPlayer';
 import { StreamLauncher } from '../stream-launcher/StreamLauncher';
 import { SteamLauncher } from '../steam-launcher/SteamLauncher';
 import { YouTubeRetro } from '../youtube-retro/YouTubeRetro';
+import { ChatBrowser } from '../chat-browser/ChatBrowser';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -147,6 +148,11 @@ export const youtubeRetroModule = widget(
   () => <YouTubeRetro />,
 );
 
+export const chatBrowserModule = widget(
+  'chat-browser', 'Chat Browser', '\uD83D\uDDC4\uFE0F', 117, 900, 600,
+  () => <ChatBrowser />,
+);
+
 // ---------------------------------------------------------------------------
 // All modules as a single array for convenience
 // ---------------------------------------------------------------------------
@@ -169,4 +175,5 @@ export const RICH_WIDGET_MODULES: readonly LaunchableAppModule[] = [
   streamLauncherModule,
   steamLauncherModule,
   youtubeRetroModule,
+  chatBrowserModule,
 ];
