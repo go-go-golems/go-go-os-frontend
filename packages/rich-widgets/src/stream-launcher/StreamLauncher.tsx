@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type FC } from 'react';
-import { Btn } from '@hypercard/engine';
+import { Btn, RadioButton } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
 import { EmptyState } from '../primitives/EmptyState';
 import { SearchBar } from '../primitives/SearchBar';
@@ -274,16 +274,12 @@ export const StreamLauncher: FC<StreamLauncherProps> = ({
         <div data-part={P.slSortSection}>
           <div data-part={P.slSortTitle}>Sort by</div>
           {SORT_OPTIONS.map(opt => (
-            <label
+            <RadioButton
               key={opt.value}
-              data-part={P.slSortItem}
-              onClick={() => setSortBy(opt.value)}
-            >
-              <span data-part={P.slRadio}>
-                {sortBy === opt.value && <span data-part={P.slRadioDot} />}
-              </span>
-              {opt.label}
-            </label>
+              label={opt.label}
+              selected={sortBy === opt.value}
+              onChange={() => setSortBy(opt.value)}
+            />
           ))}
         </div>
 

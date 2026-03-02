@@ -239,7 +239,7 @@ export function ChartView({
                 <RadioButton
                   key={opt.value}
                   label={opt.label}
-                  checked={chartType === opt.value}
+                  selected={chartType === opt.value}
                   onChange={() => setChartType(opt.value)}
                 />
               ),

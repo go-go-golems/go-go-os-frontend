@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Btn } from '@hypercard/engine';
+import { Btn, RadioButton } from '@hypercard/engine';
 import { RICH_PARTS as P } from '../parts';
 import { EmptyState } from '../primitives/EmptyState';
 import { ModalOverlay } from '../primitives/ModalOverlay';
@@ -378,18 +378,12 @@ export function GameFinder({ initialGames = SAMPLE_GAMES }: GameFinderProps) {
           <div data-part={P.gfSidebarSection}>
             <div data-part={P.gfSidebarTitle}>Sort</div>
             {SORT_OPTIONS.map((opt) => (
-              <label
+              <RadioButton
                 key={opt.value}
-                data-part={P.gfSortItem}
-                onClick={() => setSortBy(opt.value)}
-              >
-                <span data-part={P.gfRadio}>
-                  {sortBy === opt.value && (
-                    <span data-part={P.gfRadioDot} />
-                  )}
-                </span>
-                {opt.label}
-              </label>
+                label={opt.label}
+                selected={sortBy === opt.value}
+                onChange={() => setSortBy(opt.value)}
+              />
             ))}
           </div>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Btn, Checkbox } from '@hypercard/engine';
+import { Btn, Checkbox, RadioButton } from '@hypercard/engine';
 import { RICH_PARTS } from '../parts';
 import { EmptyState } from '../primitives/EmptyState';
 import type { ResearchStep, DepthLevel } from './types';
@@ -141,33 +141,13 @@ export function DeepResearch({ initialSteps }: DeepResearchProps) {
         <div>
           <div data-part={RICH_PARTS.drLabel}>Research Depth:</div>
           {DEPTH_LEVELS.map((level) => (
-            <label
+            <RadioButton
               key={level.value}
-              data-part={RICH_PARTS.drDepthOption}
-              data-state={
-                depthLevel === level.value ? 'active' : undefined
-              }
-            >
-              <span
-                onClick={() =>
-                  !isResearching && setDepthLevel(level.value)
-                }
-                data-part={RICH_PARTS.drRadio}
-              >
-                {depthLevel === level.value && (
-                  <span data-part={RICH_PARTS.drRadioDot} />
-                )}
-              </span>
-              {level.label}
-              <span
-                style={{
-                  color: 'var(--hc-color-muted)',
-                  fontSize: 10,
-                }}
-              >
-                ({level.time})
-              </span>
-            </label>
+              label={`${level.label} (${level.time})`}
+              selected={depthLevel === level.value}
+              onChange={() => setDepthLevel(level.value)}
+              disabled={isResearching}
+            />
           ))}
         </div>
 
