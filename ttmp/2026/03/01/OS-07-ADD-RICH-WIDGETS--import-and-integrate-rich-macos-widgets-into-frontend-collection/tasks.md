@@ -38,7 +38,7 @@
 - [x] 19. Port `deep-research-mac.jsx` → `DeepResearch.tsx` with stories
 - [x] 20. Port `gamefinder.jsx` → `GameFinder.tsx` with stories
 - [x] 21. Port `spotify-retro.jsx` → `RetroMusicPlayer.tsx` with stories
-- [ ] 22. Port remaining: steam-launcher, stream-launcher, youtube-retro with stories
+- [x] 22. Port remaining: steam-launcher, stream-launcher, youtube-retro with stories
 
 ## Phase 7: Desktop integration
 

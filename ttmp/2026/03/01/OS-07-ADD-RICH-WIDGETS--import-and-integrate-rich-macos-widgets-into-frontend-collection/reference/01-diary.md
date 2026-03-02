@@ -198,3 +198,105 @@ Ported `imports/gamefinder.jsx` (612 lines) → `packages/rich-widgets/src/game-
 **Import total:** 17 files, 11,057 lines
 **Storybook:** Storybook 10.x with react-vite, configured at `.storybook/main.ts`
 **Package manager:** pnpm with workspace protocol
+
+## Step 11: StreamLauncher Widget Port (Phase 16)
+
+### What was done
+Ported `imports/stream-launcher.jsx` (442 lines) → `packages/rich-widgets/src/stream-launcher/StreamLauncher.tsx`.
+
+**Files created:**
+- `stream-launcher/types.ts` — Stream, StreamStatus, ThumbType, ChatMessage, StreamSort, CATEGORIES, SORT_OPTIONS
+- `stream-launcher/sampleData.ts` — STREAMS (12 streams across 7 categories), CHAT_MESSAGES (8 messages)
+- `stream-launcher/streamArt.ts` — drawStreamThumb() canvas-based monochrome thumbnails for 12 stream types with play overlay
+- `stream-launcher/StreamLauncher.tsx` — Main component + StreamThumb + StreamCard + PlayerView sub-components
+- `stream-launcher/StreamLauncher.stories.tsx` — 3 stories (Default, Compact, FewStreams)
+- `theme/stream-launcher.css` — ~65 data-part rules for sidebar, search, stream cards, player, controls, chat
+
+**Features:** Category sidebar with filter/sort, stream list with LIVE/VOD/OFFLINE badges, canvas thumbnails, player view with transport controls/volume/progress/chat panel, search, status bar.
+
+### Key decisions
+- Canvas thumbnails in separate `streamArt.ts` utility (same pattern as GameFinder)
+- 12 distinct monochrome thumbnail types matching retro Mac aesthetic
+- Chat panel renders inside the player view with message input
+
+### Error encountered
+Initially used wrong import `@anthropic/hypercard-engine` instead of `@hypercard/engine`. Found via Storybook build error. Fixed by grepping existing widgets to confirm the correct import path.
+
+### Verification
+- TypeScript: clean
+- Storybook: all 3 stories render correctly, player view verified by clicking a stream
+
+## Step 12: SteamLauncher Widget Port (Phase 17)
+
+### What was done
+Ported `imports/steam-launcher.jsx` (690 lines) → `packages/rich-widgets/src/steam-launcher/SteamLauncher.tsx`.
+
+**Files created:**
+- `steam-launcher/types.ts` — SteamGame, Friend, FriendStatus, SteamTab, GameFilter, TABS
+- `steam-launcher/sampleData.ts` — GAMES (12 games), FRIENDS (7 friends)
+- `steam-launcher/SteamLauncher.tsx` — Main component + TabBar + GameRow + GameDetail + FriendRow + FriendsList + StoreTab + CommunityTab + DownloadsTab
+- `steam-launcher/SteamLauncher.stories.tsx` — 3 stories (Default, Compact, FewGames)
+- `theme/steam-launcher.css` — ~70 data-part rules including `@keyframes st-marquee` for launch animation
+
+**Features:** Tab navigation (Library/Store/Community/Downloads), game list sidebar with search, game detail with play/install/properties, friends list with online/away/offline groups, store tab with sale cards, launch dialog with progress animation, status bar.
+
+### Key decisions
+- Largest import at 690 lines — kept all sub-components in single file for cohesion
+- Launch animation uses CSS `@keyframes st-marquee` for progress bar
+- Friends grouped by status (online/away/offline) with counts
+
+### Verification
+- TypeScript: clean
+- Storybook: all 3 stories render correctly, detail view and friends list verified
+
+## Step 13: YouTubeRetro Widget Port (Phase 18)
+
+### What was done
+Ported `imports/youtube-retro.jsx` (579 lines) → `packages/rich-widgets/src/youtube-retro/YouTubeRetro.tsx`.
+
+**Files created:**
+- `youtube-retro/types.ts` — YtChannel, YtVideo, YtComment, YtCategory, YtView, CATEGORIES, parseDuration(), fmtTime()
+- `youtube-retro/sampleData.ts` — CHANNELS (6), VIDEOS (12), COMMENTS (6)
+- `youtube-retro/YouTubeRetro.tsx` — Main component + VideoPlayer + VideoCard + CommentItem sub-components
+- `youtube-retro/YouTubeRetro.stories.tsx` — 3 stories (Default, Compact, FewVideos)
+- `theme/youtube-retro.css` — ~85 data-part rules including CRT scanlines, moving scanline, vignette, buffer/progress bars
+
+**Features:** Home view (video grid + category filter + subscriptions sidebar), watch view (CRT player with scanlines/vignette, transport controls, video info, like/share/save/report, channel subscribe, description, comments with add/list, related videos sidebar), search, status bar.
+
+### Key decisions
+- CRT effects (scanlines, moving scanline, vignette) all CSS-based using pseudo-elements and gradients
+- `parseDuration()` and `fmtTime()` helpers in types.ts for consistent time display
+- Related videos computed via `useMemo` filtering by same channel/category
+
+### Verification
+- TypeScript: clean
+- Storybook: all 3 stories render correctly, home view with 12 videos, subscriptions, categories verified
+
+## Summary: All 17 Widget Imports Ported
+
+With StreamLauncher, SteamLauncher, and YouTubeRetro complete, all 17 imported JSX files have been ported to TypeScript widgets in `packages/rich-widgets`. The full roster:
+
+| # | Widget | Source Lines | Phase |
+|---|--------|-------------|-------|
+| 1 | Sparkline | primitive | 1 |
+| 2 | LogViewer | 850 | 2 |
+| 3 | ChartView | 476 | 3 |
+| 4 | MacWrite | 730 | 4 |
+| 5 | KanbanBoard | 780 | 5 |
+| 6 | MacRepl | 505 | 6 |
+| 7 | NodeEditor | 800 | 7 |
+| 8 | Oscilloscope | 453 | 8 |
+| 9 | LogicAnalyzer | 620 | 9 |
+| 10 | MacCalendar | 858 | 10 |
+| 11 | GraphNavigator | 680 | 11 |
+| 12 | MacCalc | 900 | 12 |
+| 13 | DeepResearch | 889 | 13 |
+| 14 | GameFinder | 612 | 14 |
+| 15 | RetroMusicPlayer | 623 | 15 |
+| 16 | StreamLauncher | 442 | 16 |
+| 17 | SteamLauncher | 690 | 17 |
+| 18 | YouTubeRetro | 579 | 18 |
+
+**Total lines ported:** ~11,000+ JSX → ~3,850 new lines (this commit) + previous commits.
+
+**Remaining tasks:** Task 23 (register as launchable apps) and Task 24 (integration testing).

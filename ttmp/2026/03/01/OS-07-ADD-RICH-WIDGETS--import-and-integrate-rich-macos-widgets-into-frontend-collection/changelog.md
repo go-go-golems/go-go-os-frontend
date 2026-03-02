@@ -2,6 +2,10 @@
 
 ## 2026-03-02
 
+- **ALL 17 WIDGET IMPORTS PORTED** — complete set of rich macOS-style widgets now in packages/rich-widgets
+- Completed YouTubeRetro widget port (task 22): CRT video player with scanlines/vignette, home grid, watch view with comments/related videos, subscriptions sidebar, 3 stories
+- Completed SteamLauncher widget port (task 22): tabbed Library/Store/Community/Downloads, game detail, friends list, launch animation, 3 stories
+- Completed StreamLauncher widget port (task 22): category sidebar, stream list with canvas thumbnails, player view with chat, LIVE/VOD/OFFLINE badges, 3 stories
 - Completed RetroMusicPlayer widget port (task 21): now-playing bar, EQ visualizer, marquee ticker, transport controls, playlist sidebar, track list/grid, queue panel, search, 3 stories
 - Completed GameFinder widget port (task 20): sidebar nav, game list with canvas pixel art, detail view with achievements, install/launch simulation, search/filter/sort, 3 stories
 - Completed DeepResearch widget port (task 19): query sidebar, depth selector, research simulation, source cards, thinking steps, progress bar, report generation, 3 stories
