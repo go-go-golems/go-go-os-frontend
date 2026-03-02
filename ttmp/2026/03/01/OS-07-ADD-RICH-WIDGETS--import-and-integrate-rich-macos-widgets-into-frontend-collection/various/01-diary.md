@@ -19,6 +19,44 @@ WhenToUse: "Review progress, understand decisions, onboard reviewers"
 
 # Implementation Diary
 
+## 2026-03-02 — MacCalendar widget port
+
+### What was done
+
+Full port of `maccal.jsx` → `MacCalendar.tsx`. This is a substantial widget with:
+- Month view with full 6-week grid, event chips, day-click to create
+- Week view with hourly time grid, positioned events, "now" line indicator
+- Event modal for create/edit/delete with date, time, duration, color pickers
+- Command palette (⌘P) with search, keyboard navigation
+- Keyboard shortcuts (N=new, T=today, M/W=view toggle, ←→=navigate)
+- Status bar with event counts and shortcut hints
+
+**Files created:**
+- `calendar/types.ts` — CalendarEvent, CalendarView, utility functions (sameDay, fmtTime, mkEventId)
+- `calendar/sampleData.ts` — 8 initial events, EVENT_COLORS using CSS tokens, makePaletteActions
+- `calendar/MacCalendar.tsx` — Main component + MonthView, WeekView, EventModal, Palette sub-components
+- `calendar/MacCalendar.stories.tsx` — Default, WeekView, Empty, EmptyWeek, Compact stories
+- `theme/calendar.css` — 35+ data-part rules
+
+**Key decisions:**
+- Dropped the original's 3 internal themes (classic/dark/green) — the engine's theming system handles that. The widget now uses CSS tokens exclusively.
+- Removed window chrome/title bar (shell handles it)
+- Replaced MacButton with `Btn` from engine
+- Used `Btn` with `data-state="active"` for duration selector and color picker instead of custom styled divs
+- Kept event colors as a prop (`eventColors`) defaulting to CSS token-based grays — theme can override
+
+### Verification
+
+All 5 Storybook stories render. Month view shows March 2026 grid with events properly placed. Controls panel in Storybook shows initialEvents, initialView (radio month/week), eventColors props.
+
+### Lessons learned
+
+- Calendar widgets are dense — many sub-components (month grid, week grid, event modal, palette) each need their own data-parts
+- The original's inline theme system (`THEMES.classic`, `THEMES.dark`, `THEMES.green`) is replaced wholesale by the engine's CSS tokens — much cleaner
+- Week view needs `position: relative` + absolute event positioning — keep structural CSS tight
+
+---
+
 ## 2026-03-02 — LogicAnalyzer widget completion
 
 ### What was done

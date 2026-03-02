@@ -7,3 +7,4 @@ import './repl.css';
 import './node-editor.css';
 import './oscilloscope.css';
 import './logic-analyzer.css';
+import './calendar.css';

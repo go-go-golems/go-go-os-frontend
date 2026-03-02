@@ -68,6 +68,24 @@ export {
   WAVEFORM_ICONS,
 } from './oscilloscope/types';
 
+// MacCalendar
+export {
+  MacCalendar,
+  type MacCalendarProps,
+} from './calendar/MacCalendar';
+export {
+  type CalendarEvent,
+  type CalendarView,
+  type PaletteAction,
+  DAYS,
+  MONTHS,
+  DURATION_OPTIONS,
+  sameDay,
+  fmtTime,
+  fmtDate,
+} from './calendar/types';
+export { INITIAL_EVENTS, EVENT_COLORS, makePaletteActions } from './calendar/sampleData';
+
 // LogicAnalyzer
 export {
   LogicAnalyzer,
