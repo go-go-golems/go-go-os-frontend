@@ -187,5 +187,61 @@ export {
 export { SAMPLE_GAMES } from './game-finder/sampleData';
 export { drawGameArt } from './game-finder/gameArt';
 
+// StreamLauncher
+export {
+  StreamLauncher,
+  type StreamLauncherProps,
+} from './stream-launcher/StreamLauncher';
+export {
+  type Stream,
+  type StreamStatus,
+  type ThumbType,
+  type ChatMessage,
+  type StreamSort,
+  CATEGORIES as STREAM_CATEGORIES,
+  SORT_OPTIONS as STREAM_SORT_OPTIONS,
+} from './stream-launcher/types';
+export { STREAMS, CHAT_MESSAGES } from './stream-launcher/sampleData';
+export { drawStreamThumb } from './stream-launcher/streamArt';
+
+// SteamLauncher
+export {
+  SteamLauncher,
+  type SteamLauncherProps,
+} from './steam-launcher/SteamLauncher';
+export {
+  type SteamGame,
+  type Friend,
+  type FriendStatus,
+  type SteamTab,
+  type GameFilter as SteamGameFilter,
+  TABS as STEAM_TABS,
+} from './steam-launcher/types';
+export {
+  GAMES as STEAM_GAMES,
+  FRIENDS as STEAM_FRIENDS,
+} from './steam-launcher/sampleData';
+
+// YouTubeRetro
+export {
+  YouTubeRetro,
+  type YouTubeRetroProps,
+} from './youtube-retro/YouTubeRetro';
+export {
+  type YtChannel,
+  type YtVideo,
+  type YtComment,
+  type YtCategory,
+  type YtView,
+  CATEGORIES as YT_CATEGORIES,
+  parseDuration as parseYtDuration,
+  fmtTime as fmtYtTime,
+} from './youtube-retro/types';
+export {
+  CHANNELS as YT_CHANNELS,
+  VIDEOS as YT_VIDEOS,
+  COMMENTS as YT_COMMENTS,
+} from './youtube-retro/sampleData';
+
 // Parts
 export { RICH_PARTS, type RichPartName } from './parts';

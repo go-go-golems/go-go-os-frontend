@@ -13,3 +13,6 @@ import './calculator.css';
 import './deep-research.css';
 import './game-finder.css';
 import './music-player.css';
+import './stream-launcher.css';
+import './steam-launcher.css';
+import './youtube-retro.css';

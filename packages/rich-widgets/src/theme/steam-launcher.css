@@ -1,0 +1,539 @@
+/* SteamLauncher */
+[data-part='steam-launcher'] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--hc-font-family);
+  font-size: var(--hc-font-size);
+  color: var(--hc-color-fg);
+  background: var(--hc-color-bg);
+}
+
+/* --- Toolbar --- */
+[data-part='st-toolbar'] {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  gap: 8px;
+  border-bottom: 1px solid var(--hc-color-border);
+  background: var(--hc-color-surface);
+  flex-shrink: 0;
+}
+
+[data-part='st-filter-group'] {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+/* --- Tab bar --- */
+[data-part='st-tab-bar'] {
+  display: flex;
+  border-bottom: var(--hc-border-width) solid var(--hc-color-border);
+  background: var(--hc-color-surface);
+  flex-shrink: 0;
+}
+
+[data-part='st-tab'] {
+  padding: 4px 14px;
+  cursor: pointer;
+  font-size: 11px;
+  background: var(--hc-color-surface);
+  border: 1px solid var(--hc-color-border);
+  border-bottom: 1px solid var(--hc-color-border);
+  border-radius: 4px 4px 0 0;
+  position: relative;
+  z-index: 1;
+}
+
+[data-part='st-tab']:hover {
+  background: var(--hc-color-bg);
+}
+
+[data-part='st-tab'][data-selected] {
+  font-weight: bold;
+  background: var(--hc-color-bg);
+  border-bottom-color: var(--hc-color-bg);
+  margin-bottom: -2px;
+  z-index: 2;
+}
+
+/* --- Content area --- */
+[data-part='st-content'] {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Library view --- */
+[data-part='st-library'] {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* --- Game list sidebar --- */
+[data-part='st-game-list'] {
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  border-right: var(--hc-border-width) solid var(--hc-color-border);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+[data-part='st-game-list-header'] {
+  padding: 4px 8px;
+  font-weight: bold;
+  font-size: 11px;
+  border-bottom: 1px solid var(--hc-color-border);
+  background: var(--hc-color-surface);
+}
+
+[data-part='st-search-bar'] {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--hc-color-border);
+  background: var(--hc-color-surface);
+}
+
+[data-part='st-search-input'] {
+  width: 100%;
+  border: 1px solid var(--hc-color-border);
+  font-family: var(--hc-font-family);
+  font-size: 11px;
+  padding: 2px 4px;
+  outline: none;
+  background: var(--hc-color-bg);
+  color: var(--hc-color-fg);
+  box-shadow: inset 1px 1px 0 var(--hc-color-border);
+}
+
+[data-part='st-game-list-body'] {
+  flex: 1;
+  overflow: auto;
+}
+
+[data-part='st-game-row'] {
+  display: flex;
+  align-items: center;
+  padding: 3px 8px;
+  gap: 8px;
+  border-bottom: 1px solid var(--hc-color-border);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+[data-part='st-game-row']:hover {
+  background: var(--hc-color-surface);
+}
+
+[data-part='st-game-row'][data-selected] {
+  background: var(--hc-confirm-selected-bg, var(--hc-color-fg));
+  color: var(--hc-confirm-selected-fg, var(--hc-color-bg));
+}
+
+[data-part='st-game-icon'] {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+[data-part='st-game-name'] {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-part='st-install-dot'] {
+  font-size: 9px;
+  opacity: 0.5;
+}
+
+/* --- Game detail --- */
+[data-part='st-detail'] {
+  flex: 1;
+  padding: 16px;
+  overflow: auto;
+}
+
+[data-part='st-detail-hero'] {
+  border: var(--hc-border-width) solid var(--hc-color-border);
+  background: var(--hc-color-surface);
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 8px,
+    rgba(0, 0, 0, 0.03) 8px,
+    rgba(0, 0, 0, 0.03) 16px
+  );
+}
+
+[data-part='st-detail-hero-icon'] {
+  font-size: 64px;
+  margin-bottom: 8px;
+}
+
+[data-part='st-detail-hero-name'] {
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+[data-part='st-detail-hero-genre'] {
+  font-size: 11px;
+  color: var(--hc-color-fg-muted);
+}
+
+[data-part='st-detail-actions'] {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  justify-content: center;
+}
+
+/* --- Info table --- */
+[data-part='st-info-table'] {
+  border: 1px solid var(--hc-color-border);
+  background: var(--hc-color-bg);
+}
+
+[data-part='st-info-row'] {
+  display: flex;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--hc-color-border);
+  font-size: 12px;
+}
+
+[data-part='st-info-row']:last-child {
+  border-bottom: none;
+}
+
+[data-part='st-info-row'][data-even] {
+  background: var(--hc-color-surface);
+}
+
+[data-part='st-info-label'] {
+  width: 120px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+/* --- Achievements --- */
+[data-part='st-achievements'] {
+  margin-top: 16px;
+}
+
+[data-part='st-achievements-title'] {
+  font-weight: bold;
+  margin-bottom: 4px;
+  font-size: 11px;
+}
+
+[data-part='st-achievements-bar'] {
+  border: 1px solid var(--hc-color-fg);
+  height: 14px;
+  background: var(--hc-color-bg);
+  position: relative;
+}
+
+[data-part='st-achievements-fill'] {
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--hc-color-fg) 0px,
+    var(--hc-color-fg) 2px,
+    var(--hc-color-bg) 2px,
+    var(--hc-color-bg) 4px
+  );
+}
+
+/* --- Friends --- */
+[data-part='st-friends'] {
+  width: 200px;
+  border-left: var(--hc-border-width) solid var(--hc-color-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+[data-part='st-friends-header'] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  font-weight: bold;
+  font-size: 11px;
+  border-bottom: 1px solid var(--hc-color-border);
+  background: var(--hc-color-surface);
+}
+
+[data-part='st-friends-list'] {
+  flex: 1;
+  overflow: auto;
+}
+
+[data-part='st-friends-group'] {
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: bold;
+  background: var(--hc-color-surface);
+  border-bottom: 1px solid var(--hc-color-border);
+}
+
+[data-part='st-friend-row'] {
+  display: flex;
+  align-items: center;
+  padding: 3px 8px;
+  gap: 6px;
+  border-bottom: 1px solid var(--hc-color-border);
+  cursor: pointer;
+}
+
+[data-part='st-friend-row']:hover {
+  background: var(--hc-color-surface);
+}
+
+[data-part='st-friend-row'][data-status='away'] {
+  opacity: 0.6;
+}
+
+[data-part='st-friend-row'][data-status='offline'] {
+  opacity: 0.35;
+}
+
+[data-part='st-friend-info'] {
+  flex: 1;
+  overflow: hidden;
+}
+
+[data-part='st-friend-name'] {
+  font-weight: bold;
+  font-size: 11px;
+}
+
+[data-part='st-friend-game'] {
+  font-size: 10px;
+  color: var(--hc-color-fg-muted);
+}
+
+/* --- Store tab --- */
+[data-part='st-store'] {
+  padding: 16px;
+  overflow: auto;
+}
+
+[data-part='st-store-title'] {
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+[data-part='st-store-grid'] {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+[data-part='st-store-card'] {
+  border: var(--hc-border-width) solid var(--hc-color-border);
+  background: var(--hc-color-bg);
+  padding: 12px;
+  text-align: center;
+}
+
+[data-part='st-store-card-icon'] {
+  font-size: 32px;
+  margin-bottom: 4px;
+}
+
+[data-part='st-store-card-name'] {
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+[data-part='st-store-card-meta'] {
+  font-size: 10px;
+  color: var(--hc-color-fg-muted);
+  margin-bottom: 8px;
+}
+
+[data-part='st-store-card-price'] {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+[data-part='st-store-old-price'] {
+  text-decoration: line-through;
+  font-size: 10px;
+}
+
+[data-part='st-store-discount'] {
+  font-weight: bold;
+  border: 1px solid var(--hc-color-fg);
+  padding: 1px 4px;
+  background: var(--hc-color-surface);
+  font-size: 11px;
+}
+
+[data-part='st-store-new-price'] {
+  font-weight: bold;
+}
+
+/* --- Community tab --- */
+[data-part='st-community'] {
+  padding: 16px;
+  text-align: center;
+  overflow: auto;
+}
+
+[data-part='st-community-title'] {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+[data-part='st-community-desc'] {
+  font-size: 11px;
+  color: var(--hc-color-fg-muted);
+  max-width: 300px;
+  margin: 0 auto 12px;
+}
+
+[data-part='st-community-actions'] {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* --- Downloads tab --- */
+[data-part='st-downloads'] {
+  padding: 16px;
+  overflow: auto;
+}
+
+[data-part='st-download-item'] {
+  margin-bottom: 12px;
+}
+
+[data-part='st-download-name'] {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+[data-part='st-download-bar'] {
+  border: 1px solid var(--hc-color-fg);
+  height: 14px;
+  background: var(--hc-color-bg);
+}
+
+[data-part='st-download-fill'] {
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--hc-color-fg) 0px,
+    var(--hc-color-fg) 2px,
+    var(--hc-color-bg) 2px,
+    var(--hc-color-bg) 4px
+  );
+}
+
+[data-part='st-download-meta'] {
+  font-size: 10px;
+  color: var(--hc-color-fg-muted);
+  margin-top: 2px;
+}
+
+[data-part='st-empty-state'] {
+  text-align: center;
+  padding: 24px;
+  color: var(--hc-color-fg-muted);
+  font-size: 11px;
+}
+
+/* --- Launch overlay --- */
+[data-part='st-launch-overlay'] {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+[data-part='st-launch-dialog'] {
+  border: var(--hc-border-width) solid var(--hc-color-border);
+  background: var(--hc-color-bg);
+  box-shadow: 2px 2px 0 var(--hc-color-fg);
+  padding: 16px;
+  text-align: center;
+  width: 280px;
+}
+
+[data-part='st-launch-title'] {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+[data-part='st-launch-name'] {
+  margin-bottom: 12px;
+}
+
+[data-part='st-launch-bar'] {
+  border: 1px solid var(--hc-color-fg);
+  height: 12px;
+  background: var(--hc-color-bg);
+  overflow: hidden;
+}
+
+[data-part='st-launch-fill'] {
+  height: 100%;
+  width: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--hc-color-fg) 0px,
+    var(--hc-color-fg) 4px,
+    var(--hc-color-bg) 4px,
+    var(--hc-color-bg) 8px
+  );
+  animation: st-marquee 1s linear infinite;
+}
+
+@keyframes st-marquee {
+  from {
+    transform: translateX(-8px);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* --- Status bar --- */
+[data-part='st-status-bar'] {
+  height: 18px;
+  background: var(--hc-color-surface);
+  border-top: var(--hc-border-width) solid var(--hc-color-border);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 10px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+[data-part='st-status-sep'] {
+  border-left: 1px solid var(--hc-color-border);
+  border-right: 1px solid var(--hc-color-bg);
+  height: 10px;
+}
