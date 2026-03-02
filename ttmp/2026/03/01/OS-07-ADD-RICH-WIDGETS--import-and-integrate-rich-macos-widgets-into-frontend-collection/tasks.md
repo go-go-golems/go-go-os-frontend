@@ -29,7 +29,7 @@
 
 ## Phase 5: Data visualization
 
-- [ ] 16. Port `graph-navigator.jsx` → `GraphNavigator.tsx` with stories
+- [x] 16. Port `graph-navigator.jsx` → `GraphNavigator.tsx` with stories
 - [x] 17. Port `node-editor.jsx` → `NodeEditor.tsx` with stories
 
 ## Phase 6: Entertainment/utility widgets

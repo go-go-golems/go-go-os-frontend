@@ -19,6 +19,46 @@ WhenToUse: "Review progress, understand decisions, onboard reviewers"
 
 # Implementation Diary
 
+## 2026-03-02 — GraphNavigator widget port
+
+### What was done
+
+Full port of `graph-navigator.jsx` → `GraphNavigator.tsx`. A graph database explorer with:
+- 3-column layout: Node Browser (left), Graph View + Query Console (center), Inspector + Edge Types (right)
+- Force-directed graph layout via custom `useForceGraph` hook (repulsion, spring attraction, gravity, damping)
+- Canvas-based rendering with DPR-aware scaling, grid background, directed edges with arrows, emoji-labeled nodes
+- Node drag support + background panning
+- Node Browser sidebar with type filter buttons (All/Person/Company/Project)
+- Query Console with Cypher-like syntax parsing (type=, label=, MATCH...RETURN)
+- Node Inspector showing properties and clickable relationships
+- Edge Types panel with sorted counts
+
+**Files created:**
+- `graph-navigator/types.ts` — GraphNavNode, GraphNavEdge, NodeTypeStyle, TYPE_STYLES
+- `graph-navigator/sampleData.ts` — 12 sample nodes, 19 edges, NODE_FILTER_TYPES
+- `graph-navigator/GraphNavigator.tsx` — Main component + useForceGraph hook + GraphCanvas sub-component (~500 lines)
+- `graph-navigator/GraphNavigator.stories.tsx` — Default, Compact, Empty, PersonsOnly stories
+- `theme/graph-navigator.css` — 27 data-part rules for 3-column layout, panels, node list, console, inspector
+
+**Key decisions:**
+- Kept canvas-based graph rendering (force simulation needs per-frame updates)
+- Used `useRef` for position/velocity state to avoid re-render on every animation frame, with periodic `setPositions` for canvas redraw
+- Removed window chrome (shell handles it)
+- Replaced MacButton with `Btn` from engine
+- All CSS uses `--hc-*` tokens, no hardcoded colors
+
+### Verification
+
+All 4 Storybook stories render correctly. Force-directed graph animates nodes into position. Node clicking selects and highlights connected edges. Query console accepts type/label/MATCH queries. Inspector shows properties and navigable relationships.
+
+### Lessons learned
+
+- Force simulation state (positions, velocities) must live in refs, not React state, to avoid thousands of re-renders per second
+- Canvas DPR handling: set `canvas.width = width * dpr`, then `ctx.setTransform(dpr, 0, 0, dpr, 0, 0)` for crisp rendering
+- The `useForceGraph` hook pattern (refs + RAF loop + periodic state sync) is reusable for any physics simulation
+
+---
+
 ## 2026-03-02 — MacCalendar widget port
 
 ### What was done

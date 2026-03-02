@@ -102,5 +102,22 @@ export {
   PROTOCOLS,
 } from './logic-analyzer/types';
 
+// GraphNavigator
+export {
+  GraphNavigator,
+  type GraphNavigatorProps,
+} from './graph-navigator/GraphNavigator';
+export {
+  type GraphNavNode,
+  type GraphNavEdge,
+  type NodeTypeStyle,
+  TYPE_STYLES,
+} from './graph-navigator/types';
+export {
+  SAMPLE_NODES,
+  SAMPLE_EDGES,
+  NODE_FILTER_TYPES,
+} from './graph-navigator/sampleData';
+
 // Parts
 export { RICH_PARTS, type RichPartName } from './parts';
