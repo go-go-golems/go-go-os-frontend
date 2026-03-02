@@ -2,6 +2,7 @@
 
 ## 2026-03-02
 
+- Completed DeepResearch widget port (task 19): query sidebar, depth selector, research simulation, source cards, thinking steps, progress bar, report generation, 3 stories
 - Completed MacCalc spreadsheet widget port (task 18): formula engine, grid, formatting, find/replace, palette, 3 stories
 - Completed GraphNavigator widget port (task 16): force-directed graph, node browser, query console, inspector, 4 stories
 - Completed MacCalendar widget port (task 15): month/week views, event modal, command palette, keyboard shortcuts, 5 stories

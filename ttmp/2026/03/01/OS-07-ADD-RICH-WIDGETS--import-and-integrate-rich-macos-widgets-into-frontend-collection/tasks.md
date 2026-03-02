@@ -35,7 +35,7 @@
 ## Phase 6: Entertainment/utility widgets
 
 - [x] 18. Port `maccalc.jsx` → `MacCalc.tsx` with stories
-- [ ] 19. Port `deep-research-mac.jsx` → `DeepResearch.tsx` with stories
+- [x] 19. Port `deep-research-mac.jsx` → `DeepResearch.tsx` with stories
 - [ ] 20. Port `gamefinder.jsx` → `GameFinder.tsx` with stories
 - [ ] 21. Port `spotify-retro.jsx` → `RetroMusicPlayer.tsx` with stories
 - [ ] 22. Port remaining: steam-launcher, stream-launcher, youtube-retro with stories

@@ -142,5 +142,17 @@ export {
 export { evaluateFormula } from './calculator/formula';
 export { createSampleCells, CALC_ACTIONS } from './calculator/sampleData';
 
+// DeepResearch
+export {
+  DeepResearch,
+  type DeepResearchProps,
+} from './deep-research/DeepResearch';
+export {
+  type ResearchStep,
+  type DepthLevel,
+  DEPTH_LEVELS,
+} from './deep-research/types';
+export { DEMO_STEPS, generateReport } from './deep-research/sampleData';
+
 // Parts
 export { RICH_PARTS, type RichPartName } from './parts';

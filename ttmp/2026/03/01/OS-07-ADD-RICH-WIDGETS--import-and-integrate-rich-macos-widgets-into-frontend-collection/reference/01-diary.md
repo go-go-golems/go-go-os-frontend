@@ -100,6 +100,35 @@ Nothing built yet — this was analysis only. The tricky part was understanding 
 - Port LogViewer as reference implementation
 - Extract reusable patterns into the playbook after the first widget is done
 
+## Step 8: DeepResearch Widget Port (Phase 13)
+
+### What was done
+Ported `imports/deep-research-mac.jsx` (889 lines) → `packages/rich-widgets/src/deep-research/DeepResearch.tsx`.
+
+**Files created:**
+- `deep-research/types.ts` — ResearchStep union type (status | source | thinking | done), DepthLevel, DEPTH_LEVELS
+- `deep-research/sampleData.ts` — DEMO_STEPS (14 research steps simulating a flow), generateReport()
+- `deep-research/DeepResearch.tsx` — Main component + SourceCard + ProgressBar sub-components
+- `deep-research/DeepResearch.stories.tsx` — 3 stories (Default, WithResults, Compact)
+- `theme/deep-research.css` — 25 data-part rules, barberpole + blink animations
+
+**Features:** Query input, depth selector (radio buttons), options (Checkbox from engine), research simulation with timed step progression, barberpole progress bar, source cards with index badges, thinking steps, final report display.
+
+### Key decisions
+- Radio buttons kept as custom elements (no engine Radio primitive) using `dr-radio` + `dr-radio-dot` data-parts
+- Used engine `Checkbox` with `onChange={() => setState(v => !v)}` toggle pattern (lesson from LogicAnalyzer)
+- Removed window chrome and internal themes — shell handles those
+- Research simulation uses `setTimeout` chain to progressively reveal demo steps
+
+### Verification
+- TypeScript: clean (`pnpm tsc --noEmit`)
+- Storybook: all 3 stories render correctly on port 6007
+- Screenshot captured and verified
+
+### Lessons learned
+- The ResearchStep union type with discriminated `type` field makes step rendering clean via switch/case
+- Barberpole progress bar animation reuses the same technique from the indeterminate progress pattern
+
 ### Code review instructions
 
 - Review the analysis doc for completeness: `ttmp/.../design-doc/01-rich-widget-import-analysis-and-integration-plan.md`

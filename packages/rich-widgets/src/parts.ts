@@ -217,6 +217,33 @@ export const RICH_PARTS = {
   calcPaletteItem: 'calc-palette-item',
   calcPaletteFooter: 'calc-palette-footer',
   calcKbd: 'calc-kbd',
+
+  // DeepResearch
+  deepResearch: 'deep-research',
+  drSidebar: 'dr-sidebar',
+  drLabel: 'dr-label',
+  drQueryInput: 'dr-query-input',
+  drDepthOption: 'dr-depth-option',
+  drRadio: 'dr-radio',
+  drRadioDot: 'dr-radio-dot',
+  drOptionsSection: 'dr-options-section',
+  drSourceCount: 'dr-source-count',
+  drActivity: 'dr-activity',
+  drProgressSection: 'dr-progress-section',
+  drProgressBar: 'dr-progress-bar',
+  drProgressFill: 'dr-progress-fill',
+  drProgressStatus: 'dr-progress-status',
+  drEmptyState: 'dr-empty-state',
+  drStepsArea: 'dr-steps-area',
+  drStepStatus: 'dr-step-status',
+  drStepSource: 'dr-step-source',
+  drSourceIndex: 'dr-source-index',
+  drSourceUrl: 'dr-source-url',
+  drStepThinking: 'dr-step-thinking',
+  drBlink: 'dr-blink',
+  drReport: 'dr-report',
+  drReportHeader: 'dr-report-header',
+  drReportBody: 'dr-report-body',
 } as const;
 
 export type RichPartName = (typeof RICH_PARTS)[keyof typeof RICH_PARTS];
