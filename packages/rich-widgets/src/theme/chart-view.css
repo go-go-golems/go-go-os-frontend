@@ -1,0 +1,53 @@
+/* ── ChartView ── */
+[data-part="chart-view"] {
+  display: flex;
+  font-family: var(--hc-font-family);
+  font-size: var(--hc-font-size);
+  color: var(--hc-color-fg);
+  background: var(--hc-color-bg);
+  gap: 0;
+}
+
+[data-part="chart-view-canvas"] {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--hc-color-border);
+}
+
+[data-part="chart-view-controls"] {
+  width: 180px;
+  flex-shrink: 0;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border: 1px solid var(--hc-color-border);
+  border-left: none;
+}
+
+[data-part="chart-view-control-group"] {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+[data-part="chart-view-legend"] {
+  display: flex;
+  gap: 14px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--hc-color-border);
+  background: var(--hc-color-alt, #f0f0f0);
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 10px;
+}
+
+[data-part="chart-view-info"] {
+  background: var(--hc-color-alt, #f0f0f0);
+  border: 1px solid var(--hc-color-border);
+  padding: 6px;
+  font-size: 9px;
+  line-height: 1.4;
+}

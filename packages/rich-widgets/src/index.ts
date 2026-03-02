@@ -23,5 +23,11 @@ export {
 } from './chart-view/types';
 export { SAMPLE_DATASETS, DATASET_NAMES } from './chart-view/sampleData';
 
+// MacWrite
+export { MacWrite, type MacWriteProps } from './mac-write/MacWrite';
+export { type ViewMode, type FormatAction, type WordCount } from './mac-write/types';
+export { parseMarkdown } from './mac-write/markdown';
+export { SAMPLE_DOCUMENT } from './mac-write/sampleData';
+
 // Parts
 export { RICH_PARTS, type RichPartName } from './parts';

@@ -1,0 +1,9 @@
+/* ── Sparkline ── */
+[data-part="sparkline"] {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+[data-part="sparkline"] rect {
+  fill: var(--hc-color-fg);
+}
