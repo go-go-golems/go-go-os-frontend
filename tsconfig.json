@@ -10,6 +10,7 @@
     { "path": "apps/todo" },
     { "path": "apps/crm" },
     { "path": "apps/apps-browser" },
-    { "path": "apps/hypercard-tools" }
+    { "path": "apps/hypercard-tools" },
+    { "path": "packages/rich-widgets" }
   ]
 }
