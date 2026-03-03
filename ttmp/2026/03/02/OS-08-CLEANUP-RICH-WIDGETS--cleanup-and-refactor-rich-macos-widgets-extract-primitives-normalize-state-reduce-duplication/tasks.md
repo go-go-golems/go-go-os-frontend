@@ -66,3 +66,4 @@
 - [x] Task 1: Add launcher-level Redux reducer target for rich widget launch stats
 - [x] Task 2: Add Redux-seeded Storybook scenarios for rich widgets
 - [x] Task 3: Remove dead LogViewer toolbar/status part constants and legacy CSS selectors
+- [x] Task 4: Remove dead MacWrite toolbar/separator/status part constants and legacy CSS selectors

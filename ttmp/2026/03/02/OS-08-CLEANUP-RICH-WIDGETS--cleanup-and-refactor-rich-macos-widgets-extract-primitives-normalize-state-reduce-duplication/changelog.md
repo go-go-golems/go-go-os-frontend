@@ -85,3 +85,13 @@ Uploaded refreshed OS-08 review bundle (design doc 03 + updated diary/tasks/chan
 - /home/manuel/workspaces/2026-03-01/add-macos-rich-widgets/go-go-os-frontend/ttmp/2026/03/02/OS-08-CLEANUP-RICH-WIDGETS--cleanup-and-refactor-rich-macos-widgets-extract-primitives-normalize-state-reduce-duplication/reference/01-investigation-diary.md — Included in uploaded bundle
 - /home/manuel/workspaces/2026-03-01/add-macos-rich-widgets/go-go-os-frontend/ttmp/2026/03/02/OS-08-CLEANUP-RICH-WIDGETS--cleanup-and-refactor-rich-macos-widgets-extract-primitives-normalize-state-reduce-duplication/tasks.md — Included in uploaded bundle
 - /home/manuel/workspaces/2026-03-01/add-macos-rich-widgets/go-go-os-frontend/ttmp/2026/03/02/OS-08-CLEANUP-RICH-WIDGETS--cleanup-and-refactor-rich-macos-widgets-extract-primitives-normalize-state-reduce-duplication/changelog.md — Included in uploaded bundle
+
+
+## 2026-03-03
+
+Phase A Task 4 complete (commit 63cd724d8cb0879d2876a2d9f5c6e68c230bc8c2): removed dead MacWrite toolbar/separator/status part constants and legacy selectors after primitive migration.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-03-01/add-macos-rich-widgets/go-go-os-frontend/packages/rich-widgets/src/parts.ts — Removed `mwToolbar`, `mwSeparator`, and `mwStatusBar` dead part constants
+- /home/manuel/workspaces/2026-03-01/add-macos-rich-widgets/go-go-os-frontend/packages/rich-widgets/src/theme/mac-write.css — Removed unused `mw-toolbar`/`mw-separator`/`mw-status-bar` selectors

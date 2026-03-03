@@ -591,3 +591,58 @@ After Task 3 code and ticket-doc updates were committed, I refreshed the reMarka
   - `remarquee upload bundle --dry-run ... --name "OS-08-CLEANUP-RICH-WIDGETS-update-2026-03-03" --remote-dir /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --toc-depth 2`
   - `remarquee upload bundle ... --name "OS-08-CLEANUP-RICH-WIDGETS-update-2026-03-03" --remote-dir /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --toc-depth 2`
   - `remarquee cloud ls /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --long --non-interactive`
+
+## Step 9: Task 4 implementation — remove dead MacWrite toolbar/separator/status residue (2026-03-03)
+
+I continued the Phase D cleanup with another widget-scoped, low-risk residue removal. This step mirrors Task 3, but for MacWrite after its migration to shared primitives.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Ok"
+
+**Assistant interpretation:** Proceed with the next task in the same commit-and-diary cadence.
+
+**Inferred user intent:** Keep execution moving without pausing between small tasks.
+
+**Commit (code):** `63cd724d8cb0879d2876a2d9f5c6e68c230bc8c2` — "chore(rich-widgets): remove dead macwrite part selectors"
+
+### What I did
+- Updated:
+  - `packages/rich-widgets/src/parts.ts`
+  - `packages/rich-widgets/src/theme/mac-write.css`
+- Removed dead MacWrite part constants:
+  - `mwToolbar`
+  - `mwSeparator`
+  - `mwStatusBar`
+- Removed matching legacy selectors:
+  - `[data-part="mw-toolbar"]`
+  - `[data-part="mw-separator"]`
+  - `[data-part="mw-status-bar"]`
+- Verified no remaining references:
+  - `rg -n "mwToolbar|mwSeparator|mwStatusBar|mw-toolbar|mw-separator|mw-status-bar" packages/rich-widgets/src` → no matches
+- Validation:
+  - `npm run test -w packages/rich-widgets` (pass)
+  - `npm run storybook:check` (pass)
+
+### Why
+- `MacWrite.tsx` now renders `WidgetToolbar`, `Separator`, and `WidgetStatusBar`, so widget-specific toolbar/separator/status selectors are orphaned migration residue.
+- Removing them reduces duplicated style surface and dead part-key inventory.
+
+### What worked
+- Change was surgical and behavior-neutral (deletions only).
+- Validation checks stayed green.
+
+### What didn't work
+- N/A
+
+### What I learned
+- Widget-by-widget residue cleanup is straightforward and keeps diffs highly reviewable while steadily reducing global dead-key counts.
+
+### What should be done in the future
+- Continue Phase D with the next widget that has primitive migration residue (`KanbanBoard`, `NodeEditor`, `Oscilloscope`, etc.), one small commit each.
+
+### Technical details
+- Key commands:
+  - `rg -n "mwToolbar|mwSeparator|mwStatusBar|mw-toolbar|mw-separator|mw-status-bar" packages/rich-widgets/src || echo "no matches"`
+  - `npm run test -w packages/rich-widgets`
+  - `npm run storybook:check`
