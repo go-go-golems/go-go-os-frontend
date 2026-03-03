@@ -34,7 +34,6 @@ export const RICH_PARTS = {
 
   // LogViewer
   lv: 'lv',
-  lvToolbar: 'lv-toolbar',
   lvSearch: 'lv-search',
   lvActivity: 'lv-activity',
   lvTable: 'lv-table',
@@ -50,7 +49,6 @@ export const RICH_PARTS = {
   lvFilterGroup: 'lv-filter-group',
   lvFilterItem: 'lv-filter-item',
   lvControls: 'lv-controls',
-  lvStatusBar: 'lv-status-bar',
 
   // ChartView
   cv: 'cv',

@@ -45,13 +45,6 @@
   color: var(--hc-confirm-selected-fg);
 }
 
-[data-part="lv-toolbar"] {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--hc-color-border);
-}
-
 [data-part="lv-search"] {
   display: flex;
   align-items: center;
@@ -180,17 +173,6 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-}
-
-[data-part="lv-status-bar"] {
-  display: flex;
-  align-items: center;
-  border-top: 2px solid var(--hc-color-border);
-  padding: 2px 8px;
-  background: var(--hc-color-alt, #eee);
-  font-size: 9px;
-  gap: 12px;
-  flex-shrink: 0;
 }
 
 /* ── LogViewer compact mode ── */
