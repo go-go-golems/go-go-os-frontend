@@ -1,6 +1,10 @@
 import type { LaunchableAppModule } from '@hypercard/desktop-os';
 import type { OpenWindowPayload } from '@hypercard/engine/desktop-core';
 import type { ReactNode } from 'react';
+import {
+  richWidgetsLauncherActions,
+  richWidgetsLauncherReducer,
+} from './richWidgetsLauncherState';
 
 import { LogViewer } from '../log-viewer/LogViewer';
 import { ChartView } from '../chart-view/ChartView';
@@ -23,6 +27,8 @@ import { ChatBrowser } from '../chat-browser/ChatBrowser';
 import { SystemModeler } from '../system-modeler/SystemModeler';
 import { ControlRoom } from '../control-room/ControlRoom';
 
+type LaunchReason = 'icon' | 'menu' | 'command' | 'startup';
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -33,7 +39,7 @@ function buildWindow(
   icon: string,
   w: number,
   h: number,
-  reason: string,
+  reason: LaunchReason,
 ): OpenWindowPayload {
   return {
     id: `window:${appId}:${Date.now()}`,
@@ -56,7 +62,13 @@ function widget(
 ): LaunchableAppModule {
   return {
     manifest: { id, name, icon, launch: { mode: 'window' }, desktop: { order } },
-    buildLaunchWindow: (_ctx, reason) => buildWindow(id, name, icon, w, h, reason),
+    buildLaunchWindow: (
+      ctx: { dispatch: (action: unknown) => unknown },
+      reason: LaunchReason,
+    ) => {
+      ctx.dispatch(richWidgetsLauncherActions.markLaunched({ appId: id, reason }));
+      return buildWindow(id, name, icon, w, h, reason);
+    },
     renderWindow: () => render(),
   };
 }
@@ -65,10 +77,16 @@ function widget(
 // Widget launcher modules
 // ---------------------------------------------------------------------------
 
-export const logViewerModule = widget(
-  'log-viewer', 'Log Viewer', '\uD83D\uDCCB', 100, 900, 600,
-  () => <LogViewer />,
-);
+export const logViewerModule: LaunchableAppModule = {
+  ...widget(
+    'log-viewer', 'Log Viewer', '\uD83D\uDCCB', 100, 900, 600,
+    () => <LogViewer />,
+  ),
+  state: {
+    stateKey: 'app_rich_widgets',
+    reducer: richWidgetsLauncherReducer,
+  },
+};
 
 export const chartViewModule = widget(
   'chart-view', 'Chart View', '\uD83D\uDCC8', 101, 800, 560,
