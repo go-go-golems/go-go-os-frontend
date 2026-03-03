@@ -56,3 +56,8 @@
 - [x] Audit primitive adoption (ButtonGroup 0/20, SearchBar 1/6)
 - [x] Write post-cleanup code review report (design doc 02)
 - [x] Upload to reMarkable
+
+### Independent Re-Review (2026-03-03)
+- [x] Re-review OS-07 and OS-08 assumptions against current code and live Storybook
+- [x] Write independent analysis report (design doc 03)
+- [x] Upload independent review bundle to reMarkable
