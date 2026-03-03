@@ -646,3 +646,32 @@ I continued the Phase D cleanup with another widget-scoped, low-risk residue rem
   - `rg -n "mwToolbar|mwSeparator|mwStatusBar|mw-toolbar|mw-separator|mw-status-bar" packages/rich-widgets/src || echo "no matches"`
   - `npm run test -w packages/rich-widgets`
   - `npm run storybook:check`
+
+## Step 10: Re-upload OS-08 bundle after Task 4 (2026-03-03)
+
+I refreshed the reMarkable upload again so the cloud/device copy contains Task 4 cleanup evidence and updated ticket docs.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Ok"
+
+**Assistant interpretation:** Continue execution and keep deliverables synchronized.
+
+### What I did
+- Ran dry-run and real bundle upload with updated documents.
+- Uploaded artifact:
+  - `OS-08-CLEANUP-RICH-WIDGETS-update-2026-03-03-task4`
+  - destination `/ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS`
+- Verified directory contents via `remarquee cloud ls`.
+
+### What worked
+- Upload succeeded and listing now shows:
+  - `OS-08 Independent Rich Widget Review`
+  - `OS-08-CLEANUP-RICH-WIDGETS-update-2026-03-03`
+  - `OS-08-CLEANUP-RICH-WIDGETS-update-2026-03-03-task4`
+
+### Technical details
+- Key commands:
+  - `remarquee upload bundle --dry-run ... --name "OS-08-CLEANUP-RICH-WIDGETS-update-2026-03-03-task4" --remote-dir /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --toc-depth 2`
+  - `remarquee upload bundle ... --name "OS-08-CLEANUP-RICH-WIDGETS-update-2026-03-03-task4" --remote-dir /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --toc-depth 2`
+  - `remarquee cloud ls /ai/2026/03/03/OS-08-CLEANUP-RICH-WIDGETS --long --non-interactive`
