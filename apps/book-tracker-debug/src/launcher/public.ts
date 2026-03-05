@@ -1,0 +1,1 @@
+export { bookTrackerLauncherModule } from './module';

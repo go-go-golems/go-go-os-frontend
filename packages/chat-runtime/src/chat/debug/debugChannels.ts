@@ -1,4 +1,13 @@
-import createDebug from 'debug';
+import * as debugModule from 'debug';
+
+type DebugLogger = (formatter: unknown, ...args: unknown[]) => void;
+type DebugFactory = {
+  (namespace: string): DebugLogger;
+  enable: (pattern: string) => void;
+  disable: () => void;
+};
+
+const createDebug = ('default' in debugModule ? debugModule.default : debugModule) as unknown as DebugFactory;
 
 interface HypercardDebugController {
   enable: (pattern: string) => void;
@@ -42,4 +51,3 @@ export function getDebugLogger(namespace: string) {
   ensureDebugGlobal();
   return createDebug(namespace);
 }
-

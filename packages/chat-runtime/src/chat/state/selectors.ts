@@ -34,6 +34,10 @@ const EMPTY_CHAT_PROFILES: ChatProfilesState = {
 const EMPTY_CHAT_WINDOW: ChatWindowSliceState = {
   byWindowId: {},
 };
+const EMPTY_PROFILE_SELECTION: { profile: string | undefined; registry: string | undefined } = {
+  profile: undefined,
+  registry: undefined,
+};
 
 function normalizeSelectorValue(value: string | undefined): string {
   return String(value ?? '').trim();
@@ -254,8 +258,10 @@ export function selectCurrentProfileSelection(
       };
     }
   }
-  return {
-    profile: profiles.selectedProfile ?? undefined,
-    registry: profiles.selectedRegistry ?? undefined,
-  };
+  const profile = profiles.selectedProfile ?? undefined;
+  const registry = profiles.selectedRegistry ?? undefined;
+  if (profile === undefined && registry === undefined) {
+    return EMPTY_PROFILE_SELECTION;
+  }
+  return { profile, registry };
 }

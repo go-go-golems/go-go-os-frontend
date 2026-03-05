@@ -1,6 +1,6 @@
 import SINGLEFILE_RELEASE_SYNC from '@jitl/quickjs-singlefile-mjs-release-sync';
 import { newQuickJSWASMModule } from 'quickjs-emscripten';
-import type { QuickJSContext, QuickJSRuntime, QuickJSWASMModule } from 'quickjs-emscripten';
+import type { QuickJSContext, QuickJSRuntime, QuickJSWASMModule } from 'quickjs-emscripten-core';
 import { validateRuntimeIntents } from './intentSchema';
 import type {
   CardId,

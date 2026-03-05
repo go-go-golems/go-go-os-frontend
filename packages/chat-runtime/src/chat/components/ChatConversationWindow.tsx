@@ -1,5 +1,5 @@
 import { type MouseEvent, type ReactNode, useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import {
   useDesktopWindowId,
   useOpenDesktopContextMenu,
@@ -110,13 +110,13 @@ export function ChatConversationWindow({
 
   const entities = useSelector((state: ChatStateSlice & Record<string, unknown>) =>
     selectRenderableTimelineEntities(state, convId)
-  );
+  , shallowEqual);
   const starterSuggestionsEntity = useSelector((state: ChatStateSlice & Record<string, unknown>) =>
     selectTimelineEntityById(state, convId, STARTER_SUGGESTIONS_ENTITY_ID)
   );
   const suggestions = useSelector((state: ChatStateSlice & Record<string, unknown>) =>
     selectSuggestions(state, convId)
-  );
+  , shallowEqual);
   const modelName = useSelector((state: ChatStateSlice & Record<string, unknown>) =>
     selectModelName(state, convId)
   );

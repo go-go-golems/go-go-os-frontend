@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import createDebug from 'debug';
+import * as debugModule from 'debug';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { clearToast, showToast } from '../../../features/notifications/notificationsSlice';
 import { type NotificationsStateSlice, selectToast } from '../../../features/notifications/selectors';
@@ -78,6 +78,11 @@ import {
   renderWindowContentWithAdapters,
   type WindowContentAdapter,
 } from './windowContentAdapter';
+
+type DebugLogger = (formatter: string, ...args: unknown[]) => void;
+type DebugFactory = (namespace: string) => DebugLogger;
+
+const createDebug = ('default' in debugModule ? debugModule.default : debugModule) as unknown as DebugFactory;
 import { useWindowInteractionController } from './useWindowInteractionController';
 
 type ShellState = WindowingStateSlice & NotificationsStateSlice & Record<string, unknown>;

@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { getCurrentProfile, listProfiles } from './profileApi';
 import type { ChatProfileListItem } from './profileTypes';
 import {
@@ -76,7 +76,10 @@ export function useProfiles(
   const profiles = useSelector((state: ProfilesStoreState) => selectAvailableProfiles(state));
   const loading = useSelector((state: ProfilesStoreState) => selectProfileLoading(state));
   const error = useSelector((state: ProfilesStoreState) => selectProfileError(state));
-  const selected = useSelector((state: ProfilesStoreState) => selectCurrentProfileSelection(state, scopeKey));
+  const selected = useSelector(
+    (state: ProfilesStoreState) => selectCurrentProfileSelection(state, scopeKey),
+    shallowEqual
+  );
 
   const refresh = useCallback(async () => {
     if (!enabled) {
