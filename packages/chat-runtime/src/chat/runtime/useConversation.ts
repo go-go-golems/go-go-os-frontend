@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { chatSessionSlice, createChatError } from '../state/chatSessionSlice';
 import {
   type ChatStateSlice,
@@ -88,7 +88,7 @@ export function useConversation(convId: string, basePrefix = '', scopeKey?: stri
   );
   const profileSelection = useSelector((state: ConversationStoreState) =>
     selectCurrentProfileSelection(state, normalizedScopeKey)
-  );
+  , shallowEqual);
   const selectedProfile = normalizeSnapshotValue(profileSelection.profile) || undefined;
   const selectedRegistry = normalizeSnapshotValue(profileSelection.registry) || undefined;
   const lastEffectSnapshotRef = useRef<ConversationEffectSnapshot | null>(null);

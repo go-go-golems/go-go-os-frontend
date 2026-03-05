@@ -9,6 +9,13 @@ import type {
   ReflectionResult,
 } from '../domain/types';
 
+function resolveApiBaseUrl(): string {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+  return 'http://127.0.0.1';
+}
+
 function toCSV(values?: string[]): string | undefined {
   if (!values || values.length === 0) {
     return undefined;
@@ -45,7 +52,7 @@ function buildOSDocsPath(query?: OSDocsQuery): string {
 
 export const appsApi = createApi({
   reducerPath: 'appsApi',
-  baseQuery: fetchBaseQuery({ baseUrl: '' }),
+  baseQuery: fetchBaseQuery({ baseUrl: resolveApiBaseUrl() }),
   tagTypes: ['AppsList', 'Reflection', 'DocsTOC', 'DocsPage', 'OSDocs', 'HelpDocs', 'HelpPage'],
   endpoints: (builder) => ({
     getApps: builder.query<import('../domain/types').AppManifestDocument[], void>({
