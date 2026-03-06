@@ -18,6 +18,12 @@ export interface Friend {
   emoji: string;
 }
 
+export interface SteamLauncherProps {
+  games?: SteamGame[];
+  friends?: Friend[];
+  height?: number | string;
+}
+
 export type SteamTab = 'library' | 'store' | 'community' | 'downloads';
 export type GameFilter = 'all' | 'installed' | 'notinstalled';
 

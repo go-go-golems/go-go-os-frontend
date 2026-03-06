@@ -60,6 +60,10 @@ import {
   streamLauncherReducer,
 } from '../stream-launcher/streamLauncherState';
 import { SteamLauncher } from '../steam-launcher/SteamLauncher';
+import {
+  STEAM_LAUNCHER_STATE_KEY,
+  steamLauncherReducer,
+} from '../steam-launcher/steamLauncherState';
 import { YouTubeRetro } from '../youtube-retro/YouTubeRetro';
 import { ChatBrowser } from '../chat-browser/ChatBrowser';
 import {
@@ -256,10 +260,16 @@ export const streamLauncherModule: LaunchableAppModule = {
   },
 };
 
-export const steamLauncherModule = widget(
-  'steam-launcher', 'Game Library', '\uD83D\uDD79\uFE0F', 115, 960, 680,
-  () => <SteamLauncher />,
-);
+export const steamLauncherModule: LaunchableAppModule = {
+  ...widget(
+    'steam-launcher', 'Game Library', '\uD83D\uDD79\uFE0F', 115, 960, 680,
+    () => <SteamLauncher />,
+  ),
+  state: {
+    stateKey: STEAM_LAUNCHER_STATE_KEY,
+    reducer: steamLauncherReducer,
+  },
+};
 
 export const youtubeRetroModule = widget(
   'youtube-retro', 'RetroTube', '\uD83C\uDFAC', 116, 960, 680,

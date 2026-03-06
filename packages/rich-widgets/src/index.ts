@@ -278,11 +278,9 @@ export { SAMPLE_GAMES } from './game-finder/sampleData';
 export { drawGameArt } from './game-finder/gameArt';
 
 // StreamLauncher
+export { StreamLauncher } from './stream-launcher/StreamLauncher';
 export {
-  StreamLauncher,
   type StreamLauncherProps,
-} from './stream-launcher/StreamLauncher';
-export {
   STREAM_LAUNCHER_STATE_KEY,
   createStreamLauncherStateSeed,
   selectStreamLauncherState,
@@ -302,10 +300,15 @@ export { STREAMS, CHAT_MESSAGES } from './stream-launcher/sampleData';
 export { drawStreamThumb } from './stream-launcher/streamArt';
 
 // SteamLauncher
+export { SteamLauncher } from './steam-launcher/SteamLauncher';
 export {
-  SteamLauncher,
   type SteamLauncherProps,
-} from './steam-launcher/SteamLauncher';
+  STEAM_LAUNCHER_STATE_KEY,
+  createSteamLauncherStateSeed,
+  selectSteamLauncherState,
+  steamLauncherActions,
+  steamLauncherReducer,
+} from './steam-launcher/steamLauncherState';
 export {
   type SteamGame,
   type Friend,
