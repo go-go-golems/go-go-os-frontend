@@ -25,47 +25,15 @@ describe('artifactProjectionMiddleware', () => {
     clearRuntimeCardRegistry();
   });
 
-  it('projects artifact upsert from hypercard_widget timeline entity', async () => {
-    const store = createStore();
-    const entity: TimelineEntity = {
-      id: 'widget:widget-123',
-      kind: 'hypercard_widget',
-      createdAt: 1,
-      props: {
-        title: 'Inventory Snapshot',
-        rawData: {
-          title: 'Inventory Snapshot',
-          widgetType: 'report',
-          data: {
-            artifact: {
-              id: '"inventory-snapshot-1"',
-              data: { totalSkus: 12 },
-            },
-          },
-        },
-      },
-    };
-
-    store.dispatch(timelineSlice.actions.upsertEntity({ convId: 'conv-1', entity }));
-    await flushListeners();
-
-    const artifact = store.getState().hypercardArtifacts.byId['inventory-snapshot-1'];
-    expect(artifact).toBeDefined();
-    expect(artifact.source).toBe('widget');
-    expect(artifact.template).toBe('report');
-    expect(artifact.data).toEqual({ totalSkus: 12 });
-  });
-
   it('projects artifacts from snapshot entities and registers runtime cards', async () => {
     const store = createStore();
     const entities: TimelineEntity[] = [
       {
-        id: 'card:card-123',
-        kind: 'hypercard_card',
+        id: 'evt-card:result',
+        kind: 'hypercard.card.v2',
         createdAt: 2,
         props: {
-          title: 'Low Stock Card',
-          rawData: {
+          result: {
             title: 'Low Stock Card',
             data: {
               artifact: {
@@ -92,17 +60,27 @@ describe('artifactProjectionMiddleware', () => {
     expect(hasRuntimeCard('runtime-low-stock')).toBe(true);
   });
 
-  it('projects artifacts from mergeSnapshot entities', async () => {
+  it('projects artifacts from mergeSnapshot entities for first-class card kinds', async () => {
     const store = createStore();
     const entities: TimelineEntity[] = [
       {
-        id: 'widget:inventory-status',
-        kind: 'hypercard_widget',
+        id: 'evt-card:result',
+        kind: 'hypercard.card.v2',
         createdAt: 3,
         props: {
-          title: 'Current Inventory Status',
-          template: 'report',
-          artifactId: 'inventory-status-current',
+          result: {
+            title: 'Current Inventory Status',
+            data: {
+              artifact: {
+                id: 'inventory-status-current',
+                data: { totalSkus: 14 },
+              },
+              card: {
+                id: 'runtimeInventoryStatus',
+                code: '({ ui }) => ({ render() { return ui.text("status"); } })',
+              },
+            },
+          },
         },
       },
     ];
@@ -113,7 +91,7 @@ describe('artifactProjectionMiddleware', () => {
     const artifact = store.getState().hypercardArtifacts.byId['inventory-status-current'];
     expect(artifact).toBeDefined();
     expect(artifact.title).toBe('Current Inventory Status');
-    expect(artifact.template).toBe('report');
-    expect(artifact.source).toBe('widget');
+    expect(artifact.source).toBe('card');
+    expect(artifact.runtimeCardId).toBe('runtimeInventoryStatus');
   });
 });

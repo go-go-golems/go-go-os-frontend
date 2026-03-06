@@ -22,7 +22,6 @@ export function normalizeArtifactId(raw: unknown): string | undefined {
     return undefined;
   }
 
-  // Handle doubly-wrapped ids such as "\"sales-summary-2026-02-20\"".
   for (let i = 0; i < 2; i += 1) {
     const isDoubleQuoted = value.startsWith('"') && value.endsWith('"');
     const isSingleQuoted = value.startsWith("'") && value.endsWith("'");
@@ -33,17 +32,10 @@ export function normalizeArtifactId(raw: unknown): string | undefined {
     break;
   }
 
-  if (!value) {
-    return undefined;
-  }
-  return value;
+  return value || undefined;
 }
 
-function artifactFromStructured(
-  record: Record<string, unknown>,
-  source: ArtifactSource,
-  template?: string,
-): ArtifactUpsert | undefined {
+function artifactFromStructured(record: Record<string, unknown>): ArtifactUpsert | undefined {
   const payload = recordField(record, 'data');
   const artifact = payload ? recordField(payload, 'artifact') : undefined;
   const artifactId = normalizeArtifactId(artifact ? stringField(artifact, 'id') : undefined);
@@ -53,43 +45,43 @@ function artifactFromStructured(
   return {
     id: artifactId,
     title: stringField(record, 'title'),
-    template,
     data: artifact ? recordField(artifact, 'data') : undefined,
-    source,
+    source: 'card',
   };
 }
 
-function artifactFromTimelineToolResult(
-  toolResult: Record<string, unknown>,
-  kindHint?: 'widget' | 'card',
-): ArtifactUpsert | undefined {
-  const effectiveKind: 'widget' | 'card' | undefined = kindHint;
-  const resultRecord =
-    structuredRecordFromUnknown(toolResult.result) ?? structuredRecordFromUnknown(toolResult.resultRaw);
-  if (!effectiveKind || !resultRecord) {
+function cardFieldsFromStructured(record: Record<string, unknown>): {
+  runtimeCardId?: string;
+  runtimeCardCode?: string;
+} {
+  const payload = recordField(record, 'data');
+  const card = payload ? recordField(payload, 'card') : undefined;
+  if (!card) {
+    return {};
+  }
+  return {
+    runtimeCardId: stringField(card, 'id'),
+    runtimeCardCode: stringField(card, 'code'),
+  };
+}
+
+function artifactFromCardResult(resultRecord: Record<string, unknown>): ArtifactUpsert | undefined {
+  const upsert = artifactFromStructured(resultRecord);
+  if (!upsert) {
     return undefined;
   }
-  if (effectiveKind === 'widget') {
-    const template =
-      stringField(resultRecord, 'widgetType') ??
-      stringField(resultRecord, 'type') ??
-      stringField(resultRecord, 'template');
-    return artifactFromStructured(resultRecord, 'widget', template);
-  }
-  if (effectiveKind === 'card') {
-    const upsert = artifactFromStructured(resultRecord, 'card', stringField(resultRecord, 'template'));
-    if (upsert) {
-      const cardData =
-        recordField(resultRecord, 'card') ??
-        (resultRecord.data ? recordField(resultRecord.data as Record<string, unknown>, 'card') : undefined);
-      if (cardData) {
-        upsert.runtimeCardId = stringField(cardData, 'id');
-        upsert.runtimeCardCode = stringField(cardData, 'code');
-      }
-    }
-    return upsert;
-  }
-  return undefined;
+  return {
+    ...upsert,
+    ...cardFieldsFromStructured(resultRecord),
+  };
+}
+
+function artifactFromTimelineCardProps(props: Record<string, unknown>): ArtifactUpsert | undefined {
+  const resultRecord =
+    structuredRecordFromUnknown(props.result) ??
+    structuredRecordFromUnknown(props.resultRaw) ??
+    props;
+  return artifactFromCardResult(resultRecord);
 }
 
 export function extractArtifactUpsertFromSem(
@@ -100,23 +92,8 @@ export function extractArtifactUpsertFromSem(
     return undefined;
   }
 
-  if (type === 'hypercard.widget.v1') {
-    const template = stringField(data, 'widgetType') ?? stringField(data, 'type') ?? stringField(data, 'template');
-    return artifactFromStructured(data, 'widget', template);
-  }
-
   if (type === 'hypercard.card.v2') {
-    const upsert = artifactFromStructured(data, 'card');
-    if (upsert) {
-      // Extract runtime card fields from the payload
-      const payload = recordField(data, 'data');
-      const cardData = payload ? recordField(payload, 'card') : undefined;
-      if (cardData) {
-        upsert.runtimeCardId = stringField(cardData, 'id');
-        upsert.runtimeCardCode = stringField(cardData, 'code');
-      }
-    }
-    return upsert;
+    return artifactFromCardResult(data);
   }
 
   if (type !== 'timeline.upsert') {
@@ -129,94 +106,29 @@ export function extractArtifactUpsertFromSem(
   }
 
   const entityKind = stringField(entity, 'kind');
-  if (
-    entityKind !== 'hypercard.widget.v1' &&
-    entityKind !== 'hypercard.card.v2'
-  ) {
+  if (entityKind !== 'hypercard.card.v2') {
     return undefined;
   }
 
-  // Legacy V1 projection: entity.toolResult
-  // Timeline V2 projection: entity.props
-  const toolResult = recordField(entity, 'toolResult') ?? recordField(entity, 'props');
-  if (!toolResult) {
-    return undefined;
-  }
-  const hint = entityKind === 'hypercard.widget.v1' ? 'widget' : 'card';
-  return artifactFromTimelineToolResult(toolResult, hint);
-}
-
-function upsertFromHypercardEntityProps(
-  entityKind: string,
-  props: Record<string, unknown>,
-): ArtifactUpsert | undefined {
-  const preferredSource: ArtifactSource = entityKind === 'hypercard_card' ? 'card' : 'widget';
-  const rawData = recordField(props, 'rawData');
-
-  if (rawData) {
-    const fromRaw = artifactFromStructured(
-      rawData,
-      preferredSource,
-      stringField(rawData, 'widgetType') ?? stringField(rawData, 'type') ?? stringField(rawData, 'template'),
-    );
-    if (fromRaw) {
-      if (preferredSource === 'card') {
-        const payload = recordField(rawData, 'data');
-        const cardData = payload ? recordField(payload, 'card') : undefined;
-        if (cardData) {
-          fromRaw.runtimeCardId = stringField(cardData, 'id');
-          fromRaw.runtimeCardCode = stringField(cardData, 'code');
-        }
-      }
-      return fromRaw;
-    }
-  }
-
-  const toolLike = artifactFromTimelineToolResult(props, preferredSource);
-  if (toolLike) {
-    return toolLike;
-  }
-
-  const fallbackId = normalizeArtifactId(stringField(props, 'artifactId'));
-  if (!fallbackId) {
+  const props = recordField(entity, 'props');
+  if (!props) {
     return undefined;
   }
 
-  return {
-    id: fallbackId,
-    title: stringField(props, 'title'),
-    template: stringField(props, 'template'),
-    source: preferredSource,
-    runtimeCardId: stringField(props, 'runtimeCardId'),
-    runtimeCardCode: stringField(props, 'runtimeCardCode'),
-  };
+  return artifactFromTimelineCardProps(props);
 }
 
 export function extractArtifactUpsertFromTimelineEntity(
   entityKind: string | undefined,
   props: unknown,
 ): ArtifactUpsert | undefined {
-  const kind = String(entityKind || '');
-  if (!kind) {
+  if (String(entityKind || '') !== 'hypercard.card.v2') {
     return undefined;
   }
-
   if (!props || typeof props !== 'object' || Array.isArray(props)) {
     return undefined;
   }
-  const record = props as Record<string, unknown>;
-
-  if (kind === 'hypercard_widget' || kind === 'hypercard_card') {
-    return upsertFromHypercardEntityProps(kind, record);
-  }
-  if (kind === 'hypercard.widget.v1') {
-    return artifactFromTimelineToolResult(record, 'widget');
-  }
-  if (kind === 'hypercard.card.v2') {
-    return artifactFromTimelineToolResult(record, 'card');
-  }
-
-  return undefined;
+  return artifactFromTimelineCardProps(props as Record<string, unknown>);
 }
 
 function sanitizeArtifactKey(value: string): string {

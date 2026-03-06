@@ -302,8 +302,7 @@ const KIND_COLORS: Record<string, string> = {
   user_message: '#10b981',
   tool_call: '#f59e0b',
   tool_result: '#f59e0b',
-  hypercard_widget: '#8b5cf6',
-  hypercard_card: '#8b5cf6',
+  'hypercard.card.v2': '#8b5cf6',
   suggestions: '#6366f1',
 };
 
