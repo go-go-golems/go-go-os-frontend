@@ -1,0 +1,108 @@
+[data-part='mac-browser'] {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+[data-part='mb-address-bar'] {
+  flex: 1;
+  min-width: 140px;
+  padding: 4px 8px;
+  border: 1px solid var(--hc-color-border);
+  background: var(--hc-color-bg);
+  color: var(--hc-color-fg);
+}
+
+[data-part='mb-body'] {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+[data-part='mb-content'],
+[data-part='mb-editor'] {
+  height: 100%;
+  min-height: 0;
+  padding: 16px 20px;
+}
+
+[data-part='mb-editor'] {
+  width: 100%;
+  border: 0;
+  resize: none;
+  outline: none;
+  font: 13px/1.5 var(--hc-font-mono, monospace);
+  background: var(--hc-color-bg);
+  color: var(--hc-color-fg);
+}
+
+[data-part='mb-empty'] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  color: var(--hc-color-muted);
+}
+
+[data-part='mb-content'] h1,
+[data-part='mb-content'] h2,
+[data-part='mb-content'] h3 {
+  margin: 0 0 10px;
+}
+
+[data-part='mb-content'] p,
+[data-part='mb-content'] li,
+[data-part='mb-content'] blockquote {
+  line-height: 1.5;
+}
+
+[data-part='mb-content'] hr {
+  border: 0;
+  border-top: 1px solid var(--hc-color-border);
+  margin: 12px 0;
+}
+
+[data-part='mb-content'] blockquote {
+  margin: 10px 0;
+  padding: 6px 12px;
+  border-left: 3px solid var(--hc-color-border);
+  background: var(--hc-color-panel);
+}
+
+[data-part='mb-content'] code,
+[data-part='mb-content'] pre {
+  font-family: var(--hc-font-mono, monospace);
+}
+
+[data-part='mb-content'] pre {
+  padding: 10px 12px;
+  border: 1px solid var(--hc-color-border);
+  background: var(--hc-color-panel);
+  overflow: auto;
+}
+
+[data-part='mb-content'] table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+}
+
+[data-part='mb-content'] th,
+[data-part='mb-content'] td {
+  border: 1px solid var(--hc-color-border);
+  padding: 4px 8px;
+  text-align: left;
+}
+
+[data-part='mb-content'] th {
+  background: var(--hc-color-panel);
+}
+
+[data-part='mb-content'] .mac-browser-link {
+  color: var(--hc-color-accent);
+  text-decoration: underline;
+  cursor: pointer;
+}

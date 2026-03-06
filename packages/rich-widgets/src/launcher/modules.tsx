@@ -112,6 +112,16 @@ import {
   CONTROL_ROOM_STATE_KEY,
   controlRoomReducer,
 } from '../control-room/controlRoomState';
+import { MermaidEditor } from '../mermaid-editor/MermaidEditor';
+import {
+  MERMAID_EDITOR_STATE_KEY,
+  mermaidEditorReducer,
+} from '../mermaid-editor/mermaidEditorState';
+import { MacBrowser } from '../mac-browser/MacBrowser';
+import {
+  MAC_BROWSER_STATE_KEY,
+  macBrowserReducer,
+} from '../mac-browser/macBrowserState';
 
 type LaunchReason = 'icon' | 'menu' | 'command' | 'startup';
 
@@ -397,6 +407,28 @@ export const controlRoomModule: LaunchableAppModule = {
   },
 };
 
+export const mermaidEditorModule: LaunchableAppModule = {
+  ...widget(
+    'mermaid-editor', 'MermaidEditor', '🧭', 121, 980, 680,
+    () => <MermaidEditor />,
+  ),
+  state: {
+    stateKey: MERMAID_EDITOR_STATE_KEY,
+    reducer: mermaidEditorReducer,
+  },
+};
+
+export const macBrowserModule: LaunchableAppModule = {
+  ...widget(
+    'mac-browser', 'MacBrowser', '🌐', 122, 920, 680,
+    () => <MacBrowser />,
+  ),
+  state: {
+    stateKey: MAC_BROWSER_STATE_KEY,
+    reducer: macBrowserReducer,
+  },
+};
+
 // ---------------------------------------------------------------------------
 // All modules as a single array for convenience
 // ---------------------------------------------------------------------------
@@ -423,4 +455,6 @@ export const RICH_WIDGET_MODULES: readonly LaunchableAppModule[] = [
   chatBrowserModule,
   systemModelerModule,
   controlRoomModule,
+  mermaidEditorModule,
+  macBrowserModule,
 ];

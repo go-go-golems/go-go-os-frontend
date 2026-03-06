@@ -479,5 +479,41 @@ export {
   type SwitchKey,
 } from './control-room/types';
 
+// MermaidEditor
+export {
+  MermaidEditor,
+  type MermaidEditorProps,
+} from './mermaid-editor/MermaidEditor';
+export {
+  MERMAID_EDITOR_STATE_KEY,
+  createMermaidEditorStateSeed,
+  mermaidEditorActions,
+  mermaidEditorReducer,
+  selectMermaidEditorState,
+} from './mermaid-editor/mermaidEditorState';
+export {
+  type MermaidPresetId,
+  type MermaidPreset,
+} from './mermaid-editor/types';
+export {
+  MERMAID_PRESETS,
+  DEFAULT_MERMAID_PRESET,
+} from './mermaid-editor/sampleData';
+
+// MacBrowser
+export {
+  MacBrowser,
+  type MacBrowserProps,
+} from './mac-browser/MacBrowser';
+export {
+  MAC_BROWSER_STATE_KEY,
+  createMacBrowserStateSeed,
+  macBrowserActions,
+  macBrowserReducer,
+  selectMacBrowserState,
+} from './mac-browser/macBrowserState';
+export { MAC_BROWSER_SAMPLE_PAGES } from './mac-browser/sampleData';
+export { parseBrowserMarkdown } from './mac-browser/markdown';
+
 // Parts
 export { RICH_PARTS, type RichPartName } from './parts';

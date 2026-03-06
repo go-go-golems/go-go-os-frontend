@@ -678,6 +678,26 @@ export const RICH_PARTS = {
   crScopeMeta: 'cr-scope-meta',
   crResourceCol: 'cr-resource-col',
   crFooter: 'cr-footer',
+
+  // MermaidEditor
+  mermaidEditor: 'mermaid-editor',
+  meBody: 'me-body',
+  mePane: 'me-pane',
+  mePaneHeader: 'me-pane-header',
+  meEditor: 'me-editor',
+  meSplitter: 'me-splitter',
+  mePreviewArea: 'me-preview-area',
+  meDiagram: 'me-diagram',
+  meMessage: 'me-message',
+  meAbout: 'me-about',
+
+  // MacBrowser
+  macBrowser: 'mac-browser',
+  mbAddressBar: 'mb-address-bar',
+  mbBody: 'mb-body',
+  mbContent: 'mb-content',
+  mbEditor: 'mb-editor',
+  mbEmpty: 'mb-empty',
 } as const;
 
 export type RichPartName = (typeof RICH_PARTS)[keyof typeof RICH_PARTS];
