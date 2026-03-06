@@ -28,3 +28,6 @@
 - Completed Task 9: migrated `StreamLauncher` to a dedicated Redux slice, added reducer tests, launcher wiring, and Redux-seeded browse/player stories
 - Re-ran `docmgr doctor --ticket OS-17-RICH-WIDGET-REDUX-ROLLOUT --stale-after 30` after Task 9 with all checks passing
 - Uploaded the refreshed OS-17 bundle to reMarkable at `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT` as `OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task9`
+- Completed Task 10: migrated `SteamLauncher` to a dedicated Redux slice, added reducer tests, launcher wiring, and Redux-seeded library/install/launch stories
+- Re-ran `docmgr doctor --ticket OS-17-RICH-WIDGET-REDUX-ROLLOUT --stale-after 30` after Task 10 with all checks passing
+- Uploaded the refreshed OS-17 bundle to reMarkable at `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT` as `OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task10`
