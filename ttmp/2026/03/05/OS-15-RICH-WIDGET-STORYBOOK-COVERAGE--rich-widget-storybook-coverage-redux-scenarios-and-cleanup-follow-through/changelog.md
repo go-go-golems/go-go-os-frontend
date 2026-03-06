@@ -14,3 +14,6 @@
   - workspace `rootDir` / file-list issues involving `packages/engine`
   - missing `@hypercard/desktop-os` type resolution in `packages/rich-widgets`
   - existing `Oscilloscope.tsx` setter-signature errors unrelated to the story changes
+- Added shared Redux-story seeding helpers in `packages/rich-widgets/src/storybook/seededStore.tsx` and refactored `packages/rich-widgets/src/launcher/RichWidgetsDesktop.stories.tsx` to use them.
+- Added `SeedAnalysisSuite` to the desktop integration story file as a concrete seeded-store example.
+- Updated `ttmp/2026/03/01/OS-07-ADD-RICH-WIDGETS--import-and-integrate-rich-macos-widgets-into-frontend-collection/playbooks/01-widget-porting-playbook.md` to reflect the Storybook-first cleanup workflow, the new seed-vs-Redux state policy, and the shared story helper files.

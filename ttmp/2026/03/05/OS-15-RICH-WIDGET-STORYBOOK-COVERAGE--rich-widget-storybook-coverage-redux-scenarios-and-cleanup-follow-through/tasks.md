@@ -5,7 +5,7 @@
 ### Shared Harness
 
 - [x] Add shared rich-widget story frame helpers
-- [ ] Add reusable seeded-story wrapper pattern and document usage
+- [x] Add reusable seeded-story wrapper pattern and document usage
 
 ### Widget Story Matrix
 
@@ -34,4 +34,4 @@
 
 - [x] Re-run story audit and record updated matrix coverage
 - [x] Identify widgets that now require Redux-backed seed state
-- [ ] Update OS-07 playbook with the Storybook-first cleanup workflow
+- [x] Update OS-07 playbook with the Storybook-first cleanup workflow

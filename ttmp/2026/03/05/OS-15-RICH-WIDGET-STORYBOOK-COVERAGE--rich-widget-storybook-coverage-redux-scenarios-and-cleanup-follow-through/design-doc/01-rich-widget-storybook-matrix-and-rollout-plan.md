@@ -132,10 +132,10 @@ The remaining widgets are still worth making more seedable, but they do not yet 
 
 Shared work that should land before broad widget conversion:
 
-1. Story frame helpers for fullscreen and fixed-window rendering.
-2. Reusable naming convention for stories (`Default`, `Empty`, `Compact`, then domain-specific names).
-3. Seed wrapper patterns for widgets that need temporary local-state setup before Redux slices exist.
-4. Follow-on store helper for widgets that migrate to Redux-backed seeded scenarios.
+1. Story frame helpers for fullscreen and fixed-window rendering. ✅ `packages/rich-widgets/src/storybook/frameDecorators.tsx`
+2. Reusable naming convention for stories (`Default`, `Empty`, `Compact`, then domain-specific names). ✅ applied across the story sweep
+3. Seed wrapper patterns for widgets that need temporary local-state setup before Redux slices exist. ✅ `packages/rich-widgets/src/storybook/seededStore.tsx`
+4. Follow-on store helper for widgets that migrate to Redux-backed seeded scenarios. ✅ first usage in `packages/rich-widgets/src/launcher/RichWidgetsDesktop.stories.tsx`
 
 ## Rollout Order
 

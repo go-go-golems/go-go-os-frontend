@@ -194,3 +194,38 @@ After the helper landed, I expanded all 20 composite widget story files. The imp
   - `npm run typecheck -w packages/rich-widgets`
 - Code commit for the story sweep:
   - `b59b3cc feat(rich-widgets): expand story coverage across widgets`
+
+## Step 3: Add the reusable seeded-store pattern and close the follow-through task
+
+The first story sweep still left one important harness gap: the package had a Redux-backed story pattern only inside `RichWidgetsDesktop.stories.tsx`, and that logic was trapped inside the story file. I extracted that pattern into a shared helper so future widget slices can use the same seeded-store story path instead of rewriting provider/store setup each time.
+
+I added `packages/rich-widgets/src/storybook/seededStore.tsx` with two pieces:
+- `SeededStoreProvider` to create a store once per story render and optionally seed it before the component tree mounts
+- `composeSeedStores` to combine multiple seed functions into a single scenario
+
+I then refactored `packages/rich-widgets/src/launcher/RichWidgetsDesktop.stories.tsx` to use the shared helper and added `SeedAnalysisSuite` as an example seeded-store scenario. After that, I updated the OS-07 playbook so the porting guidance now reflects the actual story workflow we want: prop stories first, seeded wrappers next, Redux slices only when the state is durable or externally meaningful.
+
+### What I did
+- Added `packages/rich-widgets/src/storybook/seededStore.tsx`.
+- Refactored `packages/rich-widgets/src/launcher/RichWidgetsDesktop.stories.tsx` to use the shared provider helper.
+- Added the `SeedAnalysisSuite` launcher story to demonstrate composed seed functions.
+- Updated `ttmp/2026/03/01/OS-07-ADD-RICH-WIDGETS--import-and-integrate-rich-macos-widgets-into-frontend-collection/playbooks/01-widget-porting-playbook.md`.
+- Closed the remaining OS-15 shared-harness and playbook follow-through tasks.
+
+### Why
+- The story sweep needed a reusable Redux-backed seeding path before the next state-migration ticket starts.
+- The OS-07 playbook needed to stop recommending blanket Redux usage and start recommending the Storybook-first state decision ladder we actually want.
+
+### What worked
+- The launcher desktop integration story was the right extraction point because it already had real seeded-store scenarios.
+- `composeSeedStores` is simple enough to be reusable without locking us into a heavyweight story DSL.
+
+### What didn't work
+- No new failures in this step. I reused the existing validation set and did not re-run the known-bad package typecheck.
+
+### Technical details
+- Validation:
+  - `npm run storybook:check`
+  - `npm run test -w packages/rich-widgets`
+- Pending commit for this step:
+  - shared seeded-store helper + OS-07/OS-15 doc updates

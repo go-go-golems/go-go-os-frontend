@@ -1,7 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
 import { type ReactNode, useMemo } from 'react';
-import { Provider } from 'react-redux';
 import { windowingReducer, openWindow, type OpenWindowPayload } from '@hypercard/engine/desktop-core';
 import { notificationsReducer, type CardStackDefinition } from '@hypercard/engine';
 import { DesktopShell, type DesktopIconDef, type DesktopContribution, type DesktopCommandHandler } from '@hypercard/engine/desktop-react';
@@ -26,6 +25,11 @@ import { YouTubeRetro } from '../youtube-retro/YouTubeRetro';
 import { ChatBrowser } from '../chat-browser/ChatBrowser';
 import { SystemModeler } from '../system-modeler/SystemModeler';
 import { ControlRoom } from '../control-room/ControlRoom';
+import {
+  SeededStoreProvider,
+  composeSeedStores,
+  type SeedStore,
+} from '../storybook/seededStore';
 
 // ---------------------------------------------------------------------------
 // Widget registry for the story
@@ -153,7 +157,7 @@ function createStore() {
 }
 
 type RichWidgetsDesktopStore = ReturnType<typeof createStore>;
-type SeedStore = (store: RichWidgetsDesktopStore) => void;
+type DesktopSeedStore = SeedStore<RichWidgetsDesktopStore>;
 
 function renderAppWindow(appKey: string): ReactNode {
   const w = WIDGET_MAP.get(appKey);
@@ -161,7 +165,7 @@ function renderAppWindow(appKey: string): ReactNode {
   return <div style={{ width: '100%', height: '100%', overflow: 'auto' }}>{w.render()}</div>;
 }
 
-function seedWindows(widgetIds: readonly string[]): SeedStore {
+function seedWindows(widgetIds: readonly string[]): DesktopSeedStore {
   return (store) => {
     for (const widgetId of widgetIds) {
       const widget = WIDGET_MAP.get(widgetId);
@@ -184,19 +188,18 @@ const SEED_INSTRUMENTS = seedWindows([
   'logic-analyzer',
   'system-modeler',
 ]);
+const SEED_ANALYSIS_SUITE = composeSeedStores<RichWidgetsDesktopStore>(
+  seedWindows(['log-viewer', 'chart-view']),
+  seedWindows(['graph-navigator', 'deep-research']),
+);
 
 function RichWidgetsDesktopFrame({
   startupWidget,
   seedStore,
 }: {
   startupWidget?: string;
-  seedStore?: SeedStore;
+  seedStore?: DesktopSeedStore;
 }) {
-  const store = useMemo(() => {
-    const seededStore = createStore();
-    seedStore?.(seededStore);
-    return seededStore;
-  }, [seedStore]);
   const contributions = useMemo<DesktopContribution[]>(() => {
     const result: DesktopContribution[] = [
       { id: 'rich-widgets-launchers', commands: ICON_OPEN_COMMANDS },
@@ -214,7 +217,7 @@ function RichWidgetsDesktopFrame({
   }, [startupWidget]);
 
   return (
-    <Provider store={store}>
+    <SeededStoreProvider createStore={createStore} seedStore={seedStore}>
       <div style={{ width: 1200, height: 800 }}>
         <DesktopShell
           stack={SHELL_STACK}
@@ -223,7 +226,7 @@ function RichWidgetsDesktopFrame({
           contributions={contributions}
         />
       </div>
-    </Provider>
+    </SeededStoreProvider>
   );
 }
 
@@ -232,7 +235,7 @@ function RichWidgetsDesktopFrame({
 // ---------------------------------------------------------------------------
 
 const meta: Meta = {
-  title: 'Rich Widgets/Desktop Integration',
+  title: 'RichWidgets/Desktop Integration',
   parameters: { layout: 'centered' },
 };
 export default meta;
@@ -260,4 +263,8 @@ export const SeedLogAndMusicWindows: Story = {
 
 export const SeedInstrumentCluster: Story = {
   render: () => <RichWidgetsDesktopFrame seedStore={SEED_INSTRUMENTS} />,
+};
+
+export const SeedAnalysisSuite: Story = {
+  render: () => <RichWidgetsDesktopFrame seedStore={SEED_ANALYSIS_SUITE} />,
 };

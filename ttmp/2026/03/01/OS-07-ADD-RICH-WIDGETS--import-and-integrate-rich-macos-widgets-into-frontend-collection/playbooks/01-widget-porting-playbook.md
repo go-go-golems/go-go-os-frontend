@@ -6,7 +6,7 @@ Topics:
     - frontend
     - widgets
     - storybook
-    - redux
+    - state-management
     - architecture
 DocType: playbooks
 Intent: long-term
@@ -24,9 +24,11 @@ WhenToUse: "When importing a new external React widget or sketch into the go-go-
 
 # Widget Porting Playbook
 
-A repeatable process for converting external React sketches (inline-styled, self-contained JSX) into go-go-os framework widgets that use data-parts, CSS tokens, Redux state, and Storybook stories.
+A repeatable process for converting external React sketches (inline-styled, self-contained JSX) into go-go-os framework widgets that use data-parts, CSS tokens, deterministic Storybook stories, and Redux only where it is actually warranted.
 
 **This playbook is a living document.** It will be updated with lessons learned from each widget port during OS-07.
+
+**OS-15 update:** Storybook is now the forcing function for cleanup. Start by making widget states deterministic in stories. If a meaningful scenario cannot be expressed via props, decide whether it needs a seed prop or a Redux slice before adding more ad hoc local state.
 
 ---
 
@@ -65,13 +67,18 @@ Classify all `useState` calls:
 
 | State Variable | Scope | Redux? | Rationale |
 |---------------|-------|--------|-----------|
-| `items` / core data | Global | Yes | Should persist, observable by other widgets |
-| `filterValues` | Widget | Yes | Useful to persist across window close/reopen |
-| `selected` | Widget | Maybe | Depends on whether selection is meaningful externally |
+| `items` / core data | Widget or desktop | Maybe | Redux only if other desktop systems need to observe or persist it |
+| `filterValues` | Widget | Maybe | Use Redux if it should persist/reopen or drive cross-window behavior |
+| `selected` | Widget | Maybe | Prefer seed props first; move to Redux if selection becomes externally meaningful |
 | `hoverState` | Local | No | Pure UI transient, no value in persisting |
 | `dragPosition` | Local | No | Frame-by-frame UI state |
 
-**Rule of thumb:** If another part of the desktop would ever want to read or react to this state, it belongs in Redux. If it's purely visual/transient, keep it local.
+**Decision ladder:**
+1. **Pure UI transient** (`hover`, drag rectangles, local animation toggles) → keep local.
+2. **Important for deterministic stories but still widget-local** (`selected row`, `search query`, `open modal`) → add seed props or a seeded story wrapper first.
+3. **Cross-window, launcher-visible, persistence-worthy, or externally observable** → add a Redux slice.
+
+**Rule of thumb:** Storybook should tell you when local state is a problem. If you cannot render an important state deterministically without brittle interaction hacks, either expose a seed prop or promote the durable part of that state into Redux.
 
 ### 0.4 Plan the Story Matrix
 
@@ -79,12 +86,21 @@ Before writing code, list the Storybook stories you'll need:
 
 1. **Default** — Widget with typical data, default settings
 2. **Empty** — Widget with no data (empty state)
-3. **Loading** — Widget in a loading/streaming state
-4. **Filtered** — Widget with active filters showing reduced data
-5. **Themed** — Widget under each theme (classic, modern, macos1)
-6. **Compact** — Widget in compact/minimal mode if applicable
-7. **Error state** — Widget showing error conditions
-8. **Interactive** — Story demonstrating key user interactions
+3. **Compact** — Widget in compact/minimal mode if applicable
+4. **Dense / stressed** — Widget with large data or busy content
+5. **Filtered / focused** — Widget showing a reduced or targeted subset
+6. **Running / paused / loading** — Domain-specific operational state
+7. **Empty/error edge** — Widget showing no matches, errors, or blank content
+8. **Seeded state** — Story that proves the widget can render important internal state deterministically
+
+**Current helper baseline in `packages/rich-widgets/src/storybook/`:**
+- `frameDecorators.tsx` for fullscreen and fixed-window shells
+- `seededStore.tsx` for Redux-backed story seeding when a widget slice exists
+
+**Storybook-first workflow:**
+1. Add prop-driven stories first.
+2. If a key state is still inaccessible, add a seed prop or seeded wrapper.
+3. If the state should persist, coordinate with launcher/desktop, or be observed elsewhere, move it into a Redux slice and use `seededStore.tsx` in Storybook.
 
 ---
 
@@ -98,7 +114,7 @@ packages/rich-widgets/src/<widget-name>/
   <WidgetName>.stories.tsx # Storybook stories
   types.ts                 # TypeScript interfaces
   sampleData.ts            # Test data generators
-  <widgetName>Slice.ts     # Redux slice (if applicable)
+  <widgetName>Slice.ts     # Redux slice (only if justified by the state policy)
 ```
 
 ### 1.2 Define types first
@@ -235,7 +251,10 @@ const logViewerSlice = createSlice({
 });
 ```
 
-For Storybook stories, provide a mock store or use the component's props-based API.
+For Storybook stories:
+- use props-based stories first,
+- use `packages/rich-widgets/src/storybook/seededStore.tsx` when the widget already has a Redux slice,
+- avoid brittle “click buttons in `play` just to reach state X” patterns unless there is no better short-term option.
 
 ### 3.4 Handle canvas-based rendering
 
@@ -298,6 +317,43 @@ export const ModernTheme: Story = {
   args: { initialLogs: generateSampleLogs(200) },
 };
 ```
+
+### 4.2 Seeded story guidance
+
+Use the shared helpers instead of re-creating wrappers in every file:
+
+```tsx
+import {
+  fixedFrameDecorator,
+  fullscreenDecorator,
+} from '../storybook/frameDecorators';
+
+export const Default: Story = {
+  args: { ... },
+  decorators: [fullscreenDecorator],
+};
+
+export const Compact: Story = {
+  args: { ... },
+  decorators: [fixedFrameDecorator(760, 420)],
+};
+```
+
+When a widget has a Redux slice, use the shared seeded provider:
+
+```tsx
+import { SeededStoreProvider, type SeedStore } from '../storybook/seededStore';
+
+const seedSelectedRecord: SeedStore<MyWidgetStore> = (store) => {
+  store.dispatch(selectRecord('row-42'));
+  store.dispatch(setSearchQuery('critical'));
+};
+```
+
+If you cannot write the story this way, stop and decide whether the widget needs:
+- an `initial*` prop,
+- a story-only seeded wrapper,
+- or a real Redux slice.
 
 ### 4.3 Run Storybook to verify
 
