@@ -96,6 +96,10 @@ import {
   systemModelerReducer,
 } from '../system-modeler/systemModelerState';
 import { ControlRoom } from '../control-room/ControlRoom';
+import {
+  CONTROL_ROOM_STATE_KEY,
+  controlRoomReducer,
+} from '../control-room/controlRoomState';
 
 type LaunchReason = 'icon' | 'menu' | 'command' | 'startup';
 
@@ -352,10 +356,16 @@ export const systemModelerModule: LaunchableAppModule = {
   },
 };
 
-export const controlRoomModule = widget(
-  'control-room', 'Control Room', '\uD83C\uDFDB\uFE0F', 119, 960, 700,
-  () => <ControlRoom />,
-);
+export const controlRoomModule: LaunchableAppModule = {
+  ...widget(
+    'control-room', 'Control Room', '\uD83C\uDFDB\uFE0F', 119, 960, 700,
+    () => <ControlRoom />,
+  ),
+  state: {
+    stateKey: CONTROL_ROOM_STATE_KEY,
+    reducer: controlRoomReducer,
+  },
+};
 
 // ---------------------------------------------------------------------------
 // All modules as a single array for convenience

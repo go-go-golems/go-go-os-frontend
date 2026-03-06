@@ -426,6 +426,13 @@ export {
   type ControlRoomProps,
 } from './control-room/ControlRoom';
 export {
+  CONTROL_ROOM_STATE_KEY,
+  createControlRoomStateSeed,
+  controlRoomActions,
+  controlRoomReducer,
+  selectControlRoomState,
+} from './control-room/controlRoomState';
+export {
   AnalogGauge,
   type AnalogGaugeProps,
   BarMeter,
