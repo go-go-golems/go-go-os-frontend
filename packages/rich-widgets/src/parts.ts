@@ -176,6 +176,28 @@ export const RICH_PARTS = {
   calFieldInput: 'cal-field-input',
   calColorSwatch: 'cal-color-swatch',
 
+  // MacSlides
+  macSlides: 'mac-slides',
+  msBody: 'ms-body',
+  msSidebar: 'ms-sidebar',
+  msSidebarHeader: 'ms-sidebar-header',
+  msSlideList: 'ms-slide-list',
+  msSlideThumb: 'ms-slide-thumb',
+  msSlideThumbPreview: 'ms-slide-thumb-preview',
+  msSlideThumbLabel: 'ms-slide-thumb-label',
+  msPane: 'ms-pane',
+  msPaneHeader: 'ms-pane-header',
+  msPaneMeta: 'ms-pane-meta',
+  msEditor: 'ms-editor',
+  msPreviewArea: 'ms-preview-area',
+  msSlideFrame: 'ms-slide-frame',
+  msNavRow: 'ms-nav-row',
+  msAlignToggle: 'ms-align-toggle',
+  msDeckStats: 'ms-deck-stats',
+  msPresentation: 'ms-presentation',
+  msPresentationFrame: 'ms-presentation-frame',
+  msPresentationStatus: 'ms-presentation-status',
+
   // Oscilloscope
   oscilloscope: 'oscilloscope',
   oscMain: 'osc-main',

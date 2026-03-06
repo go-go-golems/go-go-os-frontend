@@ -9,6 +9,7 @@ import './node-editor.css';
 import './oscilloscope.css';
 import './logic-analyzer.css';
 import './calendar.css';
+import './mac-slides.css';
 import './graph-navigator.css';
 import './calculator.css';
 import './deep-research.css';
