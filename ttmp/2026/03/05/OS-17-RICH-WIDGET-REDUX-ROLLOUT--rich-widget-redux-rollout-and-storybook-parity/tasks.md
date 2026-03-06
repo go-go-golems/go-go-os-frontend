@@ -7,7 +7,7 @@
 - [x] Task 3 — Migrate `MacCalendar` to `app_rw_mac_calendar` and add seeded calendar scenarios
 - [x] Task 4 — Migrate `KanbanBoard` to `app_rw_kanban` and add seeded workflow scenarios
 - [x] Task 5 — Migrate `DeepResearch` to `app_rw_deep_research` and add seeded progress/report scenarios
-- [ ] Task 6 — Migrate `ChatBrowser` to `app_rw_chat_browser` and add seeded search/result scenarios
+- [x] Task 6 — Migrate `ChatBrowser` to `app_rw_chat_browser` and add seeded search/result scenarios
 - [ ] Task 7 — Migrate `GameFinder` to `app_rw_game_finder` and add seeded browse/install/launch scenarios
 - [ ] Task 8 — Migrate `RetroMusicPlayer` to `app_rw_music_player` and add seeded playback/library scenarios
 - [ ] Task 9 — Migrate `StreamLauncher` to `app_rw_stream_launcher` and add seeded browse/player scenarios

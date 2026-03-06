@@ -307,6 +307,84 @@ npm run storybook:check
 
 Continue with `ChatBrowser`.
 
+## 2026-03-06 — Task 6 (`ChatBrowser`)
+
+### Goal
+
+Move `ChatBrowser` browsing/filter/search state into `app_rw_chat_browser`, keep the standalone export path intact, and add Redux-seeded Storybook scenarios for the search panel and filtered result states.
+
+### Files changed
+
+- `packages/rich-widgets/src/chat-browser/chatBrowserState.ts`
+- `packages/rich-widgets/src/chat-browser/chatBrowserState.test.ts`
+- `packages/rich-widgets/src/chat-browser/ChatBrowser.tsx`
+- `packages/rich-widgets/src/chat-browser/ChatBrowser.stories.tsx`
+- `packages/rich-widgets/src/launcher/modules.tsx`
+- `packages/rich-widgets/src/index.ts`
+
+### Implementation notes
+
+1. Added `app_rw_chat_browser` with a serializable slice for:
+   - `selectedConversationId`
+   - `quickFilter`
+   - `searchParams`
+   - `searchResultIds`
+   - `showSearch`
+   - the conversation list seed used by stories and standalone usage
+2. Stored search results as conversation IDs instead of duplicated conversation objects so the slice shape stays deterministic and small.
+3. Reworked the widget into the same connected/standalone pattern used across the rollout:
+   - connected path when the slice is present
+   - local `useReducer` fallback otherwise
+4. Converted the Storybook matrix to store-backed states and added explicit scenarios for:
+   - search panel open
+   - filtered results
+   - a seeded selected conversation
+5. Wired launcher registration and package exports to the new slice key.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+- Live Storybook verification on port `6006` ✅ for:
+  - `richwidgets-chatbrowser--redux-search-panel`
+  - `richwidgets-chatbrowser--redux-selected-conversation`
+- Playwright MCP only showed the existing Storybook/MSW asset warnings; no ChatBrowser-specific runtime errors surfaced.
+
+### Next task
+
+Continue with `GameFinder`.
+
+### Publication refresh
+
+```bash
+docmgr doctor --ticket OS-17-RICH-WIDGET-REDUX-ROLLOUT --stale-after 30
+remarquee upload bundle \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/index.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/design/01-redux-rollout-backlog-and-sequencing.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/tasks.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/changelog.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/reference/01-investigation-diary.md \
+  --name "OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task6" \
+  --remote-dir "/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT" \
+  --toc-depth 2 --non-interactive
+remarquee cloud ls /ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT --long --non-interactive
+```
+
+- `docmgr doctor --ticket OS-17-RICH-WIDGET-REDUX-ROLLOUT --stale-after 30` ✅
+- Updated bundle upload ✅
+- Remote listing now shows:
+  - `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT/OS-17-RICH-WIDGET-REDUX-ROLLOUT`
+  - `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT/OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task4`
+  - `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT/OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task5`
+  - `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT/OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task6`
+
 ### Publication refresh
 
 ```bash
