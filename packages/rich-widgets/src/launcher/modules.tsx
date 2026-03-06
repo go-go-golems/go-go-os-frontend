@@ -13,6 +13,10 @@ import {
 
 import { LogViewer } from '../log-viewer/LogViewer';
 import { ChartView } from '../chart-view/ChartView';
+import {
+  CHART_VIEW_STATE_KEY,
+  chartViewReducer,
+} from '../chart-view/chartViewState';
 import { MacWrite } from '../mac-write/MacWrite';
 import { KanbanBoard } from '../kanban/KanbanBoard';
 import {
@@ -165,10 +169,16 @@ export const logViewerModule: LaunchableAppModule = {
   },
 };
 
-export const chartViewModule = widget(
-  'chart-view', 'Chart View', '\uD83D\uDCC8', 101, 800, 560,
-  () => <ChartView />,
-);
+export const chartViewModule: LaunchableAppModule = {
+  ...widget(
+    'chart-view', 'Chart View', '\uD83D\uDCC8', 101, 800, 560,
+    () => <ChartView />,
+  ),
+  state: {
+    stateKey: CHART_VIEW_STATE_KEY,
+    reducer: chartViewReducer,
+  },
+};
 
 export const macWriteModule = widget(
   'mac-write', 'MacWrite', '\u270D\uFE0F', 102, 800, 620,

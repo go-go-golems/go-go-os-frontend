@@ -44,6 +44,13 @@ export { generateSampleLogs, generateLogEntry } from './log-viewer/sampleData';
 // ChartView
 export { ChartView, type ChartViewProps } from './chart-view/ChartView';
 export {
+  CHART_VIEW_STATE_KEY,
+  createChartViewStateSeed,
+  chartViewActions,
+  chartViewReducer,
+  selectChartViewState,
+} from './chart-view/chartViewState';
+export {
   type ChartType,
   type ChartDataset,
   type ChartSeries,
