@@ -10,3 +10,6 @@
 - [x] Task 6 — Replace the ad hoc markdown list/paragraph renderer with a cleaner line-based implementation and expand tests
 - [x] Task 7 — Split `MacSlides` into smaller view pieces, define proper empty-deck UI, and verify the stories with Playwright MCP
 - [x] Task 8 — Extract `MacSlides` helpers/sections/hotkeys into dedicated files and remove the last inline visual override
+- [x] Task 9 — Add focused tests for the extracted `MacSlides` helper layer
+- [x] Task 10 — Replace the remaining `MacSlides` global slide-content classes with a shared `data-part` slide markup component
+- [x] Task 11 — Convert the full `MacSlides` story matrix to Redux-seeded scenarios and keep one explicit standalone embed story

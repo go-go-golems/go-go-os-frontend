@@ -149,6 +149,149 @@ npm run storybook:check
 - `npm run test -w packages/rich-widgets` ✅
 - `npm run storybook:check` ✅
 
+## 2026-03-06 — Task 9 helper test coverage
+
+### Goal
+
+Close the final coverage gap in the extracted helper layer.
+
+### Files changed
+
+- `packages/rich-widgets/src/mac-slides/helpers.test.ts`
+
+### What changed
+
+Added direct tests for:
+
+- alignment cycle order,
+- rewriting the active slide alignment directive,
+- removal of explicit alignment directives when cycling back to `auto`.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+
+## 2026-03-06 — Task 10 content-parts normalization
+
+### Goal
+
+Remove the last widget-global MacSlides CSS contract and stop repeating the rendered slide markup pattern across thumbnail, preview, and presentation views.
+
+### Files changed
+
+- `packages/rich-widgets/src/mac-slides/SlideMarkup.tsx`
+- `packages/rich-widgets/src/mac-slides/MacSlidesSections.tsx`
+- `packages/rich-widgets/src/mac-slides/markdown.ts`
+- `packages/rich-widgets/src/parts.ts`
+- `packages/rich-widgets/src/theme/mac-slides.css`
+
+### What changed
+
+1. Added a shared `SlideMarkup` component that owns the rendered HTML surface for slide content.
+2. Replaced the old `.slide-content` / `.slide-auto` / `.slide-all-center` / `.slide-all-left` class scheme with:
+   - `data-part="ms-slide-content"`
+   - `data-align="auto|center|left"`
+3. Reused the same slide markup component in:
+   - the main preview pane,
+   - the slide thumbnails,
+   - the presentation overlay.
+4. Removed the old `alignClassName()` helper because alignment is now expressed in the DOM through the part/state contract instead of widget-global class names.
+
+### Why this matters
+
+- The widget now follows the same low-specificity theming rule as the rest of `rich-widgets`.
+- The CSS contract is easier to theme without depending on hidden class names.
+- The slide preview/presentation/sidebar paths can no longer drift in markup structure.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+
+## 2026-03-06 — Task 11 Redux-backed story parity
+
+### Goal
+
+Bring `MacSlides` story coverage in line with the Redux rollout guide now that the widget has a real slice.
+
+### Files changed
+
+- `packages/rich-widgets/src/mac-slides/MacSlides.stories.tsx`
+
+### What changed
+
+1. Converted the main story matrix to store-seeded scenarios:
+   - `Default`
+   - `EmptyDeck`
+   - `DenseDeck`
+   - `AlignmentStates`
+   - `PresentationOpen`
+   - `PaletteOpen`
+2. Added a small `renderSeededStory()` helper so each story seeds the Redux slice instead of depending on prop-only setup.
+3. Kept one explicit `StandaloneEmbed` story so the local fallback path is still visible and reviewable without conflating it with the primary integration path.
+4. Rechecked the standalone story through live Storybook on port `6006`.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+
+## 2026-03-06 — Task 11 publication refresh
+
+### Goal
+
+Refresh the OS-18 ticket after the final MacSlides cleanup pass so the published bundle matches the normalized content parts and Redux-seeded Storybook stories.
+
+### Commands run
+
+```bash
+docmgr doctor --ticket OS-18-MAC-SLIDES-IMPORT --stale-after 30
+remarquee upload bundle \
+  ttmp/2026/03/06/OS-18-MAC-SLIDES-IMPORT--macslides-rich-widget-import-and-cleanup/index.md \
+  ttmp/2026/03/06/OS-18-MAC-SLIDES-IMPORT--macslides-rich-widget-import-and-cleanup/design/01-macslides-import-plan.md \
+  ttmp/2026/03/06/OS-18-MAC-SLIDES-IMPORT--macslides-rich-widget-import-and-cleanup/tasks.md \
+  ttmp/2026/03/06/OS-18-MAC-SLIDES-IMPORT--macslides-rich-widget-import-and-cleanup/changelog.md \
+  ttmp/2026/03/06/OS-18-MAC-SLIDES-IMPORT--macslides-rich-widget-import-and-cleanup/reference/01-investigation-diary.md \
+  --name "OS-18-MAC-SLIDES-IMPORT-2026-03-06-task11" \
+  --remote-dir "/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT" \
+  --toc-depth 2 --non-interactive
+remarquee cloud ls /ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT --long --non-interactive
+```
+
+### Results
+
+- `docmgr doctor --ticket OS-18-MAC-SLIDES-IMPORT --stale-after 30` ✅
+- Updated bundle upload ✅
+- Remote listing now shows:
+  - `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT/OS-18-MAC-SLIDES-IMPORT-2026-03-06`
+  - `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT/OS-18-MAC-SLIDES-IMPORT-2026-03-06-task6`
+  - `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT/OS-18-MAC-SLIDES-IMPORT-2026-03-06-task7`
+  - `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT/OS-18-MAC-SLIDES-IMPORT-2026-03-06-task8`
+  - `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT/OS-18-MAC-SLIDES-IMPORT-2026-03-06-task9`
+  - `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT/OS-18-MAC-SLIDES-IMPORT-2026-03-06-task11`
+
 ## 2026-03-06 — Task 8 publication refresh
 
 ### Goal
