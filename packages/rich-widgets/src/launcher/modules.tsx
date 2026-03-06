@@ -24,6 +24,11 @@ import {
   MAC_CALENDAR_STATE_KEY,
   macCalendarReducer,
 } from '../calendar/macCalendarState';
+import { MacSlides } from '../mac-slides/MacSlides';
+import {
+  MAC_SLIDES_STATE_KEY,
+  macSlidesReducer,
+} from '../mac-slides/macSlidesState';
 import { GraphNavigator } from '../graph-navigator/GraphNavigator';
 import { MacCalc } from '../calculator/MacCalc';
 import {
@@ -150,6 +155,17 @@ export const macCalendarModule: LaunchableAppModule = {
   },
 };
 
+export const macSlidesModule: LaunchableAppModule = {
+  ...widget(
+    'mac-slides', 'MacSlides', '\uD83D\uDDBC\uFE0F', 120, 980, 680,
+    () => <MacSlides fileName="Launcher Deck" />,
+  ),
+  state: {
+    stateKey: MAC_SLIDES_STATE_KEY,
+    reducer: macSlidesReducer,
+  },
+};
+
 export const graphNavigatorModule = widget(
   'graph-navigator', 'Graph Navigator', '\uD83C\uDF10', 109, 900, 640,
   () => <GraphNavigator />,
@@ -225,6 +241,7 @@ export const RICH_WIDGET_MODULES: readonly LaunchableAppModule[] = [
   oscilloscopeModule,
   logicAnalyzerModule,
   macCalendarModule,
+  macSlidesModule,
   graphNavigatorModule,
   macCalcModule,
   deepResearchModule,

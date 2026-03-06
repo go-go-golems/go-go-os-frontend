@@ -121,6 +121,26 @@ export {
 } from './calendar/types';
 export { INITIAL_EVENTS, EVENT_COLORS, makePaletteActions } from './calendar/sampleData';
 
+// MacSlides
+export { MacSlides, type MacSlidesProps } from './mac-slides/MacSlides';
+export {
+  MAC_SLIDES_STATE_KEY,
+  createMacSlidesStateSeed,
+  macSlidesActions,
+  macSlidesReducer,
+  selectMacSlidesState,
+} from './mac-slides/macSlidesState';
+export {
+  type MacSlidesDeck,
+  type SlideAlignment,
+  type SlideDocument,
+} from './mac-slides/types';
+export {
+  DEFAULT_MARKDOWN as MAC_SLIDES_DEFAULT_MARKDOWN,
+  createDenseDeckMarkdown,
+  createEmptyDeckMarkdown,
+} from './mac-slides/sampleData';
+
 // LogicAnalyzer
 export {
   LogicAnalyzer,

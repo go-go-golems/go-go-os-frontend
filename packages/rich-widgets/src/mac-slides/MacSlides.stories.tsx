@@ -1,3 +1,4 @@
+import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
 import { MacSlides } from './MacSlides';
 import {
@@ -6,6 +7,13 @@ import {
   DEFAULT_MARKDOWN,
 } from './sampleData';
 import { fixedFrameDecorator, fullscreenDecorator } from '../storybook/frameDecorators';
+import { SeededStoreProvider, type SeedStore } from '../storybook/seededStore';
+import {
+  createMacSlidesStateSeed,
+  MAC_SLIDES_STATE_KEY,
+  macSlidesActions,
+  macSlidesReducer,
+} from './macSlidesState';
 import '@hypercard/rich-widgets/theme';
 
 const alignmentDeck = [
@@ -24,6 +32,33 @@ const meta: Meta<typeof MacSlides> = {
 
 export default meta;
 type Story = StoryObj<typeof MacSlides>;
+
+function createMacSlidesStoryStore() {
+  return configureStore({
+    reducer: {
+      [MAC_SLIDES_STATE_KEY]: macSlidesReducer,
+    },
+  });
+}
+
+type MacSlidesStoryStore = ReturnType<typeof createMacSlidesStoryStore>;
+type MacSlidesSeedStore = SeedStore<MacSlidesStoryStore>;
+
+function renderWithStore(
+  seedStore: MacSlidesSeedStore,
+  height: string | number = '100vh',
+) {
+  return () => (
+    <SeededStoreProvider
+      createStore={createMacSlidesStoryStore}
+      seedStore={seedStore}
+    >
+      <div style={{ height }}>
+        <MacSlides />
+      </div>
+    </SeededStoreProvider>
+  );
+}
 
 export const Default: Story = {
   args: {
@@ -58,20 +93,30 @@ export const AlignmentStates: Story = {
 };
 
 export const PresentationOpen: Story = {
-  args: {
-    fileName: 'Presentation Mode',
-    initialMarkdown: DEFAULT_MARKDOWN,
-    initialSlide: 2,
-    initialShowPresentation: true,
-  },
+  render: renderWithStore((store) => {
+    store.dispatch(
+      macSlidesActions.replaceState(
+        createMacSlidesStateSeed({
+          initialMarkdown: DEFAULT_MARKDOWN,
+          initialSlide: 2,
+          presentationOpen: true,
+        }),
+      ),
+    );
+  }),
   decorators: [fullscreenDecorator],
 };
 
 export const PaletteOpen: Story = {
-  args: {
-    fileName: 'Palette Demo',
-    initialMarkdown: DEFAULT_MARKDOWN,
-    initialShowPalette: true,
-  },
+  render: renderWithStore((store) => {
+    store.dispatch(
+      macSlidesActions.replaceState(
+        createMacSlidesStateSeed({
+          initialMarkdown: DEFAULT_MARKDOWN,
+          paletteOpen: true,
+        }),
+      ),
+    );
+  }, 620),
   decorators: [fixedFrameDecorator(960, 620)],
 };
