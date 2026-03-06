@@ -25,3 +25,4 @@
 - Uploaded the refreshed OS-18 bundle to reMarkable at `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT` as `OS-18-MAC-SLIDES-IMPORT-2026-03-06-task9`
 - Re-ran `docmgr doctor --ticket OS-18-MAC-SLIDES-IMPORT --stale-after 30` after Tasks 10 and 11 with all checks passing
 - Uploaded the refreshed OS-18 bundle to reMarkable at `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT` as `OS-18-MAC-SLIDES-IMPORT-2026-03-06-task11`
+- Closed OS-18 after completing all planned MacSlides import and cleanup phases

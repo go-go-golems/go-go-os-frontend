@@ -1,7 +1,7 @@
 ---
 Title: MacSlides rich widget import and cleanup
 Ticket: OS-18-MAC-SLIDES-IMPORT
-Status: active
+Status: closed
 Topics:
     - frontend
     - widgets
@@ -32,7 +32,7 @@ WhenToUse: ""
 
 ## Status
 
-Current status: **active**
+Current status: **closed**
 
 ## Topics
 
