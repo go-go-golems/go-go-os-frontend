@@ -30,6 +30,14 @@ A repeatable process for converting external React sketches (inline-styled, self
 
 **OS-15 update:** Storybook is now the forcing function for cleanup. Start by making widget states deterministic in stories. If a meaningful scenario cannot be expressed via props, decide whether it needs a seed prop or a Redux slice before adding more ad hoc local state.
 
+**OS-17 update:** The first real rollout migration (`LogViewer`) added a few concrete rules that are now mandatory for cleanup work:
+
+- **Redux state must stay serializable.** Do not store `Date`, `Set`, function updaters, DOM nodes, timer handles, or drag events in slices. Store timestamps as numbers, store enabled filters as arrays, and compute `Set` views or `Date` objects at selector/render time.
+- **Do not port `useReducer` actions literally if they carry functions.** Patterns like `{ type: 'UPDATE_CELLS', updater: (prev) => ... }` are acceptable in a local reducer and unacceptable in Redux. Replace them with serializable actions such as `replaceCells(nextCells)` or `patchCell({ cellId, updates })`.
+- **Keep widgets usable outside Redux.** If a widget is exported as a package component, prefer a connected path plus a standalone fallback rather than making raw component usage depend on a provider everywhere.
+- **Use seeded stories to prove the slice shape.** If the slice design is correct, it should be easy to seed `selected`, `filtered`, `palette-open`, `streaming`, or `search-active` stories without interaction hacks.
+- **Be explicit about package-level reducer debt.** The launcher currently has package-wide analytics that do not yet live in `sharedReducers`. When needed, document interim combined reducers and treat them as temporary, not the target architecture.
+
 ---
 
 ## Phase 0: Analyze the Import
@@ -114,7 +122,7 @@ packages/rich-widgets/src/<widget-name>/
   <WidgetName>.stories.tsx # Storybook stories
   types.ts                 # TypeScript interfaces
   sampleData.ts            # Test data generators
-  <widgetName>Slice.ts     # Redux slice (only if justified by the state policy)
+  <widgetName>State.ts     # Redux slice/selectors/seed helpers (only if justified by the state policy)
 ```
 
 ### 1.2 Define types first
@@ -229,12 +237,12 @@ Work from leaf nodes upward:
 For Redux-managed state:
 
 ```typescript
-// widgetSlice.ts
+// widgetState.ts
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 interface LogViewerState {
-  entries: LogEntry[];
-  levelFilter: Set<LogLevel>;
+  entries: StoredLogEntry[];
+  levelFilter: LogLevel[];
   serviceFilter: string;
   searchQuery: string;
   selectedId: number | null;
@@ -244,12 +252,18 @@ const logViewerSlice = createSlice({
   name: 'logViewer',
   initialState: { ... },
   reducers: {
-    addEntry(state, action: PayloadAction<LogEntry>) { ... },
-    setLevelFilter(state, action: PayloadAction<Set<LogLevel>>) { ... },
+    addEntry(state, action: PayloadAction<StoredLogEntry>) { ... },
+    setLevelFilter(state, action: PayloadAction<LogLevel[]>) { ... },
     // ...
   },
 });
 ```
+
+**Additional Redux cleanup rules:**
+- reducers should accept **plain data**, not callback updaters;
+- “seed helpers” should build a whole initial slice snapshot for Storybook;
+- selectors or render helpers can rehydrate non-serializable convenience shapes like `Date` or `Set`;
+- local transient state should remain local even after a widget gets a slice.
 
 For Storybook stories:
 - use props-based stories first,

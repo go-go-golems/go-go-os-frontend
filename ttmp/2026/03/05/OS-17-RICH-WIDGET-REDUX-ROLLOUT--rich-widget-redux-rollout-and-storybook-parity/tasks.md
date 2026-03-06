@@ -3,7 +3,7 @@
 ## In Progress Rollout
 
 - [x] Task 1 — Migrate `LogViewer` to `app_rw_log_viewer`, add reducer tests, and add Redux-seeded stories
-- [ ] Task 2 — Migrate `MacCalc` to `app_rw_mac_calc` and replace local durable sheet/session state
+- [x] Task 2 — Migrate `MacCalc` to `app_rw_mac_calc`, add reducer tests, and add Redux-seeded sheet scenarios
 - [ ] Task 3 — Migrate `MacCalendar` to `app_rw_mac_calendar` and add seeded calendar scenarios
 - [ ] Task 4 — Migrate `KanbanBoard` to `app_rw_kanban` and add seeded workflow scenarios
 - [ ] Task 5 — Migrate `DeepResearch` to `app_rw_deep_research` and add seeded progress/report scenarios

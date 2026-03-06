@@ -128,10 +128,26 @@ Recommended file layout:
 packages/rich-widgets/src/<widget>/
   <Widget>.tsx
   <Widget>.stories.tsx
-  <widget>Slice.ts
+  <widget>State.ts
   selectors.ts          # optional; add once selectors grow
   types.ts
   sampleData.ts
+```
+
+### Step 2a: obey the serialization rules
+
+The first real rollout task (`LogViewer`) exposed the practical serialization rules you should assume from the start:
+
+- store timestamps as numbers, not `Date`;
+- store enabled flags as arrays, not `Set`;
+- never dispatch functions such as `(prev) => next` inside Redux payloads;
+- never put `HTMLElement`, `MouseEvent`, `setInterval()` ids, drag ghosts, or `requestAnimationFrame()` handles into the slice.
+
+If the widget wants these values for convenience, rebuild them in a selector or `useMemo()`:
+
+```ts
+const timestamps = state.entries.map((entry) => new Date(entry.timestampMs));
+const enabledLevels = new Set(state.levels);
 ```
 
 ### Step 3: split “document/session state” from “local transient state”
@@ -222,6 +238,27 @@ interface MacCalcSliceState {
 
 Avoid reducers like `setBooleanFlagX`.
 
+Also avoid reducers that copy local `useReducer` mechanics into Redux:
+
+```ts
+// bad for Redux
+dispatch({
+  type: 'UPDATE_CELLS',
+  updater: (prev) => ({ ...prev, [id]: value }),
+});
+```
+
+That is serializable in neither payload nor intent. Compute the next data snapshot before dispatching, then send plain data:
+
+```ts
+const nextCells = {
+  ...cells,
+  [cellId]: { ...cells[cellId], raw: newRaw },
+};
+
+dispatch(macCalcActions.replaceCells(nextCells));
+```
+
 Prefer:
 
 ```ts
@@ -282,6 +319,16 @@ export const SearchPanelOpen: Story = {
   ),
 };
 ```
+
+### 4.7 Preserve standalone usage when necessary
+
+If the widget is exported from `@hypercard/rich-widgets` and may be rendered outside launcher or Storybook store context, use the `LogViewer` pattern:
+
+1. detect whether the relevant state key exists in the Redux store;
+2. render a connected path when it does;
+3. render a standalone local-state fallback when it does not.
+
+This keeps package consumers working while still moving the durable launcher/story state into Redux.
 
 If you finish the slice but do not add seeded stories, you are leaving the payoff unrealized.
 

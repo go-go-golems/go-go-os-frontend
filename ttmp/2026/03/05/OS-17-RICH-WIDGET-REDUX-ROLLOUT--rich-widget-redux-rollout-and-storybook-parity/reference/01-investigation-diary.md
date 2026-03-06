@@ -77,3 +77,66 @@ npm run typecheck -w packages/rich-widgets
 ### Next task
 
 Continue with `MacCalc`, which is next in the OS-16 migration order and also one of the largest remaining blockers for deterministic state-seeded stories.
+
+## 2026-03-05 — Task 2 (`MacCalc`)
+
+### Goal
+
+Take the next durable widget in the rollout order and:
+
+- move spreadsheet/session UI state into `app_rw_mac_calc`;
+- preserve standalone package usage with a local fallback;
+- replace local reducer callback-updater actions with serializable Redux actions;
+- add seeded Storybook states for find, palette, and active editing scenarios;
+- update the cleanup guides with the concrete lessons from the first two real migrations.
+
+### Guide updates
+
+Updated the primary guides in:
+
+- `ttmp/2026/03/01/OS-07-ADD-RICH-WIDGETS--import-and-integrate-rich-macos-widgets-into-frontend-collection/playbooks/01-widget-porting-playbook.md`
+- `ttmp/2026/03/05/OS-16-RICH-WIDGET-REDUX-SLICE-STUDY--rich-widget-redux-slice-study-migration-design-and-intern-guide/playbooks/01-rich-widget-redux-slice-implementation-guide-for-interns.md`
+
+New explicit guidance added:
+
+- slice payloads must stay serializable;
+- `useReducer` updater-function actions must be rewritten before moving into Redux;
+- connected widgets should keep a standalone fallback when they are package exports;
+- Storybook seeded states should be treated as proof that the slice shape is right.
+
+### Files changed
+
+- `packages/rich-widgets/src/calculator/macCalcState.ts`
+- `packages/rich-widgets/src/calculator/macCalcState.test.ts`
+- `packages/rich-widgets/src/calculator/MacCalc.tsx`
+- `packages/rich-widgets/src/calculator/MacCalc.stories.tsx`
+- `packages/rich-widgets/src/launcher/modules.tsx`
+- `packages/rich-widgets/src/index.ts`
+
+### Implementation notes
+
+1. Added `app_rw_mac_calc` and moved the spreadsheet state into a real RTK slice.
+2. Kept the state shape close to the old reducer so the migration remained mechanical and reviewable.
+3. Removed the old `UPDATE_CELLS` function-updater pattern and replaced it with explicit `setCells(nextCells)` writes computed before dispatch.
+4. Kept `MacCalc` package-safe by using the same pattern as `LogViewer`: a connected path when the slice is registered, and a standalone local reducer fallback otherwise.
+5. Added Redux-seeded stories for:
+   - find results open,
+   - command palette open,
+   - active formula editing with a seeded selection.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+- `remarquee upload bundle ... --force` ✅ refreshed `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT`
+
+### Next task
+
+Continue with `MacCalendar`.
