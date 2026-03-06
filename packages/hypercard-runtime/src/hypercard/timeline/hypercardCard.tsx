@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux';
 import type { RenderContext, RenderEntity } from '@hypercard/chat-runtime';
-import { recordField, stringField } from '@hypercard/chat-runtime';
+import { SyntaxHighlight, recordField, stringField } from '@hypercard/chat-runtime';
 import { openWindow } from '@hypercard/engine/desktop-core';
 import { buildArtifactOpenWindowPayload, normalizeArtifactId } from '../artifacts/artifactRuntime';
 import { buildCodeEditorWindowPayload } from '../editor/editorLaunch';
@@ -29,6 +29,15 @@ function runtimeCardId(props: Record<string, unknown>): string {
     recordField(payload ?? {}, 'card') ??
     recordField(payloadData ?? {}, 'card');
   return stringField(props, 'runtimeCardId') ?? stringField(card ?? {}, 'id') ?? '';
+}
+
+function runtimeCardCode(props: Record<string, unknown>): string {
+  const payload = cardPayload(props);
+  const payloadData = cardData(props);
+  const card =
+    recordField(payload ?? {}, 'card') ??
+    recordField(payloadData ?? {}, 'card');
+  return stringField(props, 'runtimeCardCode') ?? stringField(card ?? {}, 'code') ?? '';
 }
 
 function titleFromCard(props: Record<string, unknown>): string {
@@ -61,8 +70,10 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
   const { status, detail } = detailFromCard(props);
   const artifactId = cardArtifactId(props);
   const cardId = runtimeCardId(props);
+  const cardCode = runtimeCardCode(props);
   const stackId = props.stackId ? String(props.stackId) : undefined;
   const hasRuntimeCard = cardId.trim().length > 0;
+  const hasCardCode = cardCode.trim().length > 0;
 
   const openArtifact = () => {
     const payload = buildArtifactOpenWindowPayload({
@@ -88,9 +99,22 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
     <div data-part="chat-message" data-role="system">
       <div data-part="chat-role">Card:</div>
       <div style={{ fontSize: 11, whiteSpace: 'pre-wrap' }}>
-        <strong>{title}</strong> ({status}){cardId ? ` · runtime=${cardId}` : ''}
+        <strong>{title}</strong>{cardId ? ` · runtime=${cardId}` : ''}
         {detail ? ` — ${detail}` : ''}
       </div>
+      {hasCardCode && (
+        <SyntaxHighlight
+          code={cardCode}
+          language="javascript"
+          maxLines={18}
+          style={{ marginTop: 6 }}
+        />
+      )}
+      {!hasCardCode && (
+        <div style={{ fontSize: 11, whiteSpace: 'pre-wrap', opacity: 0.8 }}>
+          {status}
+        </div>
+      )}
       {ctx?.mode === 'debug' && (
         <pre
           style={{
@@ -103,7 +127,7 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
           {JSON.stringify(e.props, null, 2)}
         </pre>
       )}
-      {normalizeArtifactId(artifactId) && hasRuntimeCard && (
+      {normalizeArtifactId(artifactId) && hasRuntimeCard && status !== 'streaming' && status !== 'pending' && (
         <div style={{ marginTop: 4, display: 'flex', gap: 6 }}>
           <button type="button" data-part="btn" onClick={openArtifact}>
             Open
