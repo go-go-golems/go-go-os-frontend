@@ -11,6 +11,7 @@ import {
   subscribeTimelineRenderers,
 } from '../renderers/rendererRegistry';
 import type { RenderEntity, RenderMode } from '../renderers/types';
+import type { ChatWidgetRenderers } from '../renderers/types';
 import {
   type ChatStateSlice,
   selectCurrentTurnStats,
@@ -55,6 +56,7 @@ export interface ChatConversationWindowProps {
   profileScopeKey?: string;
   windowId?: string;
   renderMode?: RenderMode;
+  timelineRenderers?: Partial<ChatWidgetRenderers>;
   conversationContextActions?: DesktopActionEntry[];
 }
 
@@ -93,6 +95,7 @@ export function ChatConversationWindow({
   profileScopeKey,
   windowId,
   renderMode = 'normal',
+  timelineRenderers,
   conversationContextActions,
 }: ChatConversationWindowProps) {
   const dispatch = useDispatch();
@@ -221,8 +224,8 @@ export function ChatConversationWindow({
     getTimelineRendererRegistryVersion
   );
   const renderers = useMemo(
-    () => resolveTimelineRenderers(),
-    [rendererRegistryVersion]
+    () => resolveTimelineRenderers(timelineRenderers),
+    [rendererRegistryVersion, timelineRenderers]
   );
 
   const timelineContent = useMemo(
