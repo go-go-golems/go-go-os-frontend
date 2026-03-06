@@ -236,6 +236,13 @@ export {
   type RetroMusicPlayerProps,
 } from './music-player/RetroMusicPlayer';
 export {
+  MUSIC_PLAYER_STATE_KEY,
+  createMusicPlayerStateSeed,
+  musicPlayerActions,
+  musicPlayerReducer,
+  selectMusicPlayerState,
+} from './music-player/musicPlayerState';
+export {
   type Playlist,
   type AlbumMeta,
   type Track,

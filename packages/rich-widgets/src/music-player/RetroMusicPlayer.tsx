@@ -1,94 +1,29 @@
-import { useState, useEffect, useCallback, useReducer } from 'react';
+import {
+  useContext,
+  useEffect,
+  useReducer,
+  useState,
+  useCallback,
+} from 'react';
 import { Btn } from '@hypercard/engine';
+import { ReactReduxContext, useDispatch, useSelector } from 'react-redux';
 import { RICH_PARTS as P } from '../parts';
 import { EmptyState } from '../primitives/EmptyState';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
-import { type Track, type ViewMode, parseDuration, fmtTime } from './types';
+import { type Track, parseDuration, fmtTime } from './types';
 import { PLAYLISTS, ALBUMS, getTracksForPlaylist } from './sampleData';
 import type { Playlist } from './types';
+import {
+  createMusicPlayerStateSeed,
+  MUSIC_PLAYER_STATE_KEY,
+  musicPlayerActions,
+  musicPlayerReducer,
+  selectMusicPlayerState,
+  type MusicPlayerAction,
+  type MusicPlayerState,
+} from './musicPlayerState';
 
-/* ── Player State & Reducer ── */
-interface PlayerState {
-  currentTrack: Track | null;
-  trackIdx: number;
-  playing: boolean;
-  elapsed: number;
-  selPlaylist: Playlist;
-  searchTerm: string;
-  showQueue: boolean;
-  showEq: boolean;
-  view: ViewMode;
-  volume: number;
-  shuffle: boolean;
-  repeat: boolean;
-  liked: Record<string, boolean>;
-}
-
-type PlayerAction =
-  | { type: 'PLAY_TRACK'; track: Track; idx: number }
-  | { type: 'TOGGLE_PLAYING' }
-  | { type: 'TICK' }
-  | { type: 'SET_ELAPSED'; elapsed: number }
-  | { type: 'SET_VOLUME'; volume: number }
-  | { type: 'TOGGLE_SHUFFLE' }
-  | { type: 'SET_SHUFFLE'; shuffle: boolean }
-  | { type: 'TOGGLE_REPEAT' }
-  | { type: 'TOGGLE_QUEUE' }
-  | { type: 'TOGGLE_EQ' }
-  | { type: 'SET_VIEW'; view: ViewMode }
-  | { type: 'SELECT_PLAYLIST'; playlist: Playlist }
-  | { type: 'SET_SEARCH'; term: string }
-  | { type: 'TOGGLE_LIKE'; key: string };
-
-function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
-  switch (action.type) {
-    case 'PLAY_TRACK':
-      return {
-        ...state,
-        currentTrack: action.track,
-        trackIdx: action.idx,
-        playing: true,
-        elapsed: 0,
-      };
-    case 'TOGGLE_PLAYING':
-      return {
-        ...state,
-        playing: state.currentTrack ? !state.playing : false,
-      };
-    case 'TICK':
-      return { ...state, elapsed: state.elapsed + 1 };
-    case 'SET_ELAPSED':
-      return { ...state, elapsed: action.elapsed };
-    case 'SET_VOLUME':
-      return { ...state, volume: action.volume };
-    case 'TOGGLE_SHUFFLE':
-      return { ...state, shuffle: !state.shuffle };
-    case 'SET_SHUFFLE':
-      return { ...state, shuffle: action.shuffle };
-    case 'TOGGLE_REPEAT':
-      return { ...state, repeat: !state.repeat };
-    case 'TOGGLE_QUEUE':
-      return { ...state, showQueue: !state.showQueue };
-    case 'TOGGLE_EQ':
-      return { ...state, showEq: !state.showEq };
-    case 'SET_VIEW':
-      return { ...state, view: action.view };
-    case 'SELECT_PLAYLIST':
-      return { ...state, selPlaylist: action.playlist, searchTerm: '' };
-    case 'SET_SEARCH':
-      return { ...state, searchTerm: action.term };
-    case 'TOGGLE_LIKE':
-      return {
-        ...state,
-        liked: { ...state.liked, [action.key]: !state.liked[action.key] },
-      };
-    default:
-      return state;
-  }
-}
-
-/* ── EQ Visualizer ── */
 function EqViz({ playing }: { playing: boolean }) {
   const [bars, setBars] = useState(Array(16).fill(3) as number[]);
   useEffect(() => {
@@ -97,28 +32,19 @@ function EqViz({ playing }: { playing: boolean }) {
       return;
     }
     const id = setInterval(() => {
-      setBars(
-        Array(16)
-          .fill(0)
-          .map(() => Math.floor(Math.random() * 12) + 1),
-      );
+      setBars(Array(16).fill(0).map(() => Math.floor(Math.random() * 12) + 1));
     }, 180);
     return () => clearInterval(id);
   }, [playing]);
   return (
     <div data-part={P.mpEqViz}>
-      {bars.map((h, i) => (
-        <div
-          key={i}
-          data-part={P.mpEqBar}
-          style={{ height: h }}
-        />
+      {bars.map((height, index) => (
+        <div key={index} data-part={P.mpEqBar} style={{ height }} />
       ))}
     </div>
   );
 }
 
-/* ── Marquee ── */
 function Marquee({ text }: { text: string }) {
   return (
     <div data-part={P.mpMarquee}>
@@ -127,35 +53,30 @@ function Marquee({ text }: { text: string }) {
   );
 }
 
-/* ── Main ── */
 export interface RetroMusicPlayerProps {
   initialPlaylists?: Playlist[];
 }
 
-export function RetroMusicPlayer({
-  initialPlaylists = PLAYLISTS,
-}: RetroMusicPlayerProps) {
-  const [state, dispatch] = useReducer(playerReducer, {
-    currentTrack: null,
-    trackIdx: 0,
-    playing: false,
-    elapsed: 0,
-    selPlaylist: initialPlaylists[0],
-    searchTerm: '',
-    showQueue: false,
-    showEq: true,
-    view: 'list',
-    volume: 72,
-    shuffle: false,
-    repeat: false,
-    liked: {},
+function createInitialSeed(props: RetroMusicPlayerProps): MusicPlayerState {
+  return createMusicPlayerStateSeed({
+    initialPlaylists: props.initialPlaylists ?? PLAYLISTS,
   });
+}
+
+function RetroMusicPlayerFrame({
+  state,
+  dispatch,
+}: {
+  state: MusicPlayerState;
+  dispatch: (action: MusicPlayerAction) => void;
+}) {
   const {
+    playlists,
     currentTrack,
     trackIdx,
     playing,
     elapsed,
-    selPlaylist,
+    selectedPlaylistId,
     searchTerm,
     showQueue,
     showEq,
@@ -166,99 +87,70 @@ export function RetroMusicPlayer({
     liked,
   } = state;
 
-  const tracks = getTracksForPlaylist(selPlaylist.id);
+  const selectedPlaylist = playlists.find((playlist) => playlist.id === selectedPlaylistId) ?? playlists[0];
+  const tracks = getTracksForPlaylist(selectedPlaylist.id);
+  const totalDuration = currentTrack ? parseDuration(currentTrack.duration) : 200;
+  const progress = currentTrack ? Math.min(100, (elapsed / totalDuration) * 100) : 0;
+  const filteredTracks = tracks.filter(
+    (track) =>
+      !searchTerm ||
+      track.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      track.artist.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+  const albumMeta = ALBUMS[selectedPlaylist.id];
 
-  // Elapsed timer
   useEffect(() => {
     if (!playing) return;
-    const id = setInterval(() => dispatch({ type: 'TICK' }), 1000);
+    const id = setInterval(() => dispatch(musicPlayerActions.tick()), 1000);
     return () => clearInterval(id);
-  }, [playing, currentTrack]);
+  }, [dispatch, playing, currentTrack]);
 
-  const playTrack = useCallback(
-    (track: Track, idx: number) => {
-      dispatch({ type: 'PLAY_TRACK', track, idx });
-    },
-    [],
-  );
-
-  const totalDuration = currentTrack
-    ? parseDuration(currentTrack.duration)
-    : 200;
-  const progress = currentTrack
-    ? Math.min(100, (elapsed / totalDuration) * 100)
-    : 0;
+  const playTrack = useCallback((track: Track, idx: number) => {
+    dispatch(musicPlayerActions.playTrack({ track, idx }));
+  }, [dispatch]);
 
   const nextTrack = useCallback(() => {
-    const next = shuffle
-      ? Math.floor(Math.random() * tracks.length)
-      : (trackIdx + 1) % tracks.length;
+    const next = shuffle ? Math.floor(Math.random() * tracks.length) : (trackIdx + 1) % tracks.length;
     playTrack(tracks[next], next);
-  }, [shuffle, trackIdx, tracks, playTrack]);
+  }, [playTrack, shuffle, trackIdx, tracks]);
 
   const prevTrack = useCallback(() => {
     if (elapsed > 3) {
-      dispatch({ type: 'SET_ELAPSED', elapsed: 0 });
+      dispatch(musicPlayerActions.setElapsed(0));
       return;
     }
     const prev = (trackIdx - 1 + tracks.length) % tracks.length;
     playTrack(tracks[prev], prev);
-  }, [elapsed, trackIdx, tracks, playTrack]);
+  }, [dispatch, elapsed, playTrack, trackIdx, tracks]);
 
-  // Auto-advance
   useEffect(() => {
     if (playing && currentTrack && elapsed >= totalDuration) {
       if (repeat) {
-        dispatch({ type: 'SET_ELAPSED', elapsed: 0 });
+        dispatch(musicPlayerActions.setElapsed(0));
       } else {
         nextTrack();
       }
     }
-  }, [elapsed, playing, currentTrack, totalDuration, repeat, nextTrack]);
-
-  const filteredTracks = tracks.filter(
-    (t) =>
-      !searchTerm ||
-      t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.artist.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
-  const albumMeta = ALBUMS[selPlaylist.id];
-
-  const toggleLike = (t: Track) => {
-    const key = `${t.title}-${t.artist}`;
-    dispatch({ type: 'TOGGLE_LIKE', key });
-  };
+  }, [currentTrack, dispatch, elapsed, nextTrack, playing, repeat, totalDuration]);
 
   return (
     <div data-part={P.musicPlayer}>
-      {/* ── Now Playing ── */}
       <div data-part={P.mpNowPlaying}>
         <div data-part={P.mpNpContent}>
-          {/* Album art */}
           <div data-part={P.mpAlbumArt}>
-            {currentTrack
-              ? albumMeta?.cover || '\uD83C\uDFB5'
-              : '\uD83C\uDFB5'}
+            {currentTrack ? albumMeta?.cover || '\uD83C\uDFB5' : '\uD83C\uDFB5'}
           </div>
 
-          {/* Track info + controls */}
           <div data-part={P.mpTrackInfo}>
             <div data-part={P.mpTrackTitle}>
               {currentTrack ? currentTrack.title : 'No track selected'}
             </div>
             <div data-part={P.mpTrackArtist}>
-              {currentTrack
-                ? `${currentTrack.artist} \u2014 ${currentTrack.album}`
-                : 'Select a song to play'}
+              {currentTrack ? `${currentTrack.artist} \u2014 ${currentTrack.album}` : 'Select a song to play'}
             </div>
 
-            {/* Transport */}
             <div data-part={P.mpTransport}>
-              <Btn
-                onClick={() => dispatch({ type: 'TOGGLE_SHUFFLE' })}
-                data-state={shuffle ? 'active' : undefined}
-              >
+              <Btn onClick={() => dispatch(musicPlayerActions.toggleShuffle())} data-state={shuffle ? 'active' : undefined}>
                 {'\uD83D\uDD00'}
               </Btn>
               <Btn onClick={prevTrack}>{'\u23EE'}</Btn>
@@ -268,57 +160,46 @@ export function RetroMusicPlayer({
                   if (!currentTrack && tracks.length) {
                     playTrack(tracks[0], 0);
                   } else {
-                    dispatch({ type: 'TOGGLE_PLAYING' });
+                    dispatch(musicPlayerActions.togglePlaying());
                   }
                 }}
               >
                 {playing ? '\u23F8' : '\u25B6'}
               </Btn>
               <Btn onClick={nextTrack}>{'\u23ED'}</Btn>
-              <Btn
-                onClick={() => dispatch({ type: 'TOGGLE_REPEAT' })}
-                data-state={repeat ? 'active' : undefined}
-              >
+              <Btn onClick={() => dispatch(musicPlayerActions.toggleRepeat())} data-state={repeat ? 'active' : undefined}>
                 {repeat ? '\uD83D\uDD02' : '\uD83D\uDD01'}
               </Btn>
 
-              {/* Progress */}
               <div data-part={P.mpProgressArea}>
                 <span data-part={P.mpTimeLabel}>{fmtTime(elapsed)}</span>
                 <div
                   data-part={P.mpProgressBar}
-                  onClick={(e) => {
+                  onClick={(event) => {
                     if (!currentTrack) return;
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const pct = (e.clientX - rect.left) / rect.width;
-                    dispatch({ type: 'SET_ELAPSED', elapsed: Math.floor(pct * totalDuration) });
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    const pct = (event.clientX - rect.left) / rect.width;
+                    dispatch(musicPlayerActions.setElapsed(Math.floor(pct * totalDuration)));
                   }}
                 >
-                  <div
-                    data-part={P.mpProgressFill}
-                    style={{ width: `${progress}%` }}
-                  />
+                  <div data-part={P.mpProgressFill} style={{ width: `${progress}%` }} />
                 </div>
-                <span data-part={P.mpTimeLabel}>
-                  {currentTrack ? currentTrack.duration : '0:00'}
-                </span>
+                <span data-part={P.mpTimeLabel}>{currentTrack ? currentTrack.duration : '0:00'}</span>
               </div>
 
-              {/* Volume */}
               <span data-part={P.mpVolIcon}>{'\uD83D\uDD08'}</span>
               <input
                 type="range"
                 min="0"
                 max="100"
                 value={volume}
-                onChange={(e) => dispatch({ type: 'SET_VOLUME', volume: +e.target.value })}
+                onChange={(event) => dispatch(musicPlayerActions.setVolume(+event.target.value))}
                 data-part={P.mpVolSlider}
               />
               <span data-part={P.mpVolIcon}>{'\uD83D\uDD0A'}</span>
             </div>
           </div>
 
-          {/* EQ */}
           {showEq && (
             <div data-part={P.mpEqContainer}>
               <EqViz playing={playing} />
@@ -326,68 +207,51 @@ export function RetroMusicPlayer({
           )}
         </div>
 
-        {/* Marquee ticker */}
         {currentTrack && playing && (
           <div data-part={P.mpTicker}>
-            <Marquee
-              text={`\u266B  Now Playing: ${currentTrack.title} by ${currentTrack.artist}  \u2014  Album: ${currentTrack.album}  \u2014  ${selPlaylist.name}  \u266B`}
-            />
+            <Marquee text={`\u266B  Now Playing: ${currentTrack.title} by ${currentTrack.artist}  \u2014  Album: ${currentTrack.album}  \u2014  ${selectedPlaylist.name}  \u266B`} />
           </div>
         )}
       </div>
 
-      {/* ── Main Layout ── */}
       <div data-part={P.mpBody}>
-        {/* Sidebar */}
         <div data-part={P.mpSidebar}>
           <div data-part={P.mpSidebarTitle}>YOUR LIBRARY</div>
-          {initialPlaylists.map((p) => (
+          {playlists.map((playlist) => (
             <div
-              key={p.id}
+              key={playlist.id}
               data-part={P.mpPlaylistRow}
-              data-state={selPlaylist.id === p.id ? 'active' : undefined}
-              onClick={() => dispatch({ type: 'SELECT_PLAYLIST', playlist: p })}
+              data-state={selectedPlaylist.id === playlist.id ? 'active' : undefined}
+              onClick={() => dispatch(musicPlayerActions.selectPlaylist(playlist.id))}
             >
-              <span data-part={P.mpPlaylistIcon}>{p.icon}</span>
+              <span data-part={P.mpPlaylistIcon}>{playlist.icon}</span>
               <div data-part={P.mpPlaylistInfo}>
-                <div data-part={P.mpPlaylistName}>{p.name}</div>
-                <div data-part={P.mpPlaylistCount}>{p.count} songs</div>
+                <div data-part={P.mpPlaylistName}>{playlist.name}</div>
+                <div data-part={P.mpPlaylistCount}>{playlist.count} songs</div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Main content */}
         <div data-part={P.mpMain}>
-          {/* Toolbar */}
           <WidgetToolbar>
-            <Btn onClick={() => playTrack(tracks[0], 0)}>
-              {'\u25B6'} Play All
-            </Btn>
+            <Btn onClick={() => playTrack(tracks[0], 0)}>{'\u25B6'} Play All</Btn>
             <Btn
               onClick={() => {
-                const i = Math.floor(Math.random() * tracks.length);
-                playTrack(tracks[i], i);
-                dispatch({ type: 'SET_SHUFFLE', shuffle: true });
+                const index = Math.floor(Math.random() * tracks.length);
+                playTrack(tracks[index], index);
+                dispatch(musicPlayerActions.setShuffle(true));
               }}
             >
               {'\uD83D\uDD00'} Shuffle
             </Btn>
-            <Btn
-              onClick={() => dispatch({ type: 'SET_VIEW', view: view === 'list' ? 'grid' : 'list' })}
-            >
+            <Btn onClick={() => dispatch(musicPlayerActions.setView(view === 'list' ? 'grid' : 'list'))}>
               {view === 'list' ? 'Grid' : 'List'}
             </Btn>
-            <Btn
-              onClick={() => dispatch({ type: 'TOGGLE_EQ' })}
-              data-state={showEq ? 'active' : undefined}
-            >
+            <Btn onClick={() => dispatch(musicPlayerActions.toggleEq())} data-state={showEq ? 'active' : undefined}>
               EQ
             </Btn>
-            <Btn
-              onClick={() => dispatch({ type: 'TOGGLE_QUEUE' })}
-              data-state={showQueue ? 'active' : undefined}
-            >
+            <Btn onClick={() => dispatch(musicPlayerActions.toggleQueue())} data-state={showQueue ? 'active' : undefined}>
               Queue
             </Btn>
             <div style={{ flex: 1 }} />
@@ -396,93 +260,76 @@ export function RetroMusicPlayer({
               type="text"
               placeholder="Search in playlist\u2026"
               value={searchTerm}
-              onChange={(e) => dispatch({ type: 'SET_SEARCH', term: e.target.value })}
+              onChange={(event) => dispatch(musicPlayerActions.setSearchTerm(event.target.value))}
             />
           </WidgetToolbar>
 
-          {/* Playlist header */}
           <div data-part={P.mpPlaylistHeader}>
-            <div data-part={P.mpPlaylistCover}>
-              {albumMeta?.cover || '\uD83C\uDFB5'}
-            </div>
+            <div data-part={P.mpPlaylistCover}>{albumMeta?.cover || '\uD83C\uDFB5'}</div>
             <div>
-              <div data-part={P.mpPlaylistHeaderName}>
-                {selPlaylist.name}
-              </div>
+              <div data-part={P.mpPlaylistHeaderName}>{selectedPlaylist.name}</div>
               <div data-part={P.mpPlaylistHeaderArtist}>
-                {albumMeta?.artist}{' '}
-                {albumMeta?.year && `\u2022 ${albumMeta.year}`}
+                {albumMeta?.artist} {albumMeta?.year && `\u2022 ${albumMeta.year}`}
               </div>
-              <div data-part={P.mpPlaylistHeaderCount}>
-                {selPlaylist.count} songs
-              </div>
+              <div data-part={P.mpPlaylistHeaderCount}>{selectedPlaylist.count} songs</div>
             </div>
           </div>
 
           {view === 'list' ? (
             <div data-part={P.mpTrackList}>
-              {/* Column headers */}
               <div data-part={P.mpTrackListHeader}>
                 <span style={{ width: 20, textAlign: 'center' }}>#</span>
                 <span style={{ flex: 2 }}>Title</span>
                 <span style={{ flex: 1 }}>Artist</span>
                 <span style={{ flex: 1 }}>Album</span>
-                <span style={{ width: 20, textAlign: 'center' }}>
-                  {'\u2764\uFE0F'}
-                </span>
+                <span style={{ width: 20, textAlign: 'center' }}>{'\u2764\uFE0F'}</span>
                 <span style={{ width: 40, textAlign: 'right' }}>Time</span>
               </div>
-              {filteredTracks.map((t, i) => {
+              {filteredTracks.map((track, index) => {
                 const isCurrent =
-                  currentTrack?.title === t.title &&
-                  currentTrack?.artist === t.artist;
+                  currentTrack?.title === track.title && currentTrack?.artist === track.artist;
+                const likeKey = `${track.title}-${track.artist}`;
                 return (
                   <div
-                    key={i}
+                    key={index}
                     data-part={P.mpTrackRow}
                     data-state={isCurrent ? 'active' : undefined}
-                    data-stripe={i % 2 === 0 ? 'even' : 'odd'}
-                    onDoubleClick={() => playTrack(t, i)}
+                    data-stripe={index % 2 === 0 ? 'even' : 'odd'}
+                    onDoubleClick={() => playTrack(track, index)}
                   >
-                    <span data-part={P.mpTrackNum}>
-                      {isCurrent && playing ? '\uD83D\uDD0A' : i + 1}
-                    </span>
-                    <span data-part={P.mpTrackRowTitle}>{t.title}</span>
-                    <span data-part={P.mpTrackRowArtist}>{t.artist}</span>
-                    <span data-part={P.mpTrackRowAlbum}>{t.album}</span>
+                    <span data-part={P.mpTrackNum}>{isCurrent && playing ? '\uD83D\uDD0A' : index + 1}</span>
+                    <span data-part={P.mpTrackRowTitle}>{track.title}</span>
+                    <span data-part={P.mpTrackRowArtist}>{track.artist}</span>
+                    <span data-part={P.mpTrackRowAlbum}>{track.album}</span>
                     <span
                       data-part={P.mpLikeBtn}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleLike(t);
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        dispatch(musicPlayerActions.toggleLike(likeKey));
                       }}
                     >
-                      {liked[`${t.title}-${t.artist}`]
-                        ? '\u2764\uFE0F'
-                        : '\uD83E\uDD0D'}
+                      {liked[likeKey] ? '\u2764\uFE0F' : '\uD83E\uDD0D'}
                     </span>
-                    <span data-part={P.mpTrackDuration}>{t.duration}</span>
+                    <span data-part={P.mpTrackDuration}>{track.duration}</span>
                   </div>
                 );
               })}
-              {filteredTracks.length === 0 && (
-                <EmptyState message="No matching tracks." />
-              )}
+              {filteredTracks.length === 0 && <EmptyState message="No matching tracks." />}
             </div>
           ) : (
             <div data-part={P.mpGridView}>
-              {filteredTracks.map((t, i) => {
-                const isCurrent = currentTrack?.title === t.title;
+              {filteredTracks.map((track, index) => {
+                const isCurrent = currentTrack?.title === track.title;
                 return (
                   <div
-                    key={i}
+                    key={index}
                     data-part={P.mpGridCard}
                     data-state={isCurrent ? 'active' : undefined}
-                    onDoubleClick={() => playTrack(t, i)}
+                    onDoubleClick={() => playTrack(track, index)}
                   >
                     <div data-part={P.mpGridCardIcon}>{'\uD83C\uDFB5'}</div>
-                    <div data-part={P.mpGridCardTitle}>{t.title}</div>
-                    <div data-part={P.mpGridCardArtist}>{t.artist}</div>
+                    <div data-part={P.mpGridCardTitle}>{track.title}</div>
+                    <div data-part={P.mpGridCardArtist}>{track.artist}</div>
                   </div>
                 );
               })}
@@ -490,51 +337,74 @@ export function RetroMusicPlayer({
           )}
         </div>
 
-        {/* Queue */}
         {showQueue && (
           <div data-part={P.mpQueue}>
             <div data-part={P.mpQueueHeader}>
               <span>Up Next</span>
-              <Btn onClick={() => dispatch({ type: 'TOGGLE_QUEUE' })}>{'\u00D7'}</Btn>
+              <Btn onClick={() => dispatch(musicPlayerActions.toggleQueue())}>{'\u00D7'}</Btn>
             </div>
             <div data-part={P.mpQueueList}>
-              {tracks
-                .slice(trackIdx + 1, trackIdx + 10)
-                .map((t, i) => (
-                  <div
-                    key={i}
-                    data-part={P.mpQueueRow}
-                    onDoubleClick={() =>
-                      playTrack(t, trackIdx + 1 + i)
-                    }
-                  >
-                    <span data-part={P.mpQueueNum}>{i + 1}</span>
-                    <div data-part={P.mpQueueInfo}>
-                      <div data-part={P.mpQueueTitle}>{t.title}</div>
-                      <div data-part={P.mpQueueArtist}>{t.artist}</div>
-                    </div>
-                    <span data-part={P.mpQueueDuration}>
-                      {t.duration}
-                    </span>
+              {tracks.slice(trackIdx + 1, trackIdx + 10).map((track, index) => (
+                <div
+                  key={index}
+                  data-part={P.mpQueueRow}
+                  onDoubleClick={() => playTrack(track, trackIdx + 1 + index)}
+                >
+                  <span data-part={P.mpQueueNum}>{index + 1}</span>
+                  <div data-part={P.mpQueueInfo}>
+                    <div data-part={P.mpQueueTitle}>{track.title}</div>
+                    <div data-part={P.mpQueueArtist}>{track.artist}</div>
                   </div>
-                ))}
-              {tracks.slice(trackIdx + 1).length === 0 && (
-                <EmptyState message="Queue empty." />
-              )}
+                  <span data-part={P.mpQueueDuration}>{track.duration}</span>
+                </div>
+              ))}
+              {tracks.slice(trackIdx + 1).length === 0 && <EmptyState message="Queue empty." />}
             </div>
           </div>
         )}
       </div>
 
-      {/* Status bar */}
       <WidgetStatusBar>
         <span>{playing ? '\uD83D\uDD0A Playing' : '\u23F8 Paused'}</span>
         {shuffle && <span>{'\uD83D\uDD00'} Shuffle</span>}
         {repeat && <span>{'\uD83D\uDD02'} Repeat</span>}
         <div style={{ flex: 1 }} />
         <span>Vol: {volume}%</span>
-        <span>{initialPlaylists.length} playlists</span>
+        <span>{playlists.length} playlists</span>
       </WidgetStatusBar>
     </div>
   );
+}
+
+function StandaloneRetroMusicPlayer(props: RetroMusicPlayerProps) {
+  const [state, dispatch] = useReducer(musicPlayerReducer, createInitialSeed(props));
+  return <RetroMusicPlayerFrame state={state} dispatch={dispatch} />;
+}
+
+function ConnectedRetroMusicPlayer(props: RetroMusicPlayerProps) {
+  const reduxDispatch = useDispatch();
+  const state = useSelector(selectMusicPlayerState);
+
+  useEffect(() => {
+    reduxDispatch(musicPlayerActions.initializeIfNeeded(createInitialSeed(props)));
+  }, [props.initialPlaylists, reduxDispatch]);
+
+  const effectiveState = state.initialized ? state : createInitialSeed(props);
+  return <RetroMusicPlayerFrame state={effectiveState} dispatch={(action) => reduxDispatch(action)} />;
+}
+
+export function RetroMusicPlayer(props: RetroMusicPlayerProps) {
+  const reduxContext = useContext(ReactReduxContext);
+  const store = reduxContext?.store;
+  const rootState = store?.getState();
+  const hasRegisteredSlice =
+    typeof rootState === 'object' &&
+    rootState !== null &&
+    MUSIC_PLAYER_STATE_KEY in (rootState as Record<string, unknown>);
+
+  if (hasRegisteredSlice) {
+    return <ConnectedRetroMusicPlayer {...props} />;
+  }
+
+  return <StandaloneRetroMusicPlayer {...props} />;
 }

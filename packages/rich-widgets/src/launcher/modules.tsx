@@ -50,6 +50,10 @@ import {
   gameFinderReducer,
 } from '../game-finder/gameFinderState';
 import { RetroMusicPlayer } from '../music-player/RetroMusicPlayer';
+import {
+  MUSIC_PLAYER_STATE_KEY,
+  musicPlayerReducer,
+} from '../music-player/musicPlayerState';
 import { StreamLauncher } from '../stream-launcher/StreamLauncher';
 import { SteamLauncher } from '../steam-launcher/SteamLauncher';
 import { YouTubeRetro } from '../youtube-retro/YouTubeRetro';
@@ -226,10 +230,16 @@ export const gameFinderModule: LaunchableAppModule = {
   },
 };
 
-export const retroMusicPlayerModule = widget(
-  'retro-music-player', 'Music Player', '\uD83C\uDFB5', 113, 880, 600,
-  () => <RetroMusicPlayer />,
-);
+export const retroMusicPlayerModule: LaunchableAppModule = {
+  ...widget(
+    'retro-music-player', 'Music Player', '\uD83C\uDFB5', 113, 880, 600,
+    () => <RetroMusicPlayer />,
+  ),
+  state: {
+    stateKey: MUSIC_PLAYER_STATE_KEY,
+    reducer: musicPlayerReducer,
+  },
+};
 
 export const streamLauncherModule = widget(
   'stream-launcher', 'Streams', '\uD83D\uDCFA', 114, 900, 640,
