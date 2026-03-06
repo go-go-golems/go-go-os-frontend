@@ -252,6 +252,13 @@ export {
 // GameFinder
 export { GameFinder, type GameFinderProps } from './game-finder/GameFinder';
 export {
+  GAME_FINDER_STATE_KEY,
+  createGameFinderStateSeed,
+  gameFinderActions,
+  gameFinderReducer,
+  selectGameFinderState,
+} from './game-finder/gameFinderState';
+export {
   type Game,
   type Achievement,
   type ArtType,

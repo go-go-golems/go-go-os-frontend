@@ -45,6 +45,10 @@ import {
   deepResearchReducer,
 } from '../deep-research/deepResearchState';
 import { GameFinder } from '../game-finder/GameFinder';
+import {
+  GAME_FINDER_STATE_KEY,
+  gameFinderReducer,
+} from '../game-finder/gameFinderState';
 import { RetroMusicPlayer } from '../music-player/RetroMusicPlayer';
 import { StreamLauncher } from '../stream-launcher/StreamLauncher';
 import { SteamLauncher } from '../steam-launcher/SteamLauncher';
@@ -211,10 +215,16 @@ export const deepResearchModule: LaunchableAppModule = {
   },
 };
 
-export const gameFinderModule = widget(
-  'game-finder', 'Game Finder', '\uD83C\uDFAE', 112, 900, 640,
-  () => <GameFinder />,
-);
+export const gameFinderModule: LaunchableAppModule = {
+  ...widget(
+    'game-finder', 'Game Finder', '\uD83C\uDFAE', 112, 900, 640,
+    () => <GameFinder />,
+  ),
+  state: {
+    stateKey: GAME_FINDER_STATE_KEY,
+    reducer: gameFinderReducer,
+  },
+};
 
 export const retroMusicPlayerModule = widget(
   'retro-music-player', 'Music Player', '\uD83C\uDFB5', 113, 880, 600,

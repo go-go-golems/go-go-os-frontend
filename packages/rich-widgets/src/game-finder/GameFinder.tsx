@@ -1,5 +1,13 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import {
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 import { Btn, RadioButton } from '@hypercard/engine';
+import { ReactReduxContext, useDispatch, useSelector } from 'react-redux';
 import { RICH_PARTS as P } from '../parts';
 import { EmptyState } from '../primitives/EmptyState';
 import { ModalOverlay } from '../primitives/ModalOverlay';
@@ -9,14 +17,19 @@ import { drawGameArt } from './gameArt';
 import {
   type Game,
   type ArtType,
-  type GameFilter,
-  type GameSort,
   FILTER_OPTIONS,
   SORT_OPTIONS,
 } from './types';
 import { SAMPLE_GAMES } from './sampleData';
-
-/* ── Sub-components ── */
+import {
+  createGameFinderStateSeed,
+  GAME_FINDER_STATE_KEY,
+  gameFinderActions,
+  gameFinderReducer,
+  selectGameFinderState,
+  type GameFinderAction,
+  type GameFinderState,
+} from './gameFinderState';
 
 function GameArt({
   type,
@@ -59,27 +72,12 @@ function StarRating({ rating, size = 11 }: { rating: number; size?: number }) {
   );
 }
 
-function DownloadBar({
-  game,
-  onComplete,
-}: {
-  game: Game;
-  onComplete: () => void;
-}) {
+function DownloadBar({ game }: { game: Game }) {
   const [progress, setProgress] = useState(0);
-  const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     const iv = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 1) {
-          clearInterval(iv);
-          onCompleteRef.current();
-          return 1;
-        }
-        return p + 0.02 + Math.random() * 0.03;
-      });
+      setProgress((value) => (value >= 1 ? 1 : value + 0.02 + Math.random() * 0.03));
     }, 150);
     return () => clearInterval(iv);
   }, []);
@@ -93,8 +91,7 @@ function DownloadBar({
       </div>
       <ProgressBar value={pct} max={100} />
       <div data-part={P.gfDownloadMeta}>
-        {game.size} total {'\u00B7'}{' '}
-        {Math.round(progress * parseFloat(game.size) * 10) / 10}K downloaded
+        {game.size} total {'\u00B7'} {Math.round(progress * parseFloat(game.size) * 10) / 10}K downloaded
         {' \u00B7 '}ETA {Math.max(1, Math.round((1 - progress) * 8))}s
       </div>
     </div>
@@ -114,13 +111,12 @@ function GameDetail({
   onLaunch: () => void;
   installing: boolean;
 }) {
-  const doneCount = game.achievements.filter((a) => a.done).length;
+  const doneCount = game.achievements.filter((achievement) => achievement.done).length;
   const totalCount = game.achievements.length;
   const pct = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
 
   return (
     <div data-part={P.gfDetail}>
-      {/* Hero */}
       <div data-part={P.gfDetailHero}>
         <GameArt type={game.art} width={140} height={100} />
         <div data-part={P.gfDetailInfo}>
@@ -148,33 +144,17 @@ function GameDetail({
         </div>
       </div>
 
-      {installing && (
-        <DownloadBar game={game} onComplete={() => {}} />
-      )}
+      {installing && <DownloadBar game={game} />}
 
-      {/* Description */}
       <div data-part={P.gfDescSection}>{game.desc}</div>
 
-      {/* Stats */}
       <div data-part={P.gfStatsRow}>
-        <div>
-          <span data-part={P.gfStatsLabel}>Hours played:</span>{' '}
-          <b>{game.hours}</b>
-        </div>
-        <div>
-          <span data-part={P.gfStatsLabel}>Last played:</span>{' '}
-          <b>{game.lastPlayed}</b>
-        </div>
-        <div>
-          <span data-part={P.gfStatsLabel}>Size:</span> <b>{game.size}</b>
-        </div>
-        <div>
-          <span data-part={P.gfStatsLabel}>Status:</span>{' '}
-          <b>{game.installed ? 'Installed \u2713' : 'Not installed'}</b>
-        </div>
+        <div><span data-part={P.gfStatsLabel}>Hours played:</span> <b>{game.hours}</b></div>
+        <div><span data-part={P.gfStatsLabel}>Last played:</span> <b>{game.lastPlayed}</b></div>
+        <div><span data-part={P.gfStatsLabel}>Size:</span> <b>{game.size}</b></div>
+        <div><span data-part={P.gfStatsLabel}>Status:</span> <b>{game.installed ? 'Installed \u2713' : 'Not installed'}</b></div>
       </div>
 
-      {/* Achievements */}
       <div data-part={P.gfAchievementsSection}>
         <div data-part={P.gfAchievementsHeader}>
           Achievements ({doneCount}/{totalCount})
@@ -183,20 +163,18 @@ function GameDetail({
           <ProgressBar value={pct} max={100} />
           <span data-part={P.gfAchievementsPct}>{pct}%</span>
         </div>
-        {game.achievements.map((a, i) => (
+        {game.achievements.map((achievement, index) => (
           <div
-            key={i}
+            key={index}
             data-part={P.gfAchievementRow}
-            data-state={a.done ? 'done' : 'locked'}
+            data-state={achievement.done ? 'done' : 'locked'}
           >
-            <span data-part={P.gfAchievementIcon}>{a.icon}</span>
+            <span data-part={P.gfAchievementIcon}>{achievement.icon}</span>
             <div data-part={P.gfAchievementInfo}>
-              <div data-part={P.gfAchievementName}>{a.name}</div>
-              <div data-part={P.gfAchievementDesc}>{a.desc}</div>
+              <div data-part={P.gfAchievementName}>{achievement.name}</div>
+              <div data-part={P.gfAchievementDesc}>{achievement.desc}</div>
             </div>
-            <span data-part={P.gfAchievementStatus}>
-              {a.done ? '\u2713' : '\u25CB'}
-            </span>
+            <span data-part={P.gfAchievementStatus}>{achievement.done ? '\u2713' : '\u25CB'}</span>
           </div>
         ))}
       </div>
@@ -214,14 +192,8 @@ function GameRow({
   onClick: () => void;
 }) {
   return (
-    <div
-      data-part={P.gfGameRow}
-      data-state={isActive ? 'active' : undefined}
-      onClick={onClick}
-    >
-      <span data-part={P.gfInstallDot}>
-        {game.installed ? '\uD83D\uDFE2' : '\u26AA'}
-      </span>
+    <div data-part={P.gfGameRow} data-state={isActive ? 'active' : undefined} onClick={onClick}>
+      <span data-part={P.gfInstallDot}>{game.installed ? '\uD83D\uDFE2' : '\u26AA'}</span>
       <GameArt type={game.art} width={48} height={32} />
       <div data-part={P.gfGameRowInfo}>
         <div data-part={P.gfGameRowTitle}>{game.title}</div>
@@ -237,96 +209,81 @@ function GameRow({
   );
 }
 
-/* ── Main ── */
-
 export interface GameFinderProps {
   initialGames?: Game[];
 }
 
-export function GameFinder({ initialGames = SAMPLE_GAMES }: GameFinderProps) {
-  const [view, setView] = useState<'library' | 'detail'>('library');
-  const [selectedGame, setSelectedGame] = useState<string | null>(null);
-  const [games, setGames] = useState(initialGames);
-  const [installing, setInstalling] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<GameFilter>('all');
-  const [sortBy, setSortBy] = useState<GameSort>('recent');
-  const [launchedGame, setLaunchedGame] = useState<string | null>(null);
+function createInitialSeed(props: GameFinderProps): GameFinderState {
+  return createGameFinderStateSeed({
+    initialGames: props.initialGames ?? SAMPLE_GAMES,
+  });
+}
+
+function GameFinderFrame({
+  state,
+  dispatch,
+}: {
+  state: GameFinderState;
+  dispatch: (action: GameFinderAction) => void;
+}) {
+  const { view, selectedGameId, games, installingId, search, filter, sortBy, launchedGameId } = state;
 
   const filtered = useMemo(() => {
-    let list = [...games];
-    if (filter === 'installed') list = list.filter((g) => g.installed);
-    if (filter === 'notinstalled') list = list.filter((g) => !g.installed);
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (g) =>
-          g.title.toLowerCase().includes(q) ||
-          g.dev.toLowerCase().includes(q) ||
-          g.genre.toLowerCase().includes(q),
-      );
-    }
-    list.sort((a, b) => {
-      if (sortBy === 'name') return a.title.localeCompare(b.title);
-      if (sortBy === 'hours') return b.hours - a.hours;
-      if (sortBy === 'rating') return b.rating - a.rating;
+    const list = [...games];
+    const filteredGames = list
+      .filter((game) => (filter === 'installed' ? game.installed : filter === 'notinstalled' ? !game.installed : true))
+      .filter((game) => {
+        if (!search) return true;
+        const query = search.toLowerCase();
+        return (
+          game.title.toLowerCase().includes(query) ||
+          game.dev.toLowerCase().includes(query) ||
+          game.genre.toLowerCase().includes(query)
+        );
+      });
+
+    filteredGames.sort((left, right) => {
+      if (sortBy === 'name') return left.title.localeCompare(right.title);
+      if (sortBy === 'hours') return right.hours - left.hours;
+      if (sortBy === 'rating') return right.rating - left.rating;
       return 0;
     });
-    return list;
-  }, [games, filter, search, sortBy]);
+    return filteredGames;
+  }, [filter, games, search, sortBy]);
 
-  const totalHours = games.reduce((s, g) => s + g.hours, 0);
-  const installedCount = games.filter((g) => g.installed).length;
+  const totalHours = games.reduce((sum, game) => sum + game.hours, 0);
+  const installedCount = games.filter((game) => game.installed).length;
   const totalAchievements = games.reduce(
-    (s, g) => s + g.achievements.filter((a) => a.done).length,
+    (sum, game) => sum + game.achievements.filter((achievement) => achievement.done).length,
     0,
   );
-  const totalPossible = games.reduce(
-    (s, g) => s + g.achievements.length,
-    0,
-  );
+  const totalPossible = games.reduce((sum, game) => sum + game.achievements.length, 0);
+  const detail = selectedGameId ? games.find((game) => game.id === selectedGameId) ?? null : null;
 
-  const handleInstall = useCallback((gameId: string) => {
-    setInstalling(gameId);
-    setTimeout(() => {
-      setGames((prev) =>
-        prev.map((g) =>
-          g.id === gameId ? { ...g, installed: true } : g,
-        ),
-      );
-      setInstalling(null);
-    }, 5000);
-  }, []);
+  const handleInstall = (gameId: string) => {
+    dispatch(gameFinderActions.setInstallingId(gameId));
+    setTimeout(() => dispatch(gameFinderActions.markInstalled(gameId)), 5000);
+  };
 
-  const handleLaunch = useCallback((gameId: string) => {
-    setLaunchedGame(gameId);
-    setTimeout(() => setLaunchedGame(null), 3000);
-  }, []);
-
-  const detail = selectedGame
-    ? games.find((g) => g.id === selectedGame) ?? null
-    : null;
+  const handleLaunch = (gameId: string) => {
+    dispatch(gameFinderActions.setLaunchedGameId(gameId));
+    setTimeout(() => dispatch(gameFinderActions.setLaunchedGameId(null)), 3000);
+  };
 
   return (
     <div data-part={P.gameFinder}>
-      {/* Launch overlay */}
-      {launchedGame && (
-        <ModalOverlay onClose={() => setLaunchedGame(null)}>
+      {launchedGameId && (
+        <ModalOverlay onClose={() => dispatch(gameFinderActions.setLaunchedGameId(null))}>
           <div data-part={P.gfLaunchCard}>
             <GameArt
-              type={
-                games.find((g) => g.id === launchedGame)?.art ?? 'castle'
-              }
+              type={games.find((game) => game.id === launchedGameId)?.art ?? 'castle'}
               width={160}
               height={110}
             />
             <div data-part={P.gfLaunchTitle}>
-              Launching{' '}
-              {games.find((g) => g.id === launchedGame)?.title}{'\u2026'}
+              Launching {games.find((game) => game.id === launchedGameId)?.title}{'\u2026'}
             </div>
-            <div data-part={P.gfLaunchSub}>
-              Preparing Macintosh environment
-            </div>
+            <div data-part={P.gfLaunchSub}>Preparing Macintosh environment</div>
             <div data-part={P.gfLaunchProgress}>
               <div data-part={P.gfLaunchProgressFill} />
             </div>
@@ -335,7 +292,6 @@ export function GameFinder({ initialGames = SAMPLE_GAMES }: GameFinderProps) {
       )}
 
       <div data-part={P.gfBody}>
-        {/* Sidebar */}
         <div data-part={P.gfSidebar}>
           <div data-part={P.gfNavSection}>
             {[
@@ -350,8 +306,8 @@ export function GameFinder({ initialGames = SAMPLE_GAMES }: GameFinderProps) {
                 onClick={
                   item.key === 'library'
                     ? () => {
-                        setView('library');
-                        setSelectedGame(null);
+                        dispatch(gameFinderActions.setView('library'));
+                        dispatch(gameFinderActions.setSelectedGameId(null));
                       }
                     : undefined
                 }
@@ -363,26 +319,26 @@ export function GameFinder({ initialGames = SAMPLE_GAMES }: GameFinderProps) {
 
           <div data-part={P.gfSidebarSection}>
             <div data-part={P.gfSidebarTitle}>Filter</div>
-            {FILTER_OPTIONS.map((opt) => (
+            {FILTER_OPTIONS.map((option) => (
               <div
-                key={opt.value}
+                key={option.value}
                 data-part={P.gfFilterItem}
-                data-state={filter === opt.value ? 'active' : undefined}
-                onClick={() => setFilter(opt.value)}
+                data-state={filter === option.value ? 'active' : undefined}
+                onClick={() => dispatch(gameFinderActions.setFilter(option.value))}
               >
-                {opt.label}
+                {option.label}
               </div>
             ))}
           </div>
 
           <div data-part={P.gfSidebarSection}>
             <div data-part={P.gfSidebarTitle}>Sort</div>
-            {SORT_OPTIONS.map((opt) => (
+            {SORT_OPTIONS.map((option) => (
               <RadioButton
-                key={opt.value}
-                label={opt.label}
-                selected={sortBy === opt.value}
-                onChange={() => setSortBy(opt.value)}
+                key={option.value}
+                label={option.label}
+                selected={sortBy === option.value}
+                onChange={() => dispatch(gameFinderActions.setSortBy(option.value))}
               />
             ))}
           </div>
@@ -392,78 +348,66 @@ export function GameFinder({ initialGames = SAMPLE_GAMES }: GameFinderProps) {
             <div>Games: {games.length}</div>
             <div>Installed: {installedCount}</div>
             <div>Hours: {Math.round(totalHours)}</div>
-            <div>
-              Achievements: {totalAchievements}/{totalPossible}
-            </div>
+            <div>Achievements: {totalAchievements}/{totalPossible}</div>
             <ProgressBar value={totalAchievements} max={totalPossible || 1} />
           </div>
         </div>
 
-        {/* Main */}
         <div data-part={P.gfMain}>
-          {/* Search */}
           <div data-part={P.gfSearchBar}>
             <input
               data-part={P.gfSearchInput}
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setView('library');
-                setSelectedGame(null);
+              onChange={(event) => {
+                dispatch(gameFinderActions.setSearch(event.target.value));
+                dispatch(gameFinderActions.setView('library'));
+                dispatch(gameFinderActions.setSelectedGameId(null));
               }}
               placeholder="Search games\u2026"
             />
-            <span data-part={P.gfSearchCount}>
-              {filtered.length} games
-            </span>
+            <span data-part={P.gfSearchCount}>{filtered.length} games</span>
           </div>
 
           {view === 'detail' && detail ? (
             <GameDetail
               game={detail}
               onBack={() => {
-                setView('library');
-                setSelectedGame(null);
+                dispatch(gameFinderActions.setView('library'));
+                dispatch(gameFinderActions.setSelectedGameId(null));
               }}
               onInstall={() => handleInstall(detail.id)}
               onLaunch={() => handleLaunch(detail.id)}
-              installing={installing === detail.id}
+              installing={installingId === detail.id}
             />
           ) : (
             <div data-part={P.gfGameList}>
-              {/* Column header */}
               <div data-part={P.gfListHeader}>
                 <span style={{ width: 18 }}>{'\u25CF'}</span>
                 <span style={{ width: 48 }}>Art</span>
                 <span style={{ flex: 1 }}>Title / Developer</span>
-                <span style={{ width: 60, textAlign: 'right' }}>
-                  Rating / Time
-                </span>
+                <span style={{ width: 60, textAlign: 'right' }}>Rating / Time</span>
               </div>
-              {filtered.map((g) => (
+              {filtered.map((game) => (
                 <GameRow
-                  key={g.id}
-                  game={g}
-                  isActive={selectedGame === g.id}
+                  key={game.id}
+                  game={game}
+                  isActive={selectedGameId === game.id}
                   onClick={() => {
-                    setSelectedGame(g.id);
-                    setView('detail');
+                    dispatch(gameFinderActions.setSelectedGameId(game.id));
+                    dispatch(gameFinderActions.setView('detail'));
                   }}
                 />
               ))}
-              {filtered.length === 0 && (
-                <EmptyState icon={'\uD83D\uDD79\uFE0F'} message="No games found" />
-              )}
+              {filtered.length === 0 && <EmptyState icon={'\uD83D\uDD79\uFE0F'} message="No games found" />}
             </div>
           )}
         </div>
       </div>
 
-      {/* Status bar */}
       <WidgetStatusBar>
         <span>
-          {installing
-            ? `Installing ${games.find((g) => g.id === installing)?.title}\u2026`
+          {installingId
+            ? `Installing ${games.find((game) => game.id === installingId)?.title}\u2026`
             : detail
               ? `${detail.title} \u2014 ${detail.hours}h played`
               : 'Ready'}
@@ -475,4 +419,37 @@ export function GameFinder({ initialGames = SAMPLE_GAMES }: GameFinderProps) {
       </WidgetStatusBar>
     </div>
   );
+}
+
+function StandaloneGameFinder(props: GameFinderProps) {
+  const [state, dispatch] = useReducer(gameFinderReducer, createInitialSeed(props));
+  return <GameFinderFrame state={state} dispatch={dispatch} />;
+}
+
+function ConnectedGameFinder(props: GameFinderProps) {
+  const reduxDispatch = useDispatch();
+  const state = useSelector(selectGameFinderState);
+
+  useEffect(() => {
+    reduxDispatch(gameFinderActions.initializeIfNeeded(createInitialSeed(props)));
+  }, [props.initialGames, reduxDispatch]);
+
+  const effectiveState = state.initialized ? state : createInitialSeed(props);
+  return <GameFinderFrame state={effectiveState} dispatch={(action) => reduxDispatch(action)} />;
+}
+
+export function GameFinder(props: GameFinderProps) {
+  const reduxContext = useContext(ReactReduxContext);
+  const store = reduxContext?.store;
+  const rootState = store?.getState();
+  const hasRegisteredSlice =
+    typeof rootState === 'object' &&
+    rootState !== null &&
+    GAME_FINDER_STATE_KEY in (rootState as Record<string, unknown>);
+
+  if (hasRegisteredSlice) {
+    return <ConnectedGameFinder {...props} />;
+  }
+
+  return <StandaloneGameFinder {...props} />;
 }
