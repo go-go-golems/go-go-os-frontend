@@ -152,3 +152,62 @@ npm run storybook:check
 ### Next task
 
 Task 3: rebuild the widget layout against the new parts/CSS contract, remove the fake app chrome, and keep only the actual presentation editor functionality.
+
+## 2026-03-06 — Task 3 widget rebuild
+
+### Goal
+
+Replace the placeholder component with the actual widget layout, mapped onto rich-widget primitives and the new `data-part` contract.
+
+### Files changed
+
+- `packages/rich-widgets/src/mac-slides/MacSlides.tsx`
+- `packages/rich-widgets/src/parts.ts`
+- `packages/rich-widgets/src/theme/mac-slides.css`
+
+### What changed
+
+1. Replaced the placeholder component with the real widget UI:
+   - `WidgetToolbar`,
+   - slide sidebar,
+   - markdown editor pane,
+   - preview pane,
+   - `WidgetStatusBar`,
+   - command palette,
+   - presentation overlay.
+2. Kept the actual presentation-editor behavior from the import while removing the fake shell:
+   - no menu bar,
+   - no fake title bar,
+   - no desktop texture,
+   - no global style injection,
+   - no app-shell chrome copied into the widget.
+3. Added small helper behavior needed for the cleaned port:
+   - slide alignment cycling,
+   - current-slide alignment rewriting,
+   - keyboard shortcuts for palette/presentation/navigation.
+4. Extended the CSS/parts contract to eliminate the remaining inline layout styling used during the first rebuild pass:
+   - toolbar button sizing,
+   - toolbar spacer,
+   - thumbnail preview content wrapper.
+
+### Notes
+
+- State is still local at this point; Task 5 is where the Redux decision gets made.
+- The widget is intentionally not yet exported or launcher-registered.
+- Task 3 focused on getting the cleaned widget structure correct before Storybook and state wiring.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+
+### Next task
+
+Task 4: add Storybook stories for default, empty, dense, alignment, and presentation-focused states so the widget has a real scenario harness before launcher wiring.
