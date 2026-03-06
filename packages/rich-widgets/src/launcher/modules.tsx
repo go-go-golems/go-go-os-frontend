@@ -1,3 +1,4 @@
+import { combineReducers } from '@reduxjs/toolkit';
 import type { LaunchableAppModule } from '@hypercard/desktop-os';
 import type { OpenWindowPayload } from '@hypercard/engine/desktop-core';
 import type { ReactNode } from 'react';
@@ -5,6 +6,10 @@ import {
   richWidgetsLauncherActions,
   richWidgetsLauncherReducer,
 } from './richWidgetsLauncherState';
+import {
+  LOG_VIEWER_STATE_KEY,
+  logViewerReducer,
+} from '../log-viewer/logViewerState';
 
 import { LogViewer } from '../log-viewer/LogViewer';
 import { ChartView } from '../chart-view/ChartView';
@@ -83,8 +88,11 @@ export const logViewerModule: LaunchableAppModule = {
     () => <LogViewer />,
   ),
   state: {
-    stateKey: 'app_rich_widgets',
-    reducer: richWidgetsLauncherReducer,
+    stateKey: LOG_VIEWER_STATE_KEY,
+    reducer: combineReducers({
+      launcher: richWidgetsLauncherReducer,
+      viewer: logViewerReducer,
+    }),
   },
 };
 

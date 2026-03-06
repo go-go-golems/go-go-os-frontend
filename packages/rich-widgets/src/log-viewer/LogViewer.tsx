@@ -1,13 +1,28 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Btn, Checkbox } from '@hypercard/engine';
+import { ReactReduxContext, useDispatch, useSelector } from 'react-redux';
 import { RICH_PARTS as P } from '../parts';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
 import { Sparkline } from '../primitives/Sparkline';
 import { type LogEntry, type LogLevel, LOG_LEVELS, ALL_LOG_LEVELS } from './types';
 import { generateLogEntry } from './sampleData';
+import {
+  createLogViewerStateSeed,
+  deserializeLogEntry,
+  LOG_VIEWER_STATE_KEY,
+  logViewerActions,
+  selectLogViewerState,
+  serializeLogEntry,
+} from './logViewerState';
 
-// ── Format helpers ───────────────────────────────────────────────────
 function fmtTime(d: Date): string {
   return (
     d.toLocaleTimeString('en-US', {
@@ -29,138 +44,173 @@ function fmtDate(d: Date): string {
   });
 }
 
-// ── Props ────────────────────────────────────────────────────────────
 export interface LogViewerProps {
   initialLogs?: LogEntry[];
-  /** Enable live streaming of new log entries */
   streaming?: boolean;
-  /** Interval in ms between streamed entries (default: 800) */
   streamInterval?: number;
 }
 
-// ── Component ────────────────────────────────────────────────────────
-export function LogViewer({
-  initialLogs = [],
-  streaming: initialStreaming = false,
-  streamInterval = 800,
-}: LogViewerProps) {
-  const [liveLogs, setLiveLogs] = useState<LogEntry[]>(initialLogs);
-  const [search, setSearch] = useState('');
-  const [levels, setLevels] = useState<Set<LogLevel>>(() => new Set(ALL_LOG_LEVELS));
-  const [serviceFilter, setServiceFilter] = useState('All');
-  const [selected, setSelected] = useState<number | null>(null);
-  const [autoScroll, setAutoScroll] = useState(true);
-  const [streaming, setStreaming] = useState(initialStreaming);
-  const [compactMode, setCompactMode] = useState(false);
-  const [wrapLines, setWrapLines] = useState(false);
+interface LogViewerModel {
+  liveLogs: LogEntry[];
+  search: string;
+  levels: ReadonlySet<LogLevel>;
+  serviceFilter: string;
+  selectedId: number | null;
+  autoScroll: boolean;
+  streaming: boolean;
+  compactMode: boolean;
+  wrapLines: boolean;
+}
+
+interface LogViewerCallbacks {
+  appendGeneratedEntry: (entry: LogEntry) => void;
+  onReset: () => void;
+  setSearch: (value: string) => void;
+  toggleLevel: (level: LogLevel) => void;
+  setServiceFilter: (value: string) => void;
+  setSelectedId: (value: number | null) => void;
+  setAutoScroll: (value: boolean) => void;
+  setStreaming: (value: boolean) => void;
+  setCompactMode: (value: boolean) => void;
+  setWrapLines: (value: boolean) => void;
+}
+
+function LogViewerFrame({
+  model,
+  callbacks,
+  streamInterval,
+}: {
+  model: LogViewerModel;
+  callbacks: LogViewerCallbacks;
+  streamInterval: number;
+}) {
+  const {
+    liveLogs,
+    search,
+    levels,
+    serviceFilter,
+    selectedId,
+    autoScroll,
+    streaming,
+    compactMode,
+    wrapLines,
+  } = model;
+  const {
+    appendGeneratedEntry,
+    onReset,
+    setSearch,
+    toggleLevel,
+    setServiceFilter,
+    setSelectedId,
+    setAutoScroll,
+    setStreaming,
+    setCompactMode,
+    setWrapLines,
+  } = callbacks;
   const listRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // ── Streaming ──
   useEffect(() => {
     if (!streaming) {
-      if (streamRef.current) clearInterval(streamRef.current);
+      if (streamRef.current) {
+        clearInterval(streamRef.current);
+      }
       return;
     }
     streamRef.current = setInterval(() => {
-      setLiveLogs((prev) => {
-        const entry = generateLogEntry(prev.length, new Date());
-        return [...prev, entry];
-      });
+      appendGeneratedEntry(generateLogEntry(liveLogs.length, new Date()));
     }, streamInterval + Math.random() * (streamInterval * 0.5));
     return () => {
-      if (streamRef.current) clearInterval(streamRef.current);
+      if (streamRef.current) {
+        clearInterval(streamRef.current);
+      }
     };
-  }, [streaming, streamInterval]);
+  }, [appendGeneratedEntry, liveLogs.length, streaming, streamInterval]);
 
-  // ── Auto-scroll ──
   useEffect(() => {
     if (autoScroll && listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }
-  }, [liveLogs, autoScroll]);
+  }, [autoScroll, liveLogs]);
 
-  // ── Toggle level filter ──
-  const toggleLevel = useCallback((level: LogLevel) => {
-    setLevels((prev) => {
-      const next = new Set(prev);
-      if (next.has(level)) {
-        next.delete(level);
-      } else {
-        next.add(level);
-      }
-      return next;
-    });
-  }, []);
-
-  // ── Filtered logs ──
   const filtered = useMemo(() => {
-    const q = search.toLowerCase();
+    const query = search.toLowerCase();
     return liveLogs.filter((log) => {
-      if (!levels.has(log.level)) return false;
-      if (serviceFilter !== 'All' && log.service !== serviceFilter) return false;
-      if (
-        q &&
-        !log.message.toLowerCase().includes(q) &&
-        !log.service.toLowerCase().includes(q) &&
-        !log.requestId.toLowerCase().includes(q)
-      )
+      if (!levels.has(log.level)) {
         return false;
+      }
+      if (serviceFilter !== 'All' && log.service !== serviceFilter) {
+        return false;
+      }
+      if (
+        query &&
+        !log.message.toLowerCase().includes(query) &&
+        !log.service.toLowerCase().includes(query) &&
+        !log.requestId.toLowerCase().includes(query)
+      ) {
+        return false;
+      }
       return true;
     });
-  }, [liveLogs, levels, serviceFilter, search]);
+  }, [levels, liveLogs, search, serviceFilter]);
 
-  // ── Selected log detail ──
-  const selectedLog = useMemo(() => liveLogs.find((l) => l.id === selected), [liveLogs, selected]);
+  const selectedLog = useMemo(
+    () => liveLogs.find((entry) => entry.id === selectedId),
+    [liveLogs, selectedId],
+  );
 
-  // ── Level counts ──
   const levelCounts = useMemo(() => {
-    const c: Record<string, number> = {};
-    for (const l of ALL_LOG_LEVELS) c[l] = 0;
-    for (const log of liveLogs) c[log.level]++;
-    return c;
+    const counts: Record<string, number> = {};
+    for (const level of ALL_LOG_LEVELS) {
+      counts[level] = 0;
+    }
+    for (const log of liveLogs) {
+      counts[log.level] += 1;
+    }
+    return counts;
   }, [liveLogs]);
 
-  // ── Sparkline data ──
   const sparkData = useMemo(() => {
     const buckets = 30;
     const data = new Array(buckets).fill(0) as number[];
-    if (filtered.length < 2) return data;
+    if (filtered.length < 2) {
+      return data;
+    }
     const first = filtered[0].timestamp.getTime();
     const last = filtered[filtered.length - 1].timestamp.getTime();
     const range = last - first || 1;
-    for (const l of filtered) {
-      const idx = Math.min(
+    for (const log of filtered) {
+      const index = Math.min(
         buckets - 1,
-        Math.floor(((l.timestamp.getTime() - first) / range) * buckets),
+        Math.floor(((log.timestamp.getTime() - first) / range) * buckets),
       );
-      data[idx]++;
+      data[index] += 1;
     }
     return data;
   }, [filtered]);
 
-  // ── Service list ──
   const services = useMemo(() => {
-    const set = new Set(liveLogs.map((l) => l.service));
-    return ['All', ...Array.from(set).sort()];
+    const available = new Set(liveLogs.map((entry) => entry.service));
+    return ['All', ...Array.from(available).sort()];
   }, [liveLogs]);
 
-  // ── Scroll handler ──
   const onScrollList = useCallback(() => {
-    if (!listRef.current) return;
-    const el = listRef.current;
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
-    if (!atBottom && autoScroll) setAutoScroll(false);
-  }, [autoScroll]);
+    if (!listRef.current) {
+      return;
+    }
+    const element = listRef.current;
+    const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 40;
+    if (!atBottom && autoScroll) {
+      setAutoScroll(false);
+    }
+  }, [autoScroll, setAutoScroll]);
 
   return (
     <div
       data-part={P.lv}
       data-state={compactMode ? 'compact' : undefined}
     >
-      {/* ── Left Sidebar ── */}
       <div data-part={P.lvSidebar}>
-        {/* Level Filters */}
         <div data-part={P.lvFilterGroup}>
           <div style={{ fontWeight: 'bold', fontSize: 10, marginBottom: 4 }}>
             Log Levels
@@ -174,7 +224,7 @@ export function LogViewer({
               <Checkbox
                 label=""
                 checked={levels.has(level)}
-                onChange={() => toggleLevel(level)}
+                onChange={() => undefined}
               />
               <span>{LOG_LEVELS[level].emoji}</span>
               <span style={{ fontWeight: 'bold', flex: 1 }}>{level}</span>
@@ -192,18 +242,17 @@ export function LogViewer({
           ))}
         </div>
 
-        {/* Service Filter */}
         <div data-part={P.lvFilterGroup}>
           <div style={{ fontWeight: 'bold', fontSize: 10, marginBottom: 4 }}>
             Services
           </div>
           <div style={{ flex: 1, overflowY: 'auto' }}>
-            {services.map((svc) => (
+            {services.map((service) => (
               <div
-                key={svc}
+                key={service}
                 data-part={P.lvFilterItem}
-                data-state={serviceFilter === svc ? 'selected' : undefined}
-                onClick={() => setServiceFilter(svc)}
+                data-state={serviceFilter === service ? 'selected' : undefined}
+                onClick={() => setServiceFilter(service)}
                 style={{
                   fontSize: 10,
                   overflow: 'hidden',
@@ -211,13 +260,12 @@ export function LogViewer({
                   whiteSpace: 'nowrap',
                 }}
               >
-                {svc === 'All' ? '🌐 All services' : `📡 ${svc}`}
+                {service === 'All' ? '🌐 All services' : `📡 ${service}`}
               </div>
             ))}
           </div>
         </div>
 
-        {/* Controls */}
         <div data-part={P.lvControls}>
           <Btn
             onClick={() => setStreaming(!streaming)}
@@ -243,16 +291,13 @@ export function LogViewer({
           />
           <div
             style={{
-              borderTop: `1px solid var(--hc-color-border)`,
+              borderTop: '1px solid var(--hc-color-border)',
               paddingTop: 6,
               marginTop: 2,
             }}
           >
             <Btn
-              onClick={() => {
-                setLiveLogs(initialLogs);
-                setSelected(null);
-              }}
+              onClick={onReset}
               style={{ width: '100%', fontSize: 9 }}
             >
               🗑️ Clear & Reset
@@ -261,27 +306,28 @@ export function LogViewer({
         </div>
       </div>
 
-      {/* ── Center: Log Stream ── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        {/* Search + Activity */}
         <WidgetToolbar>
           <div data-part={P.lvSearch}>
             <span style={{ fontSize: 12 }}>🔍</span>
             <input
               data-part="field-input"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
               placeholder="Filter logs by message, service, or request ID..."
               style={{ flex: 1 }}
             />
             {search && (
-              <Btn onClick={() => setSearch('')} style={{ fontSize: 9 }}>
+              <Btn
+                onClick={() => setSearch('')}
+                style={{ fontSize: 9 }}
+              >
                 ✕
               </Btn>
             )}
             <div
               style={{
-                borderLeft: `2px solid var(--hc-color-border)`,
+                borderLeft: '2px solid var(--hc-color-border)',
                 paddingLeft: 8,
                 fontSize: 10,
                 whiteSpace: 'nowrap',
@@ -292,7 +338,11 @@ export function LogViewer({
           </div>
           <div data-part={P.lvActivity}>
             <span style={{ fontWeight: 'bold' }}>ACTIVITY:</span>
-            <Sparkline data={sparkData} width={200} height={20} />
+            <Sparkline
+              data={sparkData}
+              width={200}
+              height={20}
+            />
             <div style={{ flex: 1 }} />
             <span>
               {filtered.length > 0
@@ -302,7 +352,6 @@ export function LogViewer({
           </div>
         </WidgetToolbar>
 
-        {/* Log Table */}
         <div data-part={P.lvTable}>
           <div data-part={P.lvHeader}>
             <span style={{ textAlign: 'center' }}>Lv</span>
@@ -318,14 +367,14 @@ export function LogViewer({
           >
             {filtered.map((log) => {
               const meta = LOG_LEVELS[log.level];
-              const isSel = selected === log.id;
-              const isErr = log.level === 'ERROR' || log.level === 'FATAL';
-              const isWarn = log.level === 'WARN';
-              const rowState = isSel
+              const isSelected = selectedId === log.id;
+              const isError = log.level === 'ERROR' || log.level === 'FATAL';
+              const isWarning = log.level === 'WARN';
+              const rowState = isSelected
                 ? 'selected'
-                : isErr
+                : isError
                   ? 'error'
-                  : isWarn
+                  : isWarning
                     ? 'warning'
                     : undefined;
 
@@ -334,7 +383,7 @@ export function LogViewer({
                   key={log.id}
                   data-part={P.lvRow}
                   data-state={rowState}
-                  onClick={() => setSelected(isSel ? null : log.id)}
+                  onClick={() => setSelectedId(isSelected ? null : log.id)}
                 >
                   <span data-part={P.lvLevelBadge}>
                     {meta.emoji}
@@ -359,7 +408,7 @@ export function LogViewer({
                     }}
                   >
                     {log.message}
-                    {log.stackTrace && !isSel && (
+                    {log.stackTrace && !isSelected && (
                       <span style={{ opacity: 0.4 }}> [+stack]</span>
                     )}
                   </span>
@@ -375,7 +424,6 @@ export function LogViewer({
             )}
           </div>
 
-          {/* Status bar */}
           <WidgetStatusBar>
             <span>{filtered.length} entries shown</span>
             <span style={{ opacity: 0.4 }}>|</span>
@@ -393,11 +441,9 @@ export function LogViewer({
         </div>
       </div>
 
-      {/* ── Right: Inspector ── */}
       <div data-part={P.lvDetail}>
         {selectedLog ? (
           <>
-            {/* Header */}
             <div data-part={P.lvDetailHeader}>
               <div
                 style={{
@@ -419,16 +465,13 @@ export function LogViewer({
               </div>
             </div>
 
-            {/* Message */}
             <div
               style={{
                 padding: '8px 10px',
-                borderBottom: `2px solid var(--hc-color-border)`,
+                borderBottom: '2px solid var(--hc-color-border)',
               }}
             >
-              <div
-                style={{ fontWeight: 'bold', fontSize: 10, marginBottom: 4 }}
-              >
+              <div style={{ fontWeight: 'bold', fontSize: 10, marginBottom: 4 }}>
                 💬 Message
               </div>
               <div
@@ -437,7 +480,7 @@ export function LogViewer({
                   lineHeight: 1.5,
                   wordBreak: 'break-word',
                   padding: 6,
-                  border: `1px solid var(--hc-color-border)`,
+                  border: '1px solid var(--hc-color-border)',
                   background: 'var(--hc-color-alt, #f8f8f8)',
                 }}
               >
@@ -445,11 +488,8 @@ export function LogViewer({
               </div>
             </div>
 
-            {/* Fields */}
             <div style={{ padding: '6px 10px' }}>
-              <div
-                style={{ fontWeight: 'bold', fontSize: 10, marginBottom: 4 }}
-              >
+              <div style={{ fontWeight: 'bold', fontSize: 10, marginBottom: 4 }}>
                 📋 Fields
               </div>
               {(
@@ -461,9 +501,12 @@ export function LogViewer({
                   ['Region', selectedLog.metadata.region],
                   ['Version', selectedLog.metadata.version],
                 ] as const
-              ).map(([k, v]) => (
-                <div key={k} data-part={P.lvDetailField}>
-                  <span style={{ fontWeight: 'bold' }}>{k}</span>
+              ).map(([key, value]) => (
+                <div
+                  key={key}
+                  data-part={P.lvDetailField}
+                >
+                  <span style={{ fontWeight: 'bold' }}>{key}</span>
                   <span
                     style={{
                       textAlign: 'right',
@@ -473,13 +516,12 @@ export function LogViewer({
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {v}
+                    {value}
                   </span>
                 </div>
               ))}
             </div>
 
-            {/* Stack trace */}
             {selectedLog.stackTrace && (
               <div style={{ padding: '6px 10px' }}>
                 <div
@@ -498,7 +540,6 @@ export function LogViewer({
               </div>
             )}
 
-            {/* Actions */}
             <div
               style={{
                 padding: '8px 10px',
@@ -535,5 +576,206 @@ export function LogViewer({
         )}
       </div>
     </div>
+  );
+}
+
+function StandaloneLogViewer({
+  initialLogs,
+  initialStreaming,
+  streamInterval,
+}: {
+  initialLogs: LogEntry[];
+  initialStreaming: boolean;
+  streamInterval: number;
+}) {
+  const [liveLogs, setLiveLogs] = useState<LogEntry[]>(initialLogs);
+  const [search, setSearch] = useState('');
+  const [levels, setLevels] = useState<Set<LogLevel>>(
+    () => new Set(ALL_LOG_LEVELS),
+  );
+  const [serviceFilter, setServiceFilter] = useState('All');
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const [streaming, setStreaming] = useState(initialStreaming);
+  const [compactMode, setCompactMode] = useState(false);
+  const [wrapLines, setWrapLines] = useState(false);
+
+  const toggleLevel = useCallback((level: LogLevel) => {
+    setLevels((previous) => {
+      const next = new Set(previous);
+      if (next.has(level)) {
+        next.delete(level);
+      } else {
+        next.add(level);
+      }
+      return next;
+    });
+  }, []);
+
+  const appendGeneratedEntry = useCallback((entry: LogEntry) => {
+    setLiveLogs((previous) => [...previous, entry]);
+  }, []);
+
+  const onReset = useCallback(() => {
+    setLiveLogs(initialLogs);
+    setSelectedId(null);
+  }, [initialLogs]);
+
+  return (
+    <LogViewerFrame
+      model={{
+        liveLogs,
+        search,
+        levels,
+        serviceFilter,
+        selectedId,
+        autoScroll,
+        streaming,
+        compactMode,
+        wrapLines,
+      }}
+      callbacks={{
+        appendGeneratedEntry,
+        onReset,
+        setSearch,
+        toggleLevel,
+        setServiceFilter,
+        setSelectedId,
+        setAutoScroll,
+        setStreaming,
+        setCompactMode,
+        setWrapLines,
+      }}
+      streamInterval={streamInterval}
+    />
+  );
+}
+
+function ConnectedLogViewer({
+  initialLogs,
+  initialStreaming,
+  streamInterval,
+}: {
+  initialLogs: LogEntry[];
+  initialStreaming: boolean;
+  streamInterval: number;
+}) {
+  const dispatch = useDispatch();
+  const state = useSelector(selectLogViewerState);
+
+  useEffect(() => {
+    dispatch(
+      logViewerActions.initializeIfNeeded({
+        logs: initialLogs,
+        streaming: initialStreaming,
+      }),
+    );
+  }, [dispatch, initialLogs, initialStreaming]);
+
+  const effectiveState = state.initialized
+    ? state
+    : createLogViewerStateSeed({
+        logs: initialLogs,
+        streaming: initialStreaming,
+      });
+
+  const liveLogs = useMemo(
+    () => effectiveState.entries.map(deserializeLogEntry),
+    [effectiveState.entries],
+  );
+  const levels = useMemo(
+    () => new Set<LogLevel>(effectiveState.levels),
+    [effectiveState.levels],
+  );
+
+  const appendGeneratedEntry = useCallback(
+    (entry: LogEntry) => {
+      dispatch(logViewerActions.appendEntry(serializeLogEntry(entry)));
+    },
+    [dispatch],
+  );
+
+  const toggleLevel = useCallback(
+    (level: LogLevel) => {
+      dispatch(logViewerActions.toggleLevel(level));
+    },
+    [dispatch],
+  );
+
+  return (
+    <LogViewerFrame
+      model={{
+        liveLogs,
+        search: effectiveState.search,
+        levels,
+        serviceFilter: effectiveState.serviceFilter,
+        selectedId: effectiveState.selectedId,
+        autoScroll: effectiveState.autoScroll,
+        streaming: effectiveState.streaming,
+        compactMode: effectiveState.compactMode,
+        wrapLines: effectiveState.wrapLines,
+      }}
+      callbacks={{
+        appendGeneratedEntry,
+        onReset: () => {
+          dispatch(logViewerActions.resetToBaseline());
+        },
+        setSearch: (value) => {
+          dispatch(logViewerActions.setSearch(value));
+        },
+        toggleLevel,
+        setServiceFilter: (value) => {
+          dispatch(logViewerActions.setServiceFilter(value));
+        },
+        setSelectedId: (value) => {
+          dispatch(logViewerActions.setSelectedId(value));
+        },
+        setAutoScroll: (value) => {
+          dispatch(logViewerActions.setAutoScroll(value));
+        },
+        setStreaming: (value) => {
+          dispatch(logViewerActions.setStreaming(value));
+        },
+        setCompactMode: (value) => {
+          dispatch(logViewerActions.setCompactMode(value));
+        },
+        setWrapLines: (value) => {
+          dispatch(logViewerActions.setWrapLines(value));
+        },
+      }}
+      streamInterval={streamInterval}
+    />
+  );
+}
+
+export function LogViewer({
+  initialLogs = [],
+  streaming: initialStreaming = false,
+  streamInterval = 800,
+}: LogViewerProps) {
+  const reduxContext = useContext(ReactReduxContext);
+  const store = reduxContext?.store;
+  const state = store?.getState();
+  const hasRegisteredSlice =
+    typeof state === 'object' &&
+    state !== null &&
+    LOG_VIEWER_STATE_KEY in (state as Record<string, unknown>);
+
+  if (hasRegisteredSlice) {
+    return (
+      <ConnectedLogViewer
+        initialLogs={initialLogs}
+        initialStreaming={initialStreaming}
+        streamInterval={streamInterval}
+      />
+    );
+  }
+
+  return (
+    <StandaloneLogViewer
+      initialLogs={initialLogs}
+      initialStreaming={initialStreaming}
+      streamInterval={streamInterval}
+    />
   );
 }

@@ -1,7 +1,15 @@
+import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
 import { LogViewer } from './LogViewer';
 import { generateSampleLogs } from './sampleData';
 import { fixedFrameDecorator, fullscreenDecorator } from '../storybook/frameDecorators';
+import { SeededStoreProvider, type SeedStore } from '../storybook/seededStore';
+import {
+  createLogViewerStateSeed,
+  LOG_VIEWER_STATE_KEY,
+  logViewerActions,
+  logViewerReducer,
+} from './logViewerState';
 import '@hypercard/rich-widgets/theme';
 
 const meta: Meta<typeof LogViewer> = {
@@ -25,6 +33,33 @@ const denseWarnLogs = generateSampleLogs(180).map((log, index) => ({
   level: index % 4 === 0 ? 'ERROR' : 'WARN',
   service: index % 2 === 0 ? 'scheduler' : 'worker-queue',
 }));
+
+function createLogViewerStoryStore() {
+  return configureStore({
+    reducer: {
+      [LOG_VIEWER_STATE_KEY]: logViewerReducer,
+    },
+  });
+}
+
+type LogViewerStoryStore = ReturnType<typeof createLogViewerStoryStore>;
+type LogViewerSeedStore = SeedStore<LogViewerStoryStore>;
+
+function renderWithStore(
+  seedStore: LogViewerSeedStore,
+  height: string | number = '100vh',
+) {
+  return () => (
+    <SeededStoreProvider
+      createStore={createLogViewerStoryStore}
+      seedStore={seedStore}
+    >
+      <div style={{ height }}>
+        <LogViewer />
+      </div>
+    </SeededStoreProvider>
+  );
+}
 
 export const Default: Story = {
   args: {
@@ -92,5 +127,55 @@ export const CompactStream: Story = {
     streaming: true,
     streamInterval: 900,
   },
+  decorators: [fixedFrameDecorator(780, 420)],
+};
+
+export const ReduxFilteredErrors: Story = {
+  render: renderWithStore((store) => {
+    store.dispatch(
+      logViewerActions.replaceState(
+        createLogViewerStateSeed({
+          logs: generateSampleLogs(180),
+          search: 'failed',
+          levels: ['ERROR', 'FATAL'],
+          autoScroll: false,
+        }),
+      ),
+    );
+  }),
+  decorators: [fullscreenDecorator],
+};
+
+export const ReduxSelectedEntry: Story = {
+  render: renderWithStore((store) => {
+    const seededLogs = generateSampleLogs(140);
+    store.dispatch(
+      logViewerActions.replaceState(
+        createLogViewerStateSeed({
+          logs: seededLogs,
+          selectedId: seededLogs[seededLogs.length - 1]?.id ?? null,
+          compactMode: true,
+          wrapLines: true,
+          serviceFilter: seededLogs[seededLogs.length - 1]?.service ?? 'All',
+          autoScroll: false,
+        }),
+      ),
+    );
+  }),
+  decorators: [fullscreenDecorator],
+};
+
+export const ReduxStreamingConsole: Story = {
+  render: renderWithStore((store) => {
+    store.dispatch(
+      logViewerActions.replaceState(
+        createLogViewerStateSeed({
+          logs: denseWarnLogs,
+          streaming: true,
+          autoScroll: true,
+        }),
+      ),
+    );
+  }, 420),
   decorators: [fixedFrameDecorator(780, 420)],
 };

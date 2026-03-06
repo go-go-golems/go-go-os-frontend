@@ -25,6 +25,13 @@ export {
 // LogViewer
 export { LogViewer, type LogViewerProps } from './log-viewer/LogViewer';
 export {
+  LOG_VIEWER_STATE_KEY,
+  createLogViewerStateSeed,
+  logViewerActions,
+  logViewerReducer,
+  selectLogViewerState,
+} from './log-viewer/logViewerState';
+export {
   type LogEntry,
   type LogLevel,
   type LogLevelMeta,
