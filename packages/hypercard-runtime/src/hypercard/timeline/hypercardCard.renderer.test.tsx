@@ -81,8 +81,8 @@ describe('HypercardCardRenderer', () => {
     expect(container.textContent).toContain('Low Stock Card');
     expect(container.textContent).toContain('({ ui }) =>');
     expect(container.textContent).toContain('ui.text("low stock")');
-    expect(container.textContent).toContain('Open');
-    expect(container.textContent).toContain('Edit');
+    expect(container.textContent).not.toContain('Open');
+    expect(container.textContent).not.toContain('Edit');
     expect(container.querySelector('[data-part="syntax-highlight"]')).not.toBeNull();
   });
 

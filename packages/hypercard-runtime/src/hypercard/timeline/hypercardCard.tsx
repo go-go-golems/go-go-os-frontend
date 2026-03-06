@@ -74,8 +74,8 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
   const stackId = props.stackId ? String(props.stackId) : undefined;
   const hasRuntimeCard = cardId.trim().length > 0;
   const hasCardCode = cardCode.trim().length > 0;
-  const canOpenArtifact = Boolean(normalizeArtifactId(artifactId) && hasRuntimeCard);
-  const canEditCode = hasRuntimeCard && hasCardCode;
+  const canOpenArtifact = Boolean(normalizeArtifactId(artifactId) && hasRuntimeCard && status !== 'streaming' && status !== 'pending');
+  const canEditCode = hasRuntimeCard && hasCardCode && status !== 'streaming' && status !== 'pending';
 
   const openArtifact = () => {
     const payload = buildArtifactOpenWindowPayload({
