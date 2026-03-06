@@ -179,6 +179,62 @@ remarquee cloud ls /ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT --long --non-interacti
   - `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT/OS-18-MAC-SLIDES-IMPORT-2026-03-06`
   - `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT/OS-18-MAC-SLIDES-IMPORT-2026-03-06-task6`
 
+## 2026-03-06 — Task 7 modularization and live Storybook verification
+
+### Goal
+
+Continue cleanup now that the widget is functional by reducing component size, making the empty state intentional, and confirming the live Storybook output through Playwright MCP.
+
+### Files changed
+
+- `packages/rich-widgets/src/mac-slides/MacSlides.tsx`
+- `packages/rich-widgets/src/mac-slides/MacSlidesView.tsx`
+- `packages/rich-widgets/src/mac-slides/macSlidesState.ts`
+- `packages/rich-widgets/src/mac-slides/sampleData.ts`
+- `packages/rich-widgets/src/theme/mac-slides.css`
+
+### What changed
+
+1. Split the large widget implementation into:
+   - a thin connected/standalone wrapper in `MacSlides.tsx`,
+   - a presentational `MacSlidesView.tsx`,
+   - smaller internal view sections for sidebar, editor pane, preview pane, and presentation overlay.
+2. Replaced the implicit blank empty-deck state with real UI:
+   - sidebar empty state,
+   - preview empty state,
+   - disabled presentation/alignment affordances when no slides exist.
+3. Changed `createEmptyDeckMarkdown()` to return a truly empty deck instead of a pre-seeded slide.
+4. Removed the selector warning seen in Storybook by replacing the `createSelector` wrapper in `macSlidesState.ts` with a plain selector function.
+
+### Playwright MCP verification
+
+After resetting the locked `mcp-chrome` process, I used Playwright MCP directly against Storybook on port `6006`.
+
+Stories checked:
+
+- `richwidgets-macslides--empty-deck`
+- `richwidgets-macslides--default`
+- `richwidgets-macslides--presentation-open`
+
+Observed results:
+
+- empty-deck story now shows intentional empty-state affordances instead of blank panes;
+- default story renders the expected three-column layout;
+- presentation-open story renders without the prior selector warning;
+- remaining warnings are Storybook/MSW noise, not widget-specific runtime errors.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+
 ### Next task
 
 Task 3: rebuild the widget layout against the new parts/CSS contract, remove the fake app chrome, and keep only the actual presentation editor functionality.

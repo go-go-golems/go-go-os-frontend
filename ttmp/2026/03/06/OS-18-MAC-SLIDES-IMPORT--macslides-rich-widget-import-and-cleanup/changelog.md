@@ -10,6 +10,7 @@
 - Completed Task 4: added Storybook scenarios for default, empty, dense, alignment, presentation, and palette-open states
 - Completed Task 5: added a Redux-backed `MacSlides` slice, connected/standalone component paths, package exports, launcher integration, and reducer tests
 - Completed Task 6: replaced the imported markdown renderer’s ordered-list placeholder hack with a cleaner line-based renderer and expanded helper tests
+- Completed Task 7: extracted `MacSlidesView`, defined empty-deck empty states, removed the `MacSlides` selector warning, and verified live stories with Playwright MCP
 - Ran `docmgr doctor --ticket OS-18-MAC-SLIDES-IMPORT --stale-after 30` with all checks passing
 - Uploaded the OS-18 ticket bundle to reMarkable at `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT` as `OS-18-MAC-SLIDES-IMPORT-2026-03-06`
 - Re-ran `docmgr doctor --ticket OS-18-MAC-SLIDES-IMPORT --stale-after 30` after Task 6 with all checks passing
