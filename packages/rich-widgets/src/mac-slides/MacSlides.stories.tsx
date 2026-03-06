@@ -46,77 +46,115 @@ type MacSlidesSeedStore = SeedStore<MacSlidesStoryStore>;
 
 function renderWithStore(
   seedStore: MacSlidesSeedStore,
-  height: string | number = '100vh',
+  options: {
+    fileName?: string;
+    height?: string | number;
+  } = {},
 ) {
   return () => (
     <SeededStoreProvider
       createStore={createMacSlidesStoryStore}
       seedStore={seedStore}
     >
-      <div style={{ height }}>
-        <MacSlides />
+      <div style={{ height: options.height ?? '100vh' }}>
+        <MacSlides fileName={options.fileName} />
       </div>
     </SeededStoreProvider>
   );
 }
 
+function renderSeededStory(
+  seed: Parameters<typeof createMacSlidesStateSeed>[0],
+  options: {
+    fileName?: string;
+    height?: string | number;
+  } = {},
+) {
+  return renderWithStore((store) => {
+    store.dispatch(macSlidesActions.replaceState(createMacSlidesStateSeed(seed)));
+  }, options);
+}
+
 export const Default: Story = {
-  args: {
-    fileName: 'Quarterly Deck',
-  },
+  render: renderSeededStory(
+    {
+      initialMarkdown: DEFAULT_MARKDOWN,
+    },
+    {
+      fileName: 'Quarterly Deck',
+    },
+  ),
   decorators: [fullscreenDecorator],
 };
 
 export const EmptyDeck: Story = {
-  args: {
-    fileName: 'Blank Deck',
-    initialMarkdown: createEmptyDeckMarkdown(),
-  },
+  render: renderSeededStory(
+    {
+      initialMarkdown: createEmptyDeckMarkdown(),
+    },
+    {
+      fileName: 'Blank Deck',
+    },
+  ),
   decorators: [fullscreenDecorator],
 };
 
 export const DenseDeck: Story = {
-  args: {
-    fileName: 'Roadmap Review',
-    initialMarkdown: createDenseDeckMarkdown(),
-  },
+  render: renderSeededStory(
+    {
+      initialMarkdown: createDenseDeckMarkdown(),
+    },
+    {
+      fileName: 'Roadmap Review',
+    },
+  ),
   decorators: [fullscreenDecorator],
 };
 
 export const AlignmentStates: Story = {
-  args: {
-    fileName: 'Alignment Demo',
-    initialMarkdown: alignmentDeck,
-    initialSlide: 1,
-  },
+  render: renderSeededStory(
+    {
+      initialMarkdown: alignmentDeck,
+      initialSlide: 1,
+    },
+    {
+      fileName: 'Alignment Demo',
+    },
+  ),
   decorators: [fullscreenDecorator],
 };
 
 export const PresentationOpen: Story = {
-  render: renderWithStore((store) => {
-    store.dispatch(
-      macSlidesActions.replaceState(
-        createMacSlidesStateSeed({
-          initialMarkdown: DEFAULT_MARKDOWN,
-          initialSlide: 2,
-          presentationOpen: true,
-        }),
-      ),
-    );
+  render: renderSeededStory({
+    initialMarkdown: DEFAULT_MARKDOWN,
+    initialSlide: 2,
+    presentationOpen: true,
   }),
   decorators: [fullscreenDecorator],
 };
 
 export const PaletteOpen: Story = {
-  render: renderWithStore((store) => {
-    store.dispatch(
-      macSlidesActions.replaceState(
-        createMacSlidesStateSeed({
-          initialMarkdown: DEFAULT_MARKDOWN,
-          paletteOpen: true,
-        }),
-      ),
-    );
-  }, 620),
+  render: renderSeededStory(
+    {
+      initialMarkdown: DEFAULT_MARKDOWN,
+      paletteOpen: true,
+    },
+    {
+      height: 620,
+    },
+  ),
+  decorators: [fixedFrameDecorator(960, 620)],
+};
+
+export const StandaloneEmbed: Story = {
+  render: () => (
+    <div style={{ height: 620 }}>
+      <MacSlides
+        fileName="Standalone Deck"
+        initialMarkdown={DEFAULT_MARKDOWN}
+        initialSlide={1}
+      />
+    </div>
+  ),
   decorators: [fixedFrameDecorator(960, 620)],
 };
