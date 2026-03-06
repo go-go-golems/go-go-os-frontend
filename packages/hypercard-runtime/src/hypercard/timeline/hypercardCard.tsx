@@ -3,7 +3,7 @@ import type { RenderContext, RenderEntity } from '@hypercard/chat-runtime';
 import { SyntaxHighlight, recordField, stringField } from '@hypercard/chat-runtime';
 import { openWindow } from '@hypercard/engine/desktop-core';
 import { buildArtifactOpenWindowPayload, normalizeArtifactId } from '../artifacts/artifactRuntime';
-import { buildCodeEditorWindowPayload } from '../editor/editorLaunch';
+import { openCodeEditor } from '../editor/editorLaunch';
 
 function cardPayload(props: Record<string, unknown>): Record<string, unknown> | undefined {
   return recordField(props, 'result') ?? props;
@@ -74,6 +74,8 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
   const stackId = props.stackId ? String(props.stackId) : undefined;
   const hasRuntimeCard = cardId.trim().length > 0;
   const hasCardCode = cardCode.trim().length > 0;
+  const canOpenArtifact = Boolean(normalizeArtifactId(artifactId) && hasRuntimeCard);
+  const canEditCode = hasRuntimeCard && hasCardCode;
 
   const openArtifact = () => {
     const payload = buildArtifactOpenWindowPayload({
@@ -89,10 +91,10 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
   };
 
   const editArtifact = () => {
-    if (!hasRuntimeCard) {
+    if (!hasRuntimeCard || !hasCardCode) {
       return;
     }
-    dispatch(openWindow(buildCodeEditorWindowPayload({ ownerAppId: 'inventory', cardId })));
+    openCodeEditor(dispatch, { ownerAppId: 'inventory', cardId }, cardCode);
   };
 
   return (
@@ -127,14 +129,18 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
           {JSON.stringify(e.props, null, 2)}
         </pre>
       )}
-      {normalizeArtifactId(artifactId) && hasRuntimeCard && status !== 'streaming' && status !== 'pending' && (
+      {(canOpenArtifact || canEditCode) && (
         <div style={{ marginTop: 4, display: 'flex', gap: 6 }}>
-          <button type="button" data-part="btn" onClick={openArtifact}>
-            Open
-          </button>
-          <button type="button" data-part="btn" onClick={editArtifact}>
-            Edit
-          </button>
+          {canOpenArtifact && (
+            <button type="button" data-part="btn" onClick={openArtifact}>
+              Open
+            </button>
+          )}
+          {canEditCode && (
+            <button type="button" data-part="btn" onClick={editArtifact}>
+              Edit
+            </button>
+          )}
         </div>
       )}
     </div>
