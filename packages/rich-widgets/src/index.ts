@@ -86,6 +86,13 @@ export { BUILT_IN_COMMANDS, FORTUNES, INITIAL_LINES } from './repl/sampleData';
 // NodeEditor
 export { NodeEditor, type NodeEditorProps } from './node-editor/NodeEditor';
 export {
+  NODE_EDITOR_STATE_KEY,
+  createNodeEditorStateSeed,
+  nodeEditorActions,
+  nodeEditorReducer,
+  selectNodeEditorState,
+} from './node-editor/nodeEditorState';
+export {
   type GraphNode,
   type Connection,
   type Port,

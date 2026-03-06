@@ -1,7 +1,15 @@
+import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
-import { NodeEditor } from './NodeEditor';
-import { INITIAL_NODES, INITIAL_CONNECTIONS } from './sampleData';
 import { fullscreenDecorator } from '../storybook/frameDecorators';
+import { SeededStoreProvider, type SeedStore } from '../storybook/seededStore';
+import { INITIAL_CONNECTIONS, INITIAL_NODES } from './sampleData';
+import { NodeEditor } from './NodeEditor';
+import {
+  createNodeEditorStateSeed,
+  NODE_EDITOR_STATE_KEY,
+  nodeEditorActions,
+  nodeEditorReducer,
+} from './nodeEditorState';
 import '@hypercard/rich-widgets/theme';
 
 const meta: Meta<typeof NodeEditor> = {
@@ -14,6 +22,31 @@ const meta: Meta<typeof NodeEditor> = {
 
 export default meta;
 type Story = StoryObj<typeof NodeEditor>;
+
+function createNodeEditorStoryStore() {
+  return configureStore({
+    reducer: {
+      [NODE_EDITOR_STATE_KEY]: nodeEditorReducer,
+    },
+  });
+}
+
+type NodeEditorStoryStore = ReturnType<typeof createNodeEditorStoryStore>;
+type NodeEditorSeedStore = SeedStore<NodeEditorStoryStore>;
+
+function renderWithStore(seedStore: NodeEditorSeedStore) {
+  return () => (
+    <SeededStoreProvider createStore={createNodeEditorStoryStore} seedStore={seedStore}>
+      <NodeEditor />
+    </SeededStoreProvider>
+  );
+}
+
+function renderSeededStory(seed: Parameters<typeof createNodeEditorStateSeed>[0]) {
+  return renderWithStore((store) => {
+    store.dispatch(nodeEditorActions.replaceState(createNodeEditorStateSeed(seed)));
+  });
+}
 
 const denseNodes = [
   ...INITIAL_NODES,
@@ -99,19 +132,20 @@ const branchingConnections = [
 ];
 
 export const Default: Story = {
+  render: renderSeededStory({}),
   decorators: [fullscreenDecorator],
 };
 
 export const Empty: Story = {
-  args: {
+  render: renderSeededStory({
     initialNodes: [],
     initialConnections: [],
-  },
+  }),
   decorators: [fullscreenDecorator],
 };
 
 export const SingleChain: Story = {
-  args: {
+  render: renderSeededStory({
     initialNodes: [
       {
         id: 'a',
@@ -148,22 +182,24 @@ export const SingleChain: Story = {
       { from: 'a-out-0', to: 'b-in-0' },
       { from: 'b-out-0', to: 'c-in-0' },
     ],
-  },
+  }),
   decorators: [fullscreenDecorator],
 };
 
 export const DenseGraph: Story = {
-  args: {
+  render: renderSeededStory({
     initialNodes: denseNodes,
     initialConnections: denseConnections,
-  },
+    pan: { x: -120, y: 0 },
+  }),
   decorators: [fullscreenDecorator],
 };
 
 export const BranchingGraph: Story = {
-  args: {
+  render: renderSeededStory({
     initialNodes: branchingNodes,
     initialConnections: branchingConnections,
-  },
+    selectedNodeId: 'overlay',
+  }),
   decorators: [fullscreenDecorator],
 };

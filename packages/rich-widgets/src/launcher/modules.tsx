@@ -21,6 +21,10 @@ import {
 } from '../kanban/kanbanState';
 import { MacRepl } from '../repl/MacRepl';
 import { NodeEditor } from '../node-editor/NodeEditor';
+import {
+  NODE_EDITOR_STATE_KEY,
+  nodeEditorReducer,
+} from '../node-editor/nodeEditorState';
 import { Oscilloscope } from '../oscilloscope/Oscilloscope';
 import { LogicAnalyzer } from '../logic-analyzer/LogicAnalyzer';
 import { MacCalendar } from '../calendar/MacCalendar';
@@ -167,10 +171,16 @@ export const macReplModule = widget(
   () => <MacRepl />,
 );
 
-export const nodeEditorModule = widget(
-  'node-editor', 'Node Editor', '\uD83D\uDD17', 105, 900, 600,
-  () => <NodeEditor />,
-);
+export const nodeEditorModule: LaunchableAppModule = {
+  ...widget(
+    'node-editor', 'Node Editor', '\uD83D\uDD17', 105, 900, 600,
+    () => <NodeEditor />,
+  ),
+  state: {
+    stateKey: NODE_EDITOR_STATE_KEY,
+    reducer: nodeEditorReducer,
+  },
+};
 
 export const oscilloscopeModule = widget(
   'oscilloscope', 'Oscilloscope', '\uD83D\uDCDF', 106, 800, 560,
