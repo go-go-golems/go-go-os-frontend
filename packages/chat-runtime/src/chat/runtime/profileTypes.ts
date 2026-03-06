@@ -29,11 +29,6 @@ export interface ChatProfileDocument {
   is_default: boolean;
 }
 
-export interface ChatCurrentProfilePayload {
-  slug: string;
-  profile?: string;
-}
-
 export interface ChatMiddlewareSchemaDocument {
   name: string;
   version: number;

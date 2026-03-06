@@ -1,5 +1,4 @@
 import {
-  type ChatCurrentProfilePayload,
   type ChatExtensionSchemaDocument,
   type ChatMiddlewareSchemaDocument,
   type ChatProfileDocument,
@@ -145,25 +144,6 @@ function decodeProfileDocument(
   const extensions = cloneExtensions(payload.extensions);
   if (extensions) {
     out.extensions = extensions;
-  }
-  return out;
-}
-
-function decodeCurrentProfilePayload(
-  payload: unknown,
-  url: string,
-  status: number
-): ChatCurrentProfilePayload {
-  if (!isRecord(payload)) {
-    throw invalidPayload(url, status, 'invalid current profile response');
-  }
-  const slug = typeof payload.slug === 'string' ? payload.slug.trim() : '';
-  if (slug.length === 0) {
-    throw invalidPayload(url, status, 'invalid current profile response');
-  }
-  const out: ChatCurrentProfilePayload = { slug };
-  if (typeof payload.profile === 'string') {
-    out.profile = payload.profile;
   }
   return out;
 }
@@ -329,28 +309,6 @@ export async function setDefaultProfile(
   });
   const responsePayload = await parseJsonOrThrow(response, url, `set default profile failed (${response.status})`);
   return decodeProfileDocument(responsePayload, url, response.status);
-}
-
-export async function getCurrentProfile(options: FetchOptions = {}): Promise<ChatCurrentProfilePayload> {
-  const fetchImpl = options.fetchImpl ?? fetch;
-  const url = `${resolveBasePrefix(options.basePrefix)}/api/chat/profile`;
-  const response = await fetchImpl(url);
-  const payload = await parseJsonOrThrow(response, url, `current profile request failed (${response.status})`);
-  return decodeCurrentProfilePayload(payload, url, response.status);
-}
-
-export async function setCurrentProfile(slug: string, options: FetchOptions = {}): Promise<ChatCurrentProfilePayload> {
-  const fetchImpl = options.fetchImpl ?? fetch;
-  const url = `${resolveBasePrefix(options.basePrefix)}/api/chat/profile`;
-  const response = await fetchImpl(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ slug }),
-  });
-  const payload = await parseJsonOrThrow(response, url, `set current profile failed (${response.status})`);
-  return decodeCurrentProfilePayload(payload, url, response.status);
 }
 
 export async function listMiddlewareSchemas(options: FetchOptions = {}): Promise<ChatMiddlewareSchemaDocument[]> {

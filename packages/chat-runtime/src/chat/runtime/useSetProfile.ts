@@ -1,19 +1,19 @@
 import { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
-import { setCurrentProfile } from './profileApi';
 import { chatProfilesSlice } from '../state/profileSlice';
 
 export interface UseSetProfileOptions {
   scopeKey?: string;
 }
 
-export function useSetProfile(basePrefix = '', options: UseSetProfileOptions = {}) {
+export function useSetProfile(_basePrefix = '', options: UseSetProfileOptions = {}) {
   const dispatch = useDispatch();
   const scopeKey = String(options.scopeKey ?? '').trim() || undefined;
 
   return useCallback(
     async (profile: string | null) => {
       const normalized = String(profile ?? '').trim();
+      dispatch(chatProfilesSlice.actions.setProfileError(null));
       if (!normalized) {
         dispatch(
           chatProfilesSlice.actions.setSelectedProfile({
@@ -23,24 +23,13 @@ export function useSetProfile(basePrefix = '', options: UseSetProfileOptions = {
         );
         return;
       }
-      dispatch(chatProfilesSlice.actions.setProfileError(null));
-      try {
-        const payload = await setCurrentProfile(normalized, { basePrefix });
-        const serverSlug = String(payload.slug ?? payload.profile ?? normalized).trim() || normalized;
-        dispatch(
-          chatProfilesSlice.actions.setSelectedProfile({
-            profile: serverSlug,
-            scopeKey,
-          })
-        );
-      } catch (err) {
-        dispatch(
-          chatProfilesSlice.actions.setProfileError(
-            err instanceof Error ? err.message : String(err)
-          )
-        );
-      }
+      dispatch(
+        chatProfilesSlice.actions.setSelectedProfile({
+          profile: normalized,
+          scopeKey,
+        })
+      );
     },
-    [basePrefix, dispatch, scopeKey]
+    [dispatch, scopeKey]
   );
 }

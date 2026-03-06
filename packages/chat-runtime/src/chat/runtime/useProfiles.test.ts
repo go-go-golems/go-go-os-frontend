@@ -2,27 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { resolveSelectionAfterProfileRefresh } from './useProfiles';
 
 describe('resolveSelectionAfterProfileRefresh', () => {
-  it('prefers persisted server profile when redux selection is empty', () => {
-    const next = resolveSelectionAfterProfileRefresh(
-      [
-        { slug: 'inventory', is_default: true },
-        { slug: 'analyst' },
-      ],
-      {},
-      'analyst'
-    );
-
-    expect(next).toEqual({ profile: 'analyst' });
-  });
-
   it('selects default profile when no profile is currently selected', () => {
     const next = resolveSelectionAfterProfileRefresh(
       [
         { slug: 'inventory', is_default: true },
         { slug: 'analyst' },
       ],
-      {},
-      undefined
+      {}
     );
 
     expect(next).toEqual({ profile: 'inventory' });
@@ -34,8 +20,7 @@ describe('resolveSelectionAfterProfileRefresh', () => {
         { slug: 'inventory', is_default: true },
         { slug: 'analyst' },
       ],
-      { profile: 'analyst' },
-      undefined
+      { profile: 'analyst' }
     );
 
     expect(next).toBeNull();
@@ -47,8 +32,7 @@ describe('resolveSelectionAfterProfileRefresh', () => {
         { slug: 'inventory', is_default: false },
         { slug: 'planner', is_default: true },
       ],
-      { profile: 'analyst' },
-      undefined
+      { profile: 'analyst' }
     );
 
     expect(next).toEqual({ profile: 'planner' });
@@ -57,8 +41,7 @@ describe('resolveSelectionAfterProfileRefresh', () => {
   it('clears selected profile when no profiles remain', () => {
     const next = resolveSelectionAfterProfileRefresh(
       [],
-      { profile: 'analyst' },
-      undefined
+      { profile: 'analyst' }
     );
     expect(next).toEqual({ profile: null });
   });
