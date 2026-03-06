@@ -141,6 +141,12 @@
   box-shadow: 3px 3px 0 var(--hc-color-border);
 }
 
+[data-part="ms-slide-thumb-content"] {
+  width: 100%;
+  overflow: hidden;
+  text-align: center;
+}
+
 [data-part="ms-nav-row"] {
   display: flex;
   justify-content: center;
@@ -148,6 +154,20 @@
   padding: 6px;
   border-top: 1px solid var(--hc-color-border);
   background: var(--hc-color-alt, #ececec);
+}
+
+[data-part="ms-toolbar-button"] {
+  padding: 2px 10px;
+  font-size: 12px;
+}
+
+[data-part="ms-nav-row"] [data-part="ms-toolbar-button"] {
+  padding: 3px 12px;
+  font-size: 11px;
+}
+
+[data-part="ms-toolbar-spacer"] {
+  flex: 1;
 }
 
 [data-part="ms-align-toggle"] {
