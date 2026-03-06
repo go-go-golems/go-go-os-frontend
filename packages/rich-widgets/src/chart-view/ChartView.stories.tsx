@@ -14,6 +14,21 @@ const meta: Meta<typeof ChartView> = {
 export default meta;
 type Story = StoryObj<typeof ChartView>;
 
+const EMPTY_DATASET = {
+  labels: ['No data'],
+  series: [{ name: 'Usage', values: [0] }],
+};
+
+const DENSE_DATASET = {
+  labels: Array.from({ length: 12 }, (_, index) => `W${index + 1}`),
+  series: [
+    { name: 'North', values: [14, 17, 21, 19, 24, 28, 32, 29, 34, 38, 35, 40] },
+    { name: 'South', values: [9, 13, 16, 14, 20, 23, 25, 27, 30, 28, 33, 36] },
+    { name: 'East', values: [12, 11, 15, 18, 17, 21, 24, 22, 26, 29, 31, 34] },
+    { name: 'West', values: [7, 10, 12, 13, 16, 18, 19, 21, 23, 24, 27, 29] },
+  ],
+};
+
 export const LineChart: Story = {
   args: {
     data: SAMPLE_DATASETS['Quarterly Revenue'],
@@ -87,5 +102,23 @@ export const LimitedTypes: Story = {
     data: SAMPLE_DATASETS['Quarterly Revenue'],
     availableTypes: ['line', 'bar'],
     title: 'Line & Bar Only',
+  },
+};
+
+export const EmptyDataset: Story = {
+  args: {
+    data: EMPTY_DATASET,
+    initialChartType: 'line',
+    title: 'No Data Loaded',
+  },
+};
+
+export const DenseDataset: Story = {
+  args: {
+    data: DENSE_DATASET,
+    initialChartType: 'line',
+    width: 720,
+    height: 360,
+    title: 'Regional Throughput',
   },
 };

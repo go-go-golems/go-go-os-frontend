@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { LogViewer } from './LogViewer';
 import { generateSampleLogs } from './sampleData';
+import { fixedFrameDecorator, fullscreenDecorator } from '../storybook/frameDecorators';
 import '@hypercard/rich-widgets/theme';
 
 const meta: Meta<typeof LogViewer> = {
@@ -14,56 +15,43 @@ const meta: Meta<typeof LogViewer> = {
 export default meta;
 type Story = StoryObj<typeof LogViewer>;
 
+const serviceLogs = generateSampleLogs(120).map((log) => ({
+  ...log,
+  service: 'api-gateway',
+}));
+
+const denseWarnLogs = generateSampleLogs(180).map((log, index) => ({
+  ...log,
+  level: index % 4 === 0 ? 'ERROR' : 'WARN',
+  service: index % 2 === 0 ? 'scheduler' : 'worker-queue',
+}));
+
 export const Default: Story = {
   args: {
     initialLogs: generateSampleLogs(200),
   },
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
 };
 
 export const Empty: Story = {
   args: {
     initialLogs: [],
   },
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
 };
 
 export const FewEntries: Story = {
   args: {
     initialLogs: generateSampleLogs(10),
   },
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
 };
 
 export const ManyEntries: Story = {
   args: {
     initialLogs: generateSampleLogs(1000),
   },
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
 };
 
 export const Streaming: Story = {
@@ -72,13 +60,7 @@ export const Streaming: Story = {
     streaming: true,
     streamInterval: 500,
   },
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
 };
 
 export const ErrorHeavy: Story = {
@@ -87,11 +69,28 @@ export const ErrorHeavy: Story = {
       i % 3 === 0 ? { ...log, level: 'ERROR' as const } : log,
     ),
   },
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
+};
+
+export const SingleService: Story = {
+  args: {
+    initialLogs: serviceLogs,
+  },
+  decorators: [fullscreenDecorator],
+};
+
+export const DenseWarnings: Story = {
+  args: {
+    initialLogs: denseWarnLogs,
+  },
+  decorators: [fullscreenDecorator],
+};
+
+export const CompactStream: Story = {
+  args: {
+    initialLogs: generateSampleLogs(40),
+    streaming: true,
+    streamInterval: 900,
+  },
+  decorators: [fixedFrameDecorator(780, 420)],
 };

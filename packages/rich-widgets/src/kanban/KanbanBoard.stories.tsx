@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { KanbanBoard } from './KanbanBoard';
 import { INITIAL_COLUMNS, INITIAL_TASKS } from './sampleData';
+import { fullscreenDecorator } from '../storybook/frameDecorators';
 import '@hypercard/rich-widgets/theme';
 
 const meta: Meta<typeof KanbanBoard> = {
@@ -14,14 +15,19 @@ const meta: Meta<typeof KanbanBoard> = {
 export default meta;
 type Story = StoryObj<typeof KanbanBoard>;
 
+const denseTagTasks = INITIAL_TASKS.map((task, index) => ({
+  ...task,
+  tags: Array.from(
+    new Set([
+      ...task.tags,
+      index % 2 === 0 ? 'urgent' : 'design',
+      index % 3 === 0 ? 'docs' : 'feature',
+    ]),
+  ),
+}));
+
 export const Default: Story = {
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
 };
 
 export const Empty: Story = {
@@ -29,13 +35,7 @@ export const Empty: Story = {
     initialTasks: [],
     initialColumns: INITIAL_COLUMNS,
   },
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
 };
 
 export const FewColumns: Story = {
@@ -50,13 +50,7 @@ export const FewColumns: Story = {
       col: t.col === 'backlog' || t.col === 'review' ? 'todo' : t.col,
     })),
   },
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
 };
 
 export const ManyTasks: Story = {
@@ -73,11 +67,23 @@ export const ManyTasks: Story = {
       })),
     ],
   },
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
+};
+
+export const DenseTags: Story = {
+  args: {
+    initialTasks: denseTagTasks,
+  },
+  decorators: [fullscreenDecorator],
+};
+
+export const SingleLane: Story = {
+  args: {
+    initialColumns: [{ id: 'todo', title: 'Inbox', icon: '📥' }],
+    initialTasks: INITIAL_TASKS.map((task) => ({
+      ...task,
+      col: 'todo',
+    })),
+  },
+  decorators: [fullscreenDecorator],
 };

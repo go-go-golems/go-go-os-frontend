@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { LogicAnalyzer } from './LogicAnalyzer';
+import { fixedFrameDecorator, fullscreenDecorator } from '../storybook/frameDecorators';
 import '@hypercard/rich-widgets/theme';
 
 const meta: Meta<typeof LogicAnalyzer> = {
@@ -15,52 +16,28 @@ type Story = StoryObj<typeof LogicAnalyzer>;
 
 export const Default: Story = {
   args: {},
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
 };
 
 export const Paused: Story = {
   args: {
     autoStart: false,
   },
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
 };
 
 export const AllChannels: Story = {
   args: {
     initialChannelCount: 8,
   },
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
 };
 
 export const TwoChannels: Story = {
   args: {
     initialChannelCount: 2,
   },
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
 };
 
 export const Compact: Story = {
@@ -69,11 +46,21 @@ export const Compact: Story = {
     canvasHeight: 220,
     initialChannelCount: 4,
   },
-  decorators: [
-    (Story) => (
-      <div style={{ height: 400 }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fixedFrameDecorator(760, 400)],
+};
+
+export const SingleChannel: Story = {
+  args: {
+    initialChannelCount: 1,
+  },
+  decorators: [fullscreenDecorator],
+};
+
+export const WideCanvas: Story = {
+  args: {
+    canvasWidth: 860,
+    canvasHeight: 360,
+    initialChannelCount: 8,
+  },
+  decorators: [fullscreenDecorator],
 };

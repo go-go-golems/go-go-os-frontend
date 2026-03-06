@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { DeepResearch } from './DeepResearch';
+import { fixedFrameDecorator, fullscreenDecorator } from '../storybook/frameDecorators';
 import '@hypercard/rich-widgets/theme';
 
 const meta: Meta<typeof DeepResearch> = {
@@ -13,15 +14,44 @@ const meta: Meta<typeof DeepResearch> = {
 export default meta;
 type Story = StoryObj<typeof DeepResearch>;
 
+const sourceHeavySteps = [
+  {
+    type: 'status' as const,
+    text: 'Scoping query and identifying primary sources...',
+  },
+  {
+    type: 'source' as const,
+    title: 'Technical whitepaper',
+    url: 'example.com/whitepaper',
+    snippet: 'Primary source with architecture and benchmark details.',
+  },
+  {
+    type: 'source' as const,
+    title: 'Release notes',
+    url: 'example.com/releases',
+    snippet: 'Version timeline and compatibility constraints.',
+  },
+  {
+    type: 'source' as const,
+    title: 'Migration guide',
+    url: 'example.com/migration',
+    snippet: 'Operational guidance on rollout risk and edge cases.',
+  },
+];
+
+const longTrailSteps = [
+  { type: 'status' as const, text: 'Breaking the problem into sub-questions...' },
+  { type: 'thinking' as const, text: 'First pass: collect baseline definitions and terminology.' },
+  { type: 'source' as const, title: 'Overview memo', url: 'example.com/overview', snippet: 'Context-setting summary of the domain.' },
+  { type: 'status' as const, text: 'Comparing implementation variants...' },
+  { type: 'thinking' as const, text: 'The tradeoffs cluster around latency, reliability, and migration cost.' },
+  { type: 'source' as const, title: 'Benchmark appendix', url: 'example.com/benchmarks', snippet: 'Measured results across representative workloads.' },
+  { type: 'status' as const, text: 'Drafting final synthesis...' },
+];
+
 export const Default: Story = {
   args: {},
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
 };
 
 export const WithResults: Story = {
@@ -47,22 +77,24 @@ export const WithResults: Story = {
       },
     ],
   },
-  decorators: [
-    (Story) => (
-      <div style={{ height: '100vh' }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fullscreenDecorator],
 };
 
 export const Compact: Story = {
   args: {},
-  decorators: [
-    (Story) => (
-      <div style={{ height: 400, width: 700 }}>
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [fixedFrameDecorator(700, 400)],
+};
+
+export const SourcesOnly: Story = {
+  args: {
+    initialSteps: sourceHeavySteps,
+  },
+  decorators: [fullscreenDecorator],
+};
+
+export const ResearchTrail: Story = {
+  args: {
+    initialSteps: longTrailSteps,
+  },
+  decorators: [fullscreenDecorator],
 };
