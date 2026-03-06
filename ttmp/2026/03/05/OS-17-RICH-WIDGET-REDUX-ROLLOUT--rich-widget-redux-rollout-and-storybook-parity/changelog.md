@@ -37,3 +37,6 @@
 - Completed Task 12: migrated `NodeEditor` to a dedicated Redux slice, split the widget subcomponents into their own files, added reducer tests, launcher wiring, and Redux-seeded selection/document stories
 - Re-ran `docmgr doctor --ticket OS-17-RICH-WIDGET-REDUX-ROLLOUT --stale-after 30` after Task 12 with all checks passing
 - Uploaded the refreshed OS-17 bundle to reMarkable at `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT` as `OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task12`
+- Completed Task 13: migrated `SystemModeler` to a dedicated Redux slice, split the widget subcomponents into their own files, added reducer tests, launcher wiring, and Redux-seeded topology/simulation stories
+- Re-ran `docmgr doctor --ticket OS-17-RICH-WIDGET-REDUX-ROLLOUT --stale-after 30` after Task 13 with all checks passing
+- Uploaded the refreshed OS-17 bundle to reMarkable at `/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT` as `OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task13`

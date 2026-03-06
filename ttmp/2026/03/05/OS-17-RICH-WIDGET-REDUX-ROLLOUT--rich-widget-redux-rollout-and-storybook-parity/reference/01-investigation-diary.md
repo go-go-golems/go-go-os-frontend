@@ -775,3 +775,57 @@ remarquee upload bundle \
   --toc-depth 2 --non-interactive
 remarquee cloud ls /ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT --long --non-interactive
 ```
+
+## 2026-03-06 — Task 13 (`SystemModeler`)
+
+### What changed
+
+1. Added `packages/rich-widgets/src/system-modeler/systemModelerState.ts` with a dedicated `app_rw_system_modeler` slice covering:
+   - block and wire document state
+   - selected block state
+   - simulation dialog / progress state
+   - palette visibility
+2. Added reducer coverage in `packages/rich-widgets/src/system-modeler/systemModelerState.test.ts`.
+3. Split the widget subcomponents and geometry helper into their own files:
+   - `packages/rich-widgets/src/system-modeler/SystemModelerPalette.tsx`
+   - `packages/rich-widgets/src/system-modeler/SystemModelerDialogs.tsx`
+   - `packages/rich-widgets/src/system-modeler/SystemModelerSvg.tsx`
+   - `packages/rich-widgets/src/system-modeler/systemModelerGeometry.ts`
+4. Reworked `packages/rich-widgets/src/system-modeler/SystemModeler.tsx` into the connected/standalone pattern used across OS-17 while keeping drag and temporary wiring state local.
+5. Converted `packages/rich-widgets/src/system-modeler/SystemModeler.stories.tsx` to Redux-seeded scenarios and added explicit seeded topology and simulation-parameter states.
+6. Wired launcher registration and public exports to the new slice key.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+- Live Storybook verification on port `6006` ✅ for:
+  - `richwidgets-systemmodeler--dense-canvas`
+- Playwright MCP only showed the existing Storybook/MSW asset warnings; no `SystemModeler`-specific runtime errors surfaced.
+
+### Next task
+
+Durable-widget rollout is complete. Next queued follow-up is `GraphNavigator` in the partial-slice phase.
+
+### Publication refresh
+
+```bash
+docmgr doctor --ticket OS-17-RICH-WIDGET-REDUX-ROLLOUT --stale-after 30
+remarquee upload bundle \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/index.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/design/01-redux-rollout-backlog-and-sequencing.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/tasks.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/changelog.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/reference/01-investigation-diary.md \
+  --name "OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task13" \
+  --remote-dir "/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT" \
+  --toc-depth 2 --non-interactive
+remarquee cloud ls /ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT --long --non-interactive
+```

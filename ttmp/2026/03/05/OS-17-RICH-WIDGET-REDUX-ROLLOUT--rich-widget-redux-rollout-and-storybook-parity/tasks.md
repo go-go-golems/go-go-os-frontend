@@ -14,7 +14,7 @@
 - [x] Task 10 — Migrate `SteamLauncher` to `app_rw_steam_launcher` and add seeded library/install/launch scenarios
 - [x] Task 11 — Migrate `YouTubeRetro` to `app_rw_youtube_retro` and add seeded watch/list/filter scenarios
 - [x] Task 12 — Migrate `NodeEditor` to `app_rw_node_editor` and add seeded selection/document scenarios
-- [ ] Task 13 — Migrate `SystemModeler` to `app_rw_system_modeler` and add seeded topology/simulation scenarios
+- [x] Task 13 — Migrate `SystemModeler` to `app_rw_system_modeler` and add seeded topology/simulation scenarios
 
 ## Follow-up Phases
 
