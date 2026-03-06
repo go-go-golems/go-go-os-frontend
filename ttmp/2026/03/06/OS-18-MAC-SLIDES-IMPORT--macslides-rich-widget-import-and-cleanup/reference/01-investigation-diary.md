@@ -149,6 +149,36 @@ npm run storybook:check
 - `npm run test -w packages/rich-widgets` ✅
 - `npm run storybook:check` ✅
 
+## 2026-03-06 — Task 6 publication refresh
+
+### Goal
+
+Refresh the ticket publication after the renderer cleanup so the reMarkable bundle matches the latest code/docs state.
+
+### Commands run
+
+```bash
+docmgr doctor --ticket OS-18-MAC-SLIDES-IMPORT --stale-after 30
+remarquee upload bundle \
+  .../index.md \
+  .../design/01-macslides-import-plan.md \
+  .../tasks.md \
+  .../changelog.md \
+  .../reference/01-investigation-diary.md \
+  --name "OS-18-MAC-SLIDES-IMPORT-2026-03-06-task6" \
+  --remote-dir "/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT" \
+  --toc-depth 2 --non-interactive
+remarquee cloud ls /ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT --long --non-interactive
+```
+
+### Results
+
+- `docmgr doctor --ticket OS-18-MAC-SLIDES-IMPORT --stale-after 30` ✅
+- Updated bundle upload ✅
+- Remote listing now shows:
+  - `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT/OS-18-MAC-SLIDES-IMPORT-2026-03-06`
+  - `/ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT/OS-18-MAC-SLIDES-IMPORT-2026-03-06-task6`
+
 ### Next task
 
 Task 3: rebuild the widget layout against the new parts/CSS contract, remove the fake app chrome, and keep only the actual presentation editor functionality.
@@ -369,3 +399,55 @@ remarquee cloud ls /ai/2026/03/06/OS-18-MAC-SLIDES-IMPORT --long --non-interacti
 ### Notes
 
 - The first cloud-list attempt raced the upload and returned `Error: entry '06' doesnt exist`; rerunning after the upload completed succeeded.
+
+## 2026-03-06 — Task 6 markdown renderer cleanup
+
+### Goal
+
+Continue the import cleanup past initial launchability by removing the most fragile remaining logic from the imported helper layer.
+
+### Why this task
+
+The widget was working, but `renderBasicMarkdown()` still preserved one of the raw import’s weakest implementation details:
+
+- regex-heavy block conversion,
+- placeholder `oli` tags for ordered lists,
+- paragraph wrapping that depended on post-hoc HTML detection.
+
+That was acceptable for initial scaffolding, but not as a stable imported helper.
+
+### Files changed
+
+- `packages/rich-widgets/src/mac-slides/markdown.ts`
+- `packages/rich-widgets/src/mac-slides/markdown.test.ts`
+
+### What changed
+
+1. Replaced the old renderer with a simple line-based pass that explicitly handles:
+   - headings,
+   - unordered lists,
+   - ordered lists,
+   - paragraphs,
+   - inline bold / italic / code formatting.
+2. Added a small `escapeHtml()` + `renderInlineMarkdown()` split so the rendering stages are clearer.
+3. Removed the placeholder ordered-list tag hack entirely.
+4. Expanded tests to cover:
+   - ordered/unordered list rendering,
+   - HTML escaping,
+   - inline formatting preservation.
+
+### Storybook note
+
+I attempted headless capture against the running Storybook on port `6006`, but the capture path only returned the Storybook loading frame rather than a stable rendered story. I treated that as an inspection-tool limitation and continued with the next concrete code cleanup instead of blocking on it.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
