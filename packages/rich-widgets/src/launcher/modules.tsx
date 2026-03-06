@@ -55,6 +55,10 @@ import {
   musicPlayerReducer,
 } from '../music-player/musicPlayerState';
 import { StreamLauncher } from '../stream-launcher/StreamLauncher';
+import {
+  STREAM_LAUNCHER_STATE_KEY,
+  streamLauncherReducer,
+} from '../stream-launcher/streamLauncherState';
 import { SteamLauncher } from '../steam-launcher/SteamLauncher';
 import { YouTubeRetro } from '../youtube-retro/YouTubeRetro';
 import { ChatBrowser } from '../chat-browser/ChatBrowser';
@@ -241,10 +245,16 @@ export const retroMusicPlayerModule: LaunchableAppModule = {
   },
 };
 
-export const streamLauncherModule = widget(
-  'stream-launcher', 'Streams', '\uD83D\uDCFA', 114, 900, 640,
-  () => <StreamLauncher />,
-);
+export const streamLauncherModule: LaunchableAppModule = {
+  ...widget(
+    'stream-launcher', 'Streams', '\uD83D\uDCFA', 114, 900, 640,
+    () => <StreamLauncher />,
+  ),
+  state: {
+    stateKey: STREAM_LAUNCHER_STATE_KEY,
+    reducer: streamLauncherReducer,
+  },
+};
 
 export const steamLauncherModule = widget(
   'steam-launcher', 'Game Library', '\uD83D\uDD79\uFE0F', 115, 960, 680,

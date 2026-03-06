@@ -1,7 +1,8 @@
 /* StreamLauncher */
 [data-part='stream-launcher'] {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
   height: 100%;
   overflow: hidden;
   font-family: var(--hc-font-family);
@@ -10,14 +11,22 @@
   background: var(--hc-color-bg);
 }
 
+[data-part='stream-launcher'] > [data-part='widget-status-bar'] {
+  grid-column: 1 / span 2;
+  grid-row: 2;
+}
+
 /* --- Sidebar --- */
 [data-part='sl-sidebar'] {
+  grid-column: 1;
+  grid-row: 1;
   width: 150px;
   display: flex;
   flex-direction: column;
   border-right: var(--hc-border-width) solid var(--hc-color-border);
   flex-shrink: 0;
   overflow: hidden;
+  min-height: 0;
 }
 
 [data-part='sl-sidebar-title'] {
@@ -72,11 +81,14 @@
 
 /* --- Main area --- */
 [data-part='sl-main'] {
+  grid-column: 2;
+  grid-row: 1;
   flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
+  min-height: 0;
 }
 
 /* --- Stream list --- */

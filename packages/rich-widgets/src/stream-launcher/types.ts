@@ -31,6 +31,12 @@ export interface ChatMessage {
   msg: string;
 }
 
+export interface StreamLauncherProps {
+  streams?: Stream[];
+  initialCategory?: string;
+  height?: number | string;
+}
+
 export type StreamSort = 'viewers' | 'title';
 
 export const CATEGORIES = [

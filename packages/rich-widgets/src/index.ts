@@ -283,6 +283,13 @@ export {
   type StreamLauncherProps,
 } from './stream-launcher/StreamLauncher';
 export {
+  STREAM_LAUNCHER_STATE_KEY,
+  createStreamLauncherStateSeed,
+  selectStreamLauncherState,
+  streamLauncherActions,
+  streamLauncherReducer,
+} from './stream-launcher/streamLauncherState';
+export {
   type Stream,
   type StreamStatus,
   type ThumbType,
