@@ -12,7 +12,7 @@
 - [x] Task 8 — Migrate `RetroMusicPlayer` to `app_rw_music_player` and add seeded playback/library scenarios
 - [x] Task 9 — Migrate `StreamLauncher` to `app_rw_stream_launcher` and add seeded browse/player scenarios
 - [x] Task 10 — Migrate `SteamLauncher` to `app_rw_steam_launcher` and add seeded library/install/launch scenarios
-- [ ] Task 11 — Migrate `YouTubeRetro` to `app_rw_youtube_retro` and add seeded watch/list/filter scenarios
+- [x] Task 11 — Migrate `YouTubeRetro` to `app_rw_youtube_retro` and add seeded watch/list/filter scenarios
 - [ ] Task 12 — Migrate `NodeEditor` to `app_rw_node_editor` and add seeded selection/document scenarios
 - [ ] Task 13 — Migrate `SystemModeler` to `app_rw_system_modeler` and add seeded topology/simulation scenarios
 

@@ -667,3 +667,59 @@ remarquee upload bundle \
   --toc-depth 2 --non-interactive
 remarquee cloud ls /ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT --long --non-interactive
 ```
+
+## 2026-03-06 — Task 11 (`YouTubeRetro`)
+
+### What changed
+
+1. Added `packages/rich-widgets/src/youtube-retro/youTubeRetroState.ts` with a dedicated `app_rw_youtube_retro` slice covering:
+   - feed videos and current watch selection
+   - playback state and elapsed time
+   - category/search state
+   - subscription, liked-video, and user-comment state
+2. Added reducer coverage in `packages/rich-widgets/src/youtube-retro/youTubeRetroState.test.ts`.
+3. Split the widget subcomponents into their own files:
+   - `packages/rich-widgets/src/youtube-retro/VideoPlayer.tsx`
+   - `packages/rich-widgets/src/youtube-retro/VideoCard.tsx`
+   - `packages/rich-widgets/src/youtube-retro/CommentItem.tsx`
+4. Reworked `packages/rich-widgets/src/youtube-retro/YouTubeRetro.tsx` into the connected/standalone pattern used across OS-17 while keeping the CRT scanline animation local to the player component.
+5. Converted `packages/rich-widgets/src/youtube-retro/YouTubeRetro.stories.tsx` to Redux-seeded scenarios and added explicit stories for:
+   - watch-mode playback state
+   - search-filtered results
+   - reduced and empty feeds
+6. Wired launcher registration and public exports to the new slice key.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+- Live Storybook verification on port `6006` ✅ for:
+  - `richwidgets-youtuberetro--redux-watch-state`
+- Playwright MCP only showed the existing Storybook/MSW asset warnings; no `YouTubeRetro`-specific runtime errors surfaced.
+
+### Next task
+
+Continue with `NodeEditor`.
+
+### Publication refresh
+
+```bash
+docmgr doctor --ticket OS-17-RICH-WIDGET-REDUX-ROLLOUT --stale-after 30
+remarquee upload bundle \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/index.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/design/01-redux-rollout-backlog-and-sequencing.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/tasks.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/changelog.md \
+  ttmp/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT--rich-widget-redux-rollout-and-storybook-parity/reference/01-investigation-diary.md \
+  --name "OS-17-RICH-WIDGET-REDUX-ROLLOUT-2026-03-06-task11" \
+  --remote-dir "/ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT" \
+  --toc-depth 2 --non-interactive
+remarquee cloud ls /ai/2026/03/05/OS-17-RICH-WIDGET-REDUX-ROLLOUT --long --non-interactive
+```
