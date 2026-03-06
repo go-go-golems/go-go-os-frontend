@@ -211,3 +211,50 @@ npm run storybook:check
 ### Next task
 
 Task 4: add Storybook stories for default, empty, dense, alignment, and presentation-focused states so the widget has a real scenario harness before launcher wiring.
+
+## 2026-03-06 — Task 4 Storybook coverage
+
+### Goal
+
+Add scenario coverage for the cleaned widget before export/launcher wiring so the port has a review harness for layout and stateful UI states.
+
+### Files changed
+
+- `packages/rich-widgets/src/mac-slides/MacSlides.tsx`
+- `packages/rich-widgets/src/mac-slides/MacSlides.stories.tsx`
+
+### What changed
+
+1. Added seedable view props to `MacSlides`:
+   - `initialSlide`
+   - `initialShowPalette`
+   - `initialShowPresentation`
+2. Added Storybook stories covering the first review set:
+   - default deck,
+   - empty deck,
+   - dense deck,
+   - alignment-focused deck,
+   - presentation-open state,
+   - palette-open state.
+3. Kept this task local-state friendly so the story harness could land before the Redux decision in Task 5.
+
+### Notes
+
+- The new seed props are deliberate: they let stories represent UI states cleanly and they remain useful even if Task 5 adds a Redux-backed path.
+- The alignment story uses a targeted demo deck instead of overloading the main sample deck.
+
+### Commands run
+
+```bash
+npm run test -w packages/rich-widgets
+npm run storybook:check
+```
+
+### Results
+
+- `npm run test -w packages/rich-widgets` ✅
+- `npm run storybook:check` ✅
+
+### Next task
+
+Task 5: decide the state boundary, add the Redux-backed path if warranted, and wire package exports plus launcher integration.

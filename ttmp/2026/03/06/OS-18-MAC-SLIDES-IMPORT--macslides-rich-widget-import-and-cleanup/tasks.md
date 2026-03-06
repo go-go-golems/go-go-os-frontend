@@ -5,5 +5,5 @@
 - [x] Task 1 — Audit `imports/mac-slides.jsx`, scaffold `packages/rich-widgets/src/mac-slides/`, and extract typed helpers/sample data
 - [x] Task 2 — Add `RICH_PARTS` entries and create `packages/rich-widgets/src/theme/mac-slides.css`
 - [x] Task 3 — Rebuild the widget layout with rich-widget primitives and remove fake shell chrome
-- [ ] Task 4 — Add Storybook coverage for default, empty, dense, alignment, and presentation states
+- [x] Task 4 — Add Storybook coverage for default, empty, dense, alignment, and presentation states
 - [ ] Task 5 — Decide state ownership, add Redux only if justified, and wire exports/launcher integration
