@@ -15,8 +15,8 @@ describe('profileApi', () => {
       ok: true,
       status: 200,
       json: async () => [
-        { slug: 'default', is_default: false },
-        { slug: 'inventory', is_default: true, extensions: { 'webchat.starter_suggestions@v1': { items: ['restock'] } } },
+        { slug: 'default', registry: 'default', is_default: false },
+        { slug: 'inventory', registry: 'ops', is_default: true, extensions: { 'webchat.starter_suggestions@v1': { items: ['restock'] } } },
       ],
       text: async () => '',
     } as Response));
@@ -27,9 +27,10 @@ describe('profileApi', () => {
     });
 
     expect(profiles).toEqual([
-      { slug: 'default', is_default: false },
+      { slug: 'default', registry: 'default', is_default: false },
       {
         slug: 'inventory',
+        registry: 'ops',
         is_default: true,
         extensions: { 'webchat.starter_suggestions@v1': { items: ['restock'] } },
       },
@@ -42,8 +43,8 @@ describe('profileApi', () => {
       ok: true,
       status: 200,
       json: async () => ({
-        '1': { slug: 'inventory', is_default: true },
-        '0': { slug: 'default', is_default: false },
+        '1': { slug: 'inventory', registry: 'default', is_default: true },
+        '0': { slug: 'default', registry: 'default', is_default: false },
       }),
       text: async () => '',
     } as Response));
@@ -54,6 +55,7 @@ describe('profileApi', () => {
     });
 
     expect(profiles.map((profile) => profile.slug)).toEqual(['default', 'inventory']);
+    expect(profiles.map((profile) => profile.registry)).toEqual(['default', 'default']);
   });
 
   it('decodes extensions in create and update profile responses', async () => {

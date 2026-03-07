@@ -104,6 +104,9 @@ function decodeProfileListItem(
     throw invalidPayload(url, status, `invalid profile slug at index ${index}`);
   }
   const out: ChatProfileListItem = { slug };
+  if (typeof payload.registry === 'string' && payload.registry.trim().length > 0) {
+    out.registry = payload.registry.trim();
+  }
   if (typeof payload.display_name === 'string') out.display_name = payload.display_name;
   if (typeof payload.description === 'string') out.description = payload.description;
   if (typeof payload.default_prompt === 'string') out.default_prompt = payload.default_prompt;

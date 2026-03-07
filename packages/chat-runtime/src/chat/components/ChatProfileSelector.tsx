@@ -23,10 +23,9 @@ export function ChatProfileSelector({
   const currentProfile = useCurrentProfile(scopeKey);
   const setProfile = useSetProfile(basePrefix, { scopeKey });
 
-  const defaultProfileSlug = profiles.find((profile) => profile.is_default)?.slug ?? '';
   const selectedProfileValue = resolveProfileSelectorValue(
     profiles,
-    currentProfile.profile
+    currentProfile
   );
 
   return (
@@ -38,10 +37,7 @@ export function ChatProfileSelector({
         id={`chat-profile-${convId}`}
         value={selectedProfileValue}
         onChange={(event) => {
-          const nextProfile = resolveProfileSelectionChange(
-            event.target.value,
-            defaultProfileSlug
-          );
+          const nextProfile = resolveProfileSelectionChange(event.target.value, profiles);
           if (nextProfile) {
             void setProfile(nextProfile);
             return;
@@ -54,8 +50,13 @@ export function ChatProfileSelector({
         {profilesLoading ? <option value="">Loading…</option> : null}
         {!profilesLoading && profiles.length === 0 ? <option value="">No profiles</option> : null}
         {profiles.map((profile) => (
-          <option key={profile.slug} value={profile.slug}>
-            {(profile.display_name?.trim() || profile.slug) + (profile.is_default ? ' (default)' : '')}
+          <option
+            key={`${profile.registry ?? 'default'}:${profile.slug}`}
+            value={JSON.stringify({ profile: profile.slug, registry: profile.registry })}
+          >
+            {(profile.display_name?.trim() || profile.slug)
+              + (profile.registry ? ` [${profile.registry}]` : '')
+              + (profile.is_default ? ' (default)' : '')}
           </option>
         ))}
       </select>

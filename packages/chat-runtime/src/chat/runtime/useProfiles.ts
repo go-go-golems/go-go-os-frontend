@@ -29,6 +29,16 @@ function normalize(value: string | null | undefined): string {
   return String(value ?? '').trim();
 }
 
+function matchesSelection(profile: ChatProfileListItem, selectedProfile: string, selectedRegistry: string): boolean {
+  if (normalize(profile.slug) !== selectedProfile) {
+    return false;
+  }
+  if (!selectedRegistry) {
+    return true;
+  }
+  return normalize(profile.registry) === selectedRegistry;
+}
+
 export function resolveSelectionAfterProfileRefresh(
   profiles: ChatProfileListItem[],
   selected: { profile?: string; registry?: string }
@@ -37,17 +47,25 @@ export function resolveSelectionAfterProfileRefresh(
   const selectedRegistry = normalize(selected.registry) || null;
 
   if (selectedProfile) {
-    const hasSelected = profiles.some((item) => normalize(item.slug) === selectedProfile);
+    const hasSelected = profiles.some((item) => matchesSelection(item, selectedProfile, selectedRegistry ?? ''));
     if (hasSelected) {
       return null;
     }
   }
 
-  const fallback = profiles.find((item) => item.is_default) ?? profiles[0];
+  const fallback = (selectedRegistry
+    ? profiles.find((item) => normalize(item.registry) === selectedRegistry && item.is_default)
+      ?? profiles.find((item) => normalize(item.registry) === selectedRegistry)
+    : undefined)
+    ?? profiles.find((item) => item.is_default)
+    ?? profiles[0];
   if (!fallback?.slug) {
     return { profile: null, registry: selectedRegistry };
   }
-  return { profile: normalize(fallback.slug), registry: selectedRegistry };
+  return {
+    profile: normalize(fallback.slug),
+    registry: normalize(fallback.registry) || selectedRegistry,
+  };
 }
 
 export function useProfiles(

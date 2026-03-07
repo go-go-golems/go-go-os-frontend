@@ -10,6 +10,7 @@ export type ChatProfilePolicy =
 
 export interface ChatProfileListItem {
   slug: string;
+  registry?: string;
   display_name?: string;
   description?: string;
   default_prompt?: string;
