@@ -30,11 +30,12 @@ describe('profileSlice', () => {
 
   it('tracks selected profile', () => {
     const state = reduce([
-      actions.setSelectedProfile({ profile: 'agent' }),
+      actions.setSelectedProfile({ profile: 'agent', registry: 'default' }),
       actions.clearSelectedProfile(),
     ]);
 
     expect(state.selectedProfile).toBeNull();
+    expect(state.selectedRegistry).toBeNull();
   });
 
   it('tracks scoped profile selection independently', () => {
@@ -42,6 +43,7 @@ describe('profileSlice', () => {
       actions.setSelectedProfile({ profile: 'global-default' }),
       actions.setSelectedProfile({
         profile: 'inventory-specialist',
+        registry: 'ops',
         scopeKey: 'conv:abc',
       }),
       actions.clearScopedProfile({ scopeKey: 'conv:abc' }),

@@ -31,9 +31,10 @@ function normalize(value: string | null | undefined): string {
 
 export function resolveSelectionAfterProfileRefresh(
   profiles: ChatProfileListItem[],
-  selected: { profile?: string }
-): { profile: string | null } | null {
+  selected: { profile?: string; registry?: string }
+): { profile: string | null; registry?: string | null } | null {
   const selectedProfile = normalize(selected.profile);
+  const selectedRegistry = normalize(selected.registry) || null;
 
   if (selectedProfile) {
     const hasSelected = profiles.some((item) => normalize(item.slug) === selectedProfile);
@@ -44,9 +45,9 @@ export function resolveSelectionAfterProfileRefresh(
 
   const fallback = profiles.find((item) => item.is_default) ?? profiles[0];
   if (!fallback?.slug) {
-    return { profile: null };
+    return { profile: null, registry: selectedRegistry };
   }
-  return { profile: normalize(fallback.slug) };
+  return { profile: normalize(fallback.slug), registry: selectedRegistry };
 }
 
 export function useProfiles(

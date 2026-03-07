@@ -13,6 +13,7 @@ describe('chat runtime http', () => {
       fetchImpl: fetchImpl as unknown as typeof fetch,
       profileSelection: {
         profile: 'agent',
+        registry: 'default',
       },
     });
 
@@ -23,6 +24,7 @@ describe('chat runtime http', () => {
       prompt: 'hello',
       conv_id: 'conv-1',
       profile: 'agent',
+      registry: 'default',
     });
   });
 

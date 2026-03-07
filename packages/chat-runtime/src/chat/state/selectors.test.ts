@@ -164,6 +164,7 @@ describe('selectors', () => {
     expect(selectProfileError(state)).toBeNull();
     expect(selectCurrentProfileSelection(state)).toEqual({
       profile: undefined,
+      registry: undefined,
     });
   });
 
@@ -174,9 +175,11 @@ describe('selectors', () => {
       chatProfiles: {
         availableProfiles: [],
         selectedProfile: 'global-profile',
+        selectedRegistry: 'default',
         selectedByScope: {
           'conv:abc': {
             profile: 'scoped-profile',
+            registry: 'ops',
           },
         },
         loading: false,
@@ -186,9 +189,11 @@ describe('selectors', () => {
 
     expect(selectCurrentProfileSelection(state, 'conv:abc')).toEqual({
       profile: 'scoped-profile',
+      registry: 'ops',
     });
     expect(selectCurrentProfileSelection(state, 'conv:missing')).toEqual({
       profile: undefined,
+      registry: undefined,
     });
   });
 

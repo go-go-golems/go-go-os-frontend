@@ -42,6 +42,10 @@ function applyProfileSelection(
   if (profile.length > 0) {
     payload.profile = profile;
   }
+  const registry = String(profileSelection.registry ?? '').trim();
+  if (registry.length > 0) {
+    payload.registry = registry;
+  }
 }
 
 export async function submitPrompt(

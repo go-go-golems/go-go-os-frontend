@@ -25,6 +25,7 @@ interface ConversationEffectSnapshot {
   basePrefix: string;
   profilePolicy: string;
   profile: string;
+  registry: string;
 }
 
 const lifecycleLog = getDebugLogger('chat:useConversation:lifecycle');
@@ -44,7 +45,8 @@ function buildEffectSnapshot(
   convId: string,
   basePrefix: string,
   profilePolicy: ChatProfilePolicy | undefined,
-  profile: string | undefined
+  profile: string | undefined,
+  registry: string | undefined
 ): ConversationEffectSnapshot {
   const policyKey = (() => {
     if (!profilePolicy) return 'none';
@@ -61,6 +63,7 @@ function buildEffectSnapshot(
     basePrefix: normalizeSnapshotValue(basePrefix),
     profilePolicy: policyKey,
     profile: normalizeSnapshotValue(profile),
+    registry: normalizeSnapshotValue(registry),
   };
 }
 
@@ -73,22 +76,31 @@ function diffEffectSnapshot(
   if (previous.basePrefix !== current.basePrefix) changed.push('basePrefix');
   if (previous.profilePolicy !== current.profilePolicy) changed.push('profilePolicy');
   if (previous.profile !== current.profile) changed.push('profile');
+  if (previous.registry !== current.registry) changed.push('registry');
   return changed;
 }
 
 function resolveEffectiveProfileSelection(
   policy: ChatProfilePolicy | undefined,
-  selected: { profile?: string }
-): { profile?: string } | undefined {
+  selected: { profile?: string; registry?: string }
+): { profile?: string; registry?: string } | undefined {
   if (!policy || policy.kind === 'none') {
     return undefined;
   }
   if (policy.kind === 'fixed') {
     const fixed = normalizeSnapshotValue(policy.profile);
-    return fixed ? { profile: fixed } : undefined;
+    const registry = normalizeSnapshotValue(selected.registry) || undefined;
+    return fixed ? { profile: fixed, registry } : undefined;
   }
   const selectedProfile = normalizeSnapshotValue(selected.profile);
-  return selectedProfile ? { profile: selectedProfile } : undefined;
+  const selectedRegistry = normalizeSnapshotValue(selected.registry) || undefined;
+  if (!selectedProfile && !selectedRegistry) {
+    return undefined;
+  }
+  return {
+    profile: selectedProfile || undefined,
+    registry: selectedRegistry,
+  };
 }
 
 export function useConversation(convId: string, basePrefix = '', profilePolicy?: ChatProfilePolicy): UseConversationResult {
@@ -129,6 +141,7 @@ export function useConversation(convId: string, basePrefix = '', profilePolicy?:
     [normalizedProfilePolicy, profileSelection],
   );
   const selectedProfile = normalizeSnapshotValue(effectiveProfileSelection?.profile) || undefined;
+  const selectedRegistry = normalizeSnapshotValue(effectiveProfileSelection?.registry) || undefined;
   const lastEffectSnapshotRef = useRef<ConversationEffectSnapshot | null>(null);
   const lastEffectDispatchRef = useRef<typeof dispatch | null>(null);
   const effectRunIdRef = useRef(0);
@@ -139,6 +152,7 @@ export function useConversation(convId: string, basePrefix = '', profilePolicy?:
       normalizedBasePrefix,
       normalizedProfilePolicy,
       selectedProfile,
+      selectedRegistry,
     );
     const previousSnapshot = lastEffectSnapshotRef.current;
     const changedKeys = previousSnapshot ? diffEffectSnapshot(previousSnapshot, snapshot) : ['mount'];
@@ -186,7 +200,7 @@ export function useConversation(convId: string, basePrefix = '', profilePolicy?:
       disposed = true;
       conversationManager.disconnect(normalizedConvId);
     };
-  }, [effectiveProfileSelection, normalizedBasePrefix, normalizedConvId, normalizedProfilePolicy, selectedProfile]);
+  }, [effectiveProfileSelection, normalizedBasePrefix, normalizedConvId, normalizedProfilePolicy, selectedProfile, selectedRegistry]);
 
   const send = useCallback(
     async (prompt: string) => {

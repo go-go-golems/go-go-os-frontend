@@ -1,5 +1,6 @@
 export interface ChatProfileSelection {
   profile?: string;
+  registry?: string;
 }
 
 export type ChatProfilePolicy =

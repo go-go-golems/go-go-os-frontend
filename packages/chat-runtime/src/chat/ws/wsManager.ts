@@ -64,7 +64,8 @@ function resolveBasePrefix(basePrefix?: string): string {
 
 function profileSelectionKey(selection?: ChatProfileSelection): string {
   const profile = String(selection?.profile ?? '').trim();
-  return profile;
+  const registry = String(selection?.registry ?? '').trim();
+  return `${profile}::${registry}`;
 }
 
 function resolveWsUrl(
@@ -83,6 +84,10 @@ function resolveWsUrl(
   const profile = String(profileSelection?.profile ?? '').trim();
   if (profile.length > 0) {
     url += `&profile=${encodeURIComponent(profile)}`;
+  }
+  const registry = String(profileSelection?.registry ?? '').trim();
+  if (registry.length > 0) {
+    url += `&registry=${encodeURIComponent(registry)}`;
   }
   return url;
 }

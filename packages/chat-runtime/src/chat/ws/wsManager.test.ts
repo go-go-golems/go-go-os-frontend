@@ -112,6 +112,7 @@ describe('wsManager', () => {
       dispatch: store.dispatch,
       profileSelection: {
         profile: 'agent',
+        registry: 'default',
       },
       hydrate: false,
       wsFactory: (url) => {
@@ -123,7 +124,7 @@ describe('wsManager', () => {
     });
 
     expect(sockets).toHaveLength(1);
-    expect(sockets[0].url).toBe('wss://chat.local/ws?conv_id=conv-profile&profile=agent');
+    expect(sockets[0].url).toBe('wss://chat.local/ws?conv_id=conv-profile&profile=agent&registry=default');
     sockets[0].emitOpen();
     await connectPromise;
     manager.disconnect();

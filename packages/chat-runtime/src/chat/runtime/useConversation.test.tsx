@@ -117,7 +117,7 @@ describe('useConversation profile policy', () => {
 
     expect(connectMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        profileSelection: { profile: 'planner' },
+        profileSelection: { profile: 'planner', registry: undefined },
       }),
     );
   });
