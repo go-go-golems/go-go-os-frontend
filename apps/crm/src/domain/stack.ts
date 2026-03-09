@@ -45,7 +45,7 @@ export const STACK: CardStackDefinition = {
     bundleCode: CRM_PLUGIN_BUNDLE,
     capabilities: {
       domain: ['contacts', 'companies', 'deals', 'activities'],
-      system: ['nav.go', 'nav.back', 'notify'],
+      system: ['nav.go', 'nav.back', 'notify.show'],
     },
   },
   cards: Object.fromEntries(CRM_CARD_META.map((card) => [card.id, toPluginCard(card)])),
