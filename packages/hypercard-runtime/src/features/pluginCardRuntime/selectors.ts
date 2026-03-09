@@ -4,7 +4,7 @@ import type {
   PluginRuntimeSession,
 } from './pluginCardRuntimeSlice';
 
-const RUNTIME_GLOBAL_EXCLUDED_SLICES = new Set(['pluginCardRuntime', 'windowing', 'notifications', 'debug']);
+const RUNTIME_PROJECTED_SLICES = new Set(['inventory', 'sales']);
 const EMPTY_RUNTIME_OBJECT = Object.freeze({}) as Record<string, unknown>;
 const projectedDomainsCache = new WeakMap<object, Record<string, unknown>>();
 
@@ -43,9 +43,9 @@ export const selectPendingNavIntents = (state: PluginCardRuntimeStateSlice) =>
   state.pluginCardRuntime.pendingNavIntents;
 
 /**
- * Returns app/domain slices that should be exposed to plugin runtime as `globalState.domains`.
+ * Returns the app slices that the runtime host currently projects into VM-facing state.
  * The result is intended to be consumed with `useSelector(..., shallowEqual)` so callers
- * rerender only when domain slice references change.
+ * rerender only when relevant slice references change.
  */
 export const selectProjectedRuntimeDomains = (state: unknown): Record<string, unknown> => {
   if (!isRecord(state)) {
@@ -57,7 +57,7 @@ export const selectProjectedRuntimeDomains = (state: unknown): Record<string, un
     return cached;
   }
   const projected = Object.fromEntries(
-    Object.entries(state).filter(([key]) => !RUNTIME_GLOBAL_EXCLUDED_SLICES.has(key)),
+    Object.entries(state).filter(([key]) => RUNTIME_PROJECTED_SLICES.has(key)),
   );
   projectedDomainsCache.set(state, projected);
   return projected;
