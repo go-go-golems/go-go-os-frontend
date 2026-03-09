@@ -12,8 +12,27 @@ defineStackBundle(({ ui }) => {
     { id: '6', sku: 'P-3002', name: 'Thingamajig F', category: 'Parts', price: '$3.25', qty: 120 },
   ];
 
-  function go(dispatchSystemCommand, cardId, param) {
-    dispatchSystemCommand('nav.go', param ? { cardId: String(cardId), param: String(param) } : { cardId: String(cardId) });
+  function draftState(state) {
+    return asRecord(asRecord(state).draft);
+  }
+
+  function navigate(context, cardId, param) {
+    context.dispatch({
+      type: 'nav.go',
+      payload: param ? { cardId: String(cardId), param: String(param) } : { cardId: String(cardId) },
+    });
+  }
+
+  function showNotice(context, message) {
+    context.dispatch({ type: 'notify.show', payload: { message: String(message || '') } });
+  }
+
+  function patchDraft(context, payload) {
+    context.dispatch({ type: 'draft.patch', payload });
+  }
+
+  function setDraft(context, path, value) {
+    context.dispatch({ type: 'draft.set', payload: { path, value } });
   }
 
   return {
@@ -40,8 +59,8 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            go(dispatchSystemCommand, asRecord(args).cardId || 'home');
+          go(context, args) {
+            navigate(context, asRecord(args).cardId || 'home');
           },
         },
       },
@@ -61,8 +80,8 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            go(dispatchSystemCommand, asRecord(args).cardId || 'home');
+          go(context, args) {
+            navigate(context, asRecord(args).cardId || 'home');
           },
         },
       },
@@ -91,20 +110,20 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            go(dispatchSystemCommand, asRecord(args).cardId || 'home');
+          go(context, args) {
+            navigate(context, asRecord(args).cardId || 'home');
           },
-          notify({ dispatchSystemCommand }, args) {
-            dispatchSystemCommand('notify', { message: String(asRecord(args).message || '') });
+          notify(context, args) {
+            showNotice(context, asRecord(args).message || '');
           },
         },
       },
 
       chat: {
-        render({ cardState }) {
-          const state = asRecord(cardState);
-          const history = Array.isArray(state.history) ? state.history : [];
-          const draft = String(state.draft || '');
+        render({ state }) {
+          const draft = draftState(state);
+          const history = Array.isArray(draft.history) ? draft.history : [];
+          const draftText = String(draft.draft || '');
           const lines = history.map((entry) => {
             const row = asRecord(entry);
             const role = String(row.role || 'assistant');
@@ -115,7 +134,7 @@ defineStackBundle(({ ui }) => {
           return ui.panel([
             ui.text('Assistant'),
             ui.column(lines),
-            ui.input(draft, { onChange: { handler: 'changeDraft' } }),
+            ui.input(draftText, { onChange: { handler: 'changeDraft' } }),
             ui.row([
               ui.button('Send', { onClick: { handler: 'send' } }),
               ui.button('🏠 Home', { onClick: { handler: 'go', args: { cardId: 'home' } } }),
@@ -123,27 +142,26 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            go(dispatchSystemCommand, asRecord(args).cardId || 'home');
+          go(context, args) {
+            navigate(context, asRecord(args).cardId || 'home');
           },
-          changeDraft({ dispatchCardAction }, args) {
-            dispatchCardAction('set', {
-              path: 'draft',
-              value: asRecord(args).value,
-            });
+          changeDraft(context, args) {
+            setDraft(context, 'draft', asRecord(args).value);
           },
-          send({ cardState, dispatchCardAction }) {
-            const state = asRecord(cardState);
-            const draft = String(state.draft || '').trim();
-            if (!draft) return;
+          send(context) {
+            const card = draftState(context.state);
+            const draft = String(card.draft || '').trim();
+            if (!draft) {
+              return;
+            }
 
-            const history = Array.isArray(state.history) ? state.history : [];
+            const history = Array.isArray(card.history) ? card.history : [];
             const nextHistory = history.concat([
               { role: 'user', text: draft },
               { role: 'assistant', text: 'Received: ' + draft },
             ]);
 
-            dispatchCardAction('patch', {
+            patchDraft(context, {
               history: nextHistory.slice(-12),
               draft: '',
             });
@@ -169,8 +187,8 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            go(dispatchSystemCommand, asRecord(args).cardId || 'home');
+          go(context, args) {
+            navigate(context, asRecord(args).cardId || 'home');
           },
         },
       },
