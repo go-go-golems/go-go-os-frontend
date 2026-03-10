@@ -130,6 +130,19 @@ const windowingSlice = createSlice({
       win.bounds.h = Math.max(win.minH, action.payload.h);
     },
 
+    /** Update content-derived minimum size. Can only raise, never lower. */
+    updateWindowMinSize(state, action: PayloadAction<{ id: string; minW?: number; minH?: number }>) {
+      const win = state.windows[action.payload.id];
+      if (!win) return;
+
+      if (action.payload.minW !== undefined) {
+        win.minW = Math.max(win.minW, action.payload.minW);
+      }
+      if (action.payload.minH !== undefined) {
+        win.minH = Math.max(win.minH, action.payload.minH);
+      }
+    },
+
     // ── Desktop UI state ──
 
     setActiveMenu(state, action: PayloadAction<string | null>) {
@@ -189,6 +202,7 @@ export const {
   closeWindow,
   moveWindow,
   resizeWindow,
+  updateWindowMinSize,
   setActiveMenu,
   setSelectedIcon,
   setDesktopContextMenu,

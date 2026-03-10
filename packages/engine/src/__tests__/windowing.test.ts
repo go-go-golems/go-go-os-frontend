@@ -21,6 +21,7 @@ import {
   moveWindow,
   openWindow,
   resizeWindow,
+  updateWindowMinSize,
   sessionNavBack,
   sessionNavGo,
   sessionNavHome,
@@ -330,6 +331,75 @@ describe('windowingReducer', () => {
       const after = windowingReducer(before, resizeWindow({ id: 'nonexistent', w: 999, h: 999 }));
 
       expect(after).toEqual(before);
+    });
+  });
+
+  // ── updateWindowMinSize ──
+
+  describe('updateWindowMinSize', () => {
+    it('raises minW when measured value exceeds current', () => {
+      const state = reduce(
+        openWindow(cardWindow('w1', 'browse')),
+        updateWindowMinSize({ id: 'w1', minW: 354 }),
+      );
+
+      expect(state.windows.w1.minW).toBe(354);
+      expect(state.windows.w1.minH).toBe(120); // unchanged
+    });
+
+    it('raises minH when measured value exceeds current', () => {
+      const state = reduce(
+        openWindow(cardWindow('w1', 'browse')),
+        updateWindowMinSize({ id: 'w1', minH: 200 }),
+      );
+
+      expect(state.windows.w1.minH).toBe(200);
+      expect(state.windows.w1.minW).toBe(180); // unchanged
+    });
+
+    it('does not lower minW below current value', () => {
+      const state = reduce(
+        openWindow(cardWindow('w1', 'browse', { minW: 300 })),
+        updateWindowMinSize({ id: 'w1', minW: 200 }),
+      );
+
+      expect(state.windows.w1.minW).toBe(300);
+    });
+
+    it('does not lower minH below current value', () => {
+      const state = reduce(
+        openWindow(cardWindow('w1', 'browse', { minH: 250 })),
+        updateWindowMinSize({ id: 'w1', minH: 100 }),
+      );
+
+      expect(state.windows.w1.minH).toBe(250);
+    });
+
+    it('raises both minW and minH in a single dispatch', () => {
+      const state = reduce(
+        openWindow(cardWindow('w1', 'browse')),
+        updateWindowMinSize({ id: 'w1', minW: 400, minH: 300 }),
+      );
+
+      expect(state.windows.w1.minW).toBe(400);
+      expect(state.windows.w1.minH).toBe(300);
+    });
+
+    it('is a no-op for unknown window id', () => {
+      const before = reduce(openWindow(cardWindow('w1', 'browse')));
+      const after = windowingReducer(before, updateWindowMinSize({ id: 'nonexistent', minW: 500 }));
+
+      expect(after).toEqual(before);
+    });
+
+    it('resizeWindow respects updated minW after content measurement', () => {
+      const state = reduce(
+        openWindow(cardWindow('w1', 'browse')),
+        updateWindowMinSize({ id: 'w1', minW: 354 }),
+        resizeWindow({ id: 'w1', w: 200, h: 200 }),
+      );
+
+      expect(state.windows.w1.bounds.w).toBe(354); // clamped to content-derived min
     });
   });
 
