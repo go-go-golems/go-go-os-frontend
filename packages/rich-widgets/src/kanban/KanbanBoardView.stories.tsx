@@ -66,3 +66,18 @@ export const SingleLane: Story = {
   }),
   decorators: [fullscreenDecorator],
 };
+
+export const WithHighlights: Story = {
+  args: {
+    ...createArgs(),
+    title: 'Incident Command',
+    subtitle: 'Three-lane ops board with telemetry cards',
+    primaryActionLabel: '+ Escalate',
+    highlights: [
+      { id: 'sev1', label: 'SEV-1', value: 1, caption: 'Customer-facing outage', tone: 'danger', trend: [0, 1, 1, 2, 1] },
+      { id: 'mitigation', label: 'Mitigation', value: '74%', caption: 'Rollback in progress', tone: 'warning', progress: 0.74 },
+      { id: 'latency', label: 'Latency', value: '182ms', caption: 'API p95', tone: 'accent', trend: [140, 150, 180, 210, 182] },
+    ],
+  },
+  decorators: [fullscreenDecorator],
+};

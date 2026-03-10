@@ -74,6 +74,7 @@ export { SAMPLE_DOCUMENT } from './mac-write/sampleData';
 // KanbanBoard
 export { KanbanBoard, KanbanBoardFrame, type KanbanBoardProps } from './kanban/KanbanBoard';
 export { KanbanBoardView, type KanbanBoardViewProps } from './kanban/KanbanBoardView';
+export { KanbanHighlights, type KanbanHighlightsProps } from './kanban/KanbanHighlights';
 export { KanbanHeaderBar, type KanbanHeaderBarProps } from './kanban/KanbanHeaderBar';
 export { KanbanFilterBar, type KanbanFilterBarProps } from './kanban/KanbanFilterBar';
 export { KanbanLaneView, type KanbanLaneViewProps } from './kanban/KanbanLaneView';
@@ -97,6 +98,7 @@ export {
   type KanbanLabelId,
   type KanbanTaxonomy,
   type KanbanOptionDescriptor,
+  type KanbanHighlight,
   DEFAULT_KANBAN_TAXONOMY,
   formatKanbanOption,
   findKanbanOption,

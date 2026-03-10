@@ -32,6 +32,16 @@ export interface Column {
   icon: string;
 }
 
+export interface KanbanHighlight {
+  id: string;
+  label: string;
+  value: string | number;
+  caption?: string;
+  progress?: number;
+  trend?: number[];
+  tone?: 'neutral' | 'accent' | 'success' | 'warning' | 'danger';
+}
+
 export const DEFAULT_KANBAN_TAXONOMY: KanbanTaxonomy = {
   issueTypes: [
     { id: 'bug', label: 'Bug', icon: '🐞', color: '#f28b82' },

@@ -140,6 +140,21 @@ export const SingleLane: Story = {
   decorators: [fullscreenDecorator],
 };
 
+export const TwoLaneCutline: Story = {
+  render: renderSeededStory({
+    initialColumns: [
+      { id: 'gates', title: 'Launch Gates', icon: '🚧' },
+      { id: 'ship', title: 'Shipping', icon: '🚀' },
+    ],
+    initialTasks: [
+      { id: 'cutline-1', col: 'gates', title: 'Marketing copy final signoff', type: 'task', labels: ['docs'], priority: 'medium', desc: 'Need PM + marketing approval.' },
+      { id: 'cutline-2', col: 'gates', title: 'Android fallback verification', type: 'bug', labels: ['backend'], priority: 'high', desc: 'Last blocker before launch.' },
+      { id: 'cutline-3', col: 'ship', title: 'iOS candidate rollout', type: 'feature', labels: ['frontend'], priority: 'low', desc: 'Already cleared for flighting.' },
+    ],
+  }),
+  decorators: [fullscreenDecorator],
+};
+
 export const ReduxEditingExistingTask: Story = {
   render: renderSeededStory({
     editingTask: INITIAL_TASKS[2],
@@ -178,6 +193,16 @@ export const BugTriageBoard: Story = {
 
 export const PersonalPlannerBoard: Story = {
   render: renderSeededStory(KANBAN_EXAMPLE_BOARDS[2].props),
+  decorators: [fullscreenDecorator],
+};
+
+export const IncidentCommandBoard: Story = {
+  render: renderSeededStory(KANBAN_EXAMPLE_BOARDS[3].props),
+  decorators: [fullscreenDecorator],
+};
+
+export const ReleaseCutlineBoard: Story = {
+  render: renderSeededStory(KANBAN_EXAMPLE_BOARDS[4].props),
   decorators: [fullscreenDecorator],
 };
 

@@ -71,6 +71,12 @@ export const RICH_PARTS = {
 
   // KanbanBoard
   kb: 'kb',
+  kbHighlights: 'kb-highlights',
+  kbHighlight: 'kb-highlight',
+  kbHighlightLabel: 'kb-highlight-label',
+  kbHighlightValue: 'kb-highlight-value',
+  kbHighlightCaption: 'kb-highlight-caption',
+  kbHighlightTrend: 'kb-highlight-trend',
   kbBoard: 'kb-board',
   kbColumn: 'kb-column',
   kbColumnHeader: 'kb-column-header',

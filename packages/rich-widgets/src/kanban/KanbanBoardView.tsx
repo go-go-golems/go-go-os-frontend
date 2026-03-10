@@ -5,8 +5,10 @@ import { KanbanHeaderBar } from './KanbanHeaderBar';
 import { KanbanFilterBar } from './KanbanFilterBar';
 import { KanbanLaneView } from './KanbanLaneView';
 import { KanbanStatusBar, type KanbanStatusMetric } from './KanbanStatusBar';
+import { KanbanHighlights } from './KanbanHighlights';
 import { KanbanTaskModal } from './KanbanTaskModal';
 import type { KanbanState } from './kanbanState';
+import type { KanbanHighlight } from './types';
 
 function filterTasks(tasks: Task[], filterType: KanbanIssueTypeId | null, filterPriority: KanbanPriorityId | null, searchQuery: string) {
   const normalizedQuery = searchQuery.toLowerCase();
@@ -48,6 +50,7 @@ export interface KanbanBoardViewProps {
   primaryActionLabel?: string;
   showFilterBar?: boolean;
   statusMetrics?: KanbanStatusMetric[] | null;
+  highlights?: KanbanHighlight[] | null;
   onPrimaryAction?: () => void;
 }
 
@@ -71,6 +74,7 @@ export function KanbanBoardView({
   primaryActionLabel = '+ New',
   showFilterBar = true,
   statusMetrics = null,
+  highlights = null,
   onPrimaryAction,
 }: KanbanBoardViewProps) {
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
@@ -135,6 +139,8 @@ export function KanbanBoardView({
         onPrimaryAction={onPrimaryAction ?? (() => onOpenTaskEditor(createTaskSeed()))}
         onSearchChange={onSearchChange}
       />
+
+      {highlights && highlights.length > 0 ? <KanbanHighlights items={highlights} /> : null}
 
       {showFilterBar ? (
         <KanbanFilterBar

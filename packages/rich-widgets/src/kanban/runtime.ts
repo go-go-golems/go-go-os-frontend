@@ -1,5 +1,6 @@
 export { KanbanBoardFrame } from './KanbanBoard';
 export { KanbanBoardView } from './KanbanBoardView';
+export { KanbanHighlights } from './KanbanHighlights';
 export { KanbanHeaderBar } from './KanbanHeaderBar';
 export { KanbanFilterBar } from './KanbanFilterBar';
 export { KanbanLaneView } from './KanbanLaneView';
@@ -18,9 +19,11 @@ export type {
   KanbanLabelId,
   KanbanTaxonomy,
   KanbanOptionDescriptor,
+  KanbanHighlight,
   Task,
 } from './types';
 export type { KanbanBoardViewProps } from './KanbanBoardView';
+export type { KanbanHighlightsProps } from './KanbanHighlights';
 export type { KanbanHeaderBarProps } from './KanbanHeaderBar';
 export type { KanbanFilterBarProps } from './KanbanFilterBar';
 export type { KanbanLaneViewProps } from './KanbanLaneView';

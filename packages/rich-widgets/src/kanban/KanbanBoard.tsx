@@ -15,7 +15,15 @@ import {
   type KanbanAction,
   type KanbanState,
 } from './kanbanState';
-import type { Column, KanbanPriorityId, KanbanIssueTypeId, KanbanTaxonomy, Task } from './types';
+import type {
+  Column,
+  KanbanHighlight,
+  KanbanPriorityId,
+  KanbanIssueTypeId,
+  KanbanTaxonomy,
+  Task,
+} from './types';
+import type { KanbanStatusMetric } from './KanbanStatusBar';
 import { KanbanBoardView } from './KanbanBoardView';
 
 // ── Props ────────────────────────────────────────────────────────────
@@ -28,6 +36,12 @@ export interface KanbanBoardProps {
   initialFilterPriority?: KanbanPriorityId | null;
   initialSearchQuery?: string;
   initialCollapsedCols?: Record<string, boolean>;
+  title?: string;
+  subtitle?: string;
+  primaryActionLabel?: string;
+  showFilterBar?: boolean;
+  statusMetrics?: KanbanStatusMetric[] | null;
+  highlights?: KanbanHighlight[] | null;
 }
 
 function createInitialSeed(props: KanbanBoardProps) {
@@ -46,13 +60,31 @@ function createInitialSeed(props: KanbanBoardProps) {
 export function KanbanBoardFrame({
   state,
   dispatch,
+  title,
+  subtitle,
+  primaryActionLabel,
+  showFilterBar,
+  statusMetrics,
+  highlights,
 }: {
   state: KanbanState;
   dispatch: (action: KanbanAction) => void;
+  title?: string;
+  subtitle?: string;
+  primaryActionLabel?: string;
+  showFilterBar?: boolean;
+  statusMetrics?: KanbanStatusMetric[] | null;
+  highlights?: KanbanHighlight[] | null;
 }) {
   return (
     <KanbanBoardView
       state={state}
+      title={title}
+      subtitle={subtitle}
+      primaryActionLabel={primaryActionLabel}
+      showFilterBar={showFilterBar}
+      statusMetrics={statusMetrics}
+      highlights={highlights}
       onOpenTaskEditor={(task) => dispatch(kanbanActions.setEditingTask(task))}
       onCloseTaskEditor={() => dispatch(kanbanActions.setEditingTask(null))}
       onSaveTask={(task: Task) => dispatch(kanbanActions.upsertTask(task))}
@@ -70,7 +102,18 @@ export function KanbanBoardFrame({
 function StandaloneKanbanBoard(props: KanbanBoardProps) {
   const [state, dispatch] = useReducer(kanbanReducer, createInitialSeed(props));
 
-  return <KanbanBoardFrame state={state} dispatch={dispatch} />;
+  return (
+    <KanbanBoardFrame
+      state={state}
+      dispatch={dispatch}
+      title={props.title}
+      subtitle={props.subtitle}
+      primaryActionLabel={props.primaryActionLabel}
+      showFilterBar={props.showFilterBar}
+      statusMetrics={props.statusMetrics}
+      highlights={props.highlights}
+    />
+  );
 }
 
 function ConnectedKanbanBoard(props: KanbanBoardProps) {
@@ -97,7 +140,18 @@ function ConnectedKanbanBoard(props: KanbanBoardProps) {
     reduxDispatch(action);
   }, [reduxDispatch]);
 
-  return <KanbanBoardFrame state={effectiveState} dispatch={dispatch} />;
+  return (
+    <KanbanBoardFrame
+      state={effectiveState}
+      dispatch={dispatch}
+      title={props.title}
+      subtitle={props.subtitle}
+      primaryActionLabel={props.primaryActionLabel}
+      showFilterBar={props.showFilterBar}
+      statusMetrics={props.statusMetrics}
+      highlights={props.highlights}
+    />
+  );
 }
 
 // ── Component ────────────────────────────────────────────────────────
