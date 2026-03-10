@@ -7,6 +7,7 @@ import {
 import type { MouseEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useGetAppsQuery, useGetReflectionQuery } from '../api/appsApi';
+import type { DocObjectPath } from '../domain/docsObjects';
 import { findApi, findSchema, getCrossRefSchemaIds, isReflectionUnsupported } from '../domain/selectors';
 import { sortApps } from '../domain/sorting';
 import type { AppManifestDocument, ReflectionResult } from '../domain/types';
@@ -18,7 +19,7 @@ export interface ModuleBrowserWindowProps {
   initialAppId?: string;
   onOpenDocs?: (moduleId?: string) => void;
   onOpenDocsCenter?: () => void;
-  onOpenDoc?: (moduleId: string, slug: string, newWindow?: boolean) => void;
+  onOpenDoc?: (path: DocObjectPath, newWindow?: boolean) => void;
 }
 
 function ReflectionLoader({

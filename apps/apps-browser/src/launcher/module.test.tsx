@@ -108,8 +108,8 @@ describe('apps-browser docs command routing', () => {
     expect(outcome).toBe('handled');
     expect(hostContext.openWindow).toHaveBeenCalledWith(
       expect.objectContaining({
-        dedupeKey: 'apps-browser:docs:module:inventory',
-        content: expect.objectContaining({ appKey: 'apps-browser:docs:apps:module:inventory' }),
+        dedupeKey: 'apps-browser:docs:collection:%2Fdocs%2Fobjects%2Fmodule%2Finventory',
+        content: expect.objectContaining({ appKey: 'apps-browser:docs:collection:%2Fdocs%2Fobjects%2Fmodule%2Finventory' }),
       }),
     );
   });
@@ -126,9 +126,9 @@ describe('apps-browser docs command routing', () => {
     expect(outcome).toBe('handled');
     expect(hostContext.openWindow).toHaveBeenCalledWith(
       expect.objectContaining({
-        dedupeKey: 'apps-browser:docs:doc:arc-agi:session%20lifecycle',
+        dedupeKey: 'apps-browser:docs:doc:%2Fdocs%2Fobjects%2Fmodule%2Farc-agi%2Fsession%20lifecycle',
         content: expect.objectContaining({
-          appKey: 'apps-browser:docs:apps:doc:arc-agi:session%20lifecycle',
+          appKey: 'apps-browser:docs:doc:%2Fdocs%2Fobjects%2Fmodule%2Farc-agi%2Fsession%20lifecycle',
         }),
       }),
     );
@@ -146,7 +146,7 @@ describe('apps-browser docs command routing', () => {
     expect(outcome).toBe('handled');
     expect(hostContext.openWindow).toHaveBeenCalledWith(
       expect.objectContaining({
-        content: expect.objectContaining({ appKey: 'apps-browser:docs:apps:search' }),
+        content: expect.objectContaining({ appKey: 'apps-browser:docs:search' }),
       }),
     );
   });
@@ -176,9 +176,9 @@ describe('apps-browser docs command routing', () => {
     expect(outcome).toBe('handled');
     expect(hostContext.openWindow).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: 'Help',
-        content: expect.objectContaining({ appKey: 'apps-browser:docs:help:home' }),
-        dedupeKey: 'apps-browser:help:home',
+        title: 'Documentation',
+        content: expect.objectContaining({ appKey: 'apps-browser:docs:collection:%2Fdocs%2Fobjects%2Fhelp%2Fwesen-os' }),
+        dedupeKey: 'apps-browser:docs:collection:%2Fdocs%2Fobjects%2Fhelp%2Fwesen-os',
       }),
     );
   });
@@ -233,45 +233,34 @@ describe('apps-browser docs window route parsing', () => {
     expect(html).toContain('&quot;initialQuery&quot;:&quot;runtime error&quot;');
   });
 
-  it('routes doc window suffix to reader params with decoded module and slug', () => {
-    const html = renderDocWindow('apps-browser:docs:doc:arc-agi:session%20lifecycle');
+  it('routes doc window suffix to reader params with decoded object path', () => {
+    const html = renderDocWindow('apps-browser:docs:doc:%2Fdocs%2Fobjects%2Fmodule%2Farc-agi%2Fsession%20lifecycle');
 
-    expect(html).toContain('&quot;initialModuleId&quot;:&quot;arc-agi&quot;');
-    expect(html).toContain('&quot;initialSlug&quot;:&quot;session lifecycle&quot;');
+    expect(html).toContain('&quot;initialPath&quot;:&quot;/docs/objects/module/arc-agi/session lifecycle&quot;');
   });
 
   it('falls back to home params for malformed encoded route parts', () => {
-    const html = renderDocWindow('apps-browser:docs:doc:%E0%A4%A:overview');
+    const html = renderDocWindow('apps-browser:docs:doc:%E0%A4%A');
 
     expect(html).toContain('{}');
   });
 
-  it('routes help:home suffix to help mode home screen', () => {
-    const html = renderDocWindow('apps-browser:docs:help:home');
+  it('routes collection suffix to collection params', () => {
+    const html = renderDocWindow('apps-browser:docs:collection:%2Fdocs%2Fobjects%2Fmodule%2Finventory');
 
-    expect(html).toContain('&quot;mode&quot;:&quot;help&quot;');
+    expect(html).toContain('&quot;initialMountPath&quot;:&quot;/docs/objects/module/inventory&quot;');
   });
 
-  it('routes help:doc:<slug> suffix to help mode reader with wesen-os moduleId', () => {
-    const html = renderDocWindow('apps-browser:docs:help:doc:wesen-os-guide');
+  it('routes help collection suffix to canonical help mount', () => {
+    const html = renderDocWindow('apps-browser:docs:collection:%2Fdocs%2Fobjects%2Fhelp%2Fwesen-os');
 
-    expect(html).toContain('&quot;mode&quot;:&quot;help&quot;');
-    expect(html).toContain('&quot;initialModuleId&quot;:&quot;wesen-os&quot;');
-    expect(html).toContain('&quot;initialSlug&quot;:&quot;wesen-os-guide&quot;');
+    expect(html).toContain('&quot;initialMountPath&quot;:&quot;/docs/objects/help/wesen-os&quot;');
   });
 
-  it('routes apps:module:<id> suffix to apps mode with moduleId', () => {
-    const html = renderDocWindow('apps-browser:docs:apps:module:inventory');
+  it('routes topic suffix to topic-browser with decoded topic', () => {
+    const html = renderDocWindow('apps-browser:docs:topic:runtime-pack');
 
-    expect(html).toContain('&quot;mode&quot;:&quot;apps&quot;');
-    expect(html).toContain('&quot;initialModuleId&quot;:&quot;inventory&quot;');
-  });
-
-  it('routes apps:search:<query> suffix to apps mode search', () => {
-    const html = renderDocWindow('apps-browser:docs:apps:search:test%20query');
-
-    expect(html).toContain('&quot;mode&quot;:&quot;apps&quot;');
-    expect(html).toContain('&quot;initialScreen&quot;:&quot;search&quot;');
-    expect(html).toContain('&quot;initialQuery&quot;:&quot;test query&quot;');
+    expect(html).toContain('&quot;initialScreen&quot;:&quot;topic-browser&quot;');
+    expect(html).toContain('&quot;initialTopic&quot;:&quot;runtime-pack&quot;');
   });
 });

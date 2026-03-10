@@ -14,6 +14,7 @@ export {
   createVmmetaPackDocsMount,
   registerDefaultDocsMounts,
 } from './domain/docsMountAdapters';
+export { createDocsCatalogStore, docsCatalogStore, serializeDocsSearchQuery, useDocsCatalogSnapshot } from './domain/docsCatalogStore';
 // Components
 export { AppIcon } from './components/AppIcon';
 export { AppsFolderWindow } from './components/AppsFolderWindow';
@@ -53,16 +54,3 @@ export {
   parseDocsObjectPath,
 } from './domain/docsObjects';
 export { appsBrowserReducer, appsBrowserSlice } from './features/appsBrowser/appsBrowserSlice';
-export {
-  docsExplorerReducer,
-  docsExplorerSlice,
-  cacheDocObject,
-  docsSearchFailed,
-  docsSearchStarted,
-  docsSearchSucceeded,
-  docsSyncFailed,
-  docsSyncStarted,
-  docsSyncSucceeded,
-  selectDocObjectPath,
-} from './features/docsExplorer/docsExplorerSlice';
-export { attachDocsRegistrySync, runDocsRegistrySearch } from './features/docsExplorer/docsRegistrySync';

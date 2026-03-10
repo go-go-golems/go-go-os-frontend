@@ -1,15 +1,14 @@
 import { createContext, useCallback, useContext, useMemo, useReducer, useState } from 'react';
 import type { ReactNode } from 'react';
+import type { DocObjectPath, DocsMountPath } from '../../domain/docsObjects';
 import type { DocLinkTarget } from './docLinkInteraction';
 
-export type DocBrowserMode = 'apps' | 'help';
-
-export type DocBrowserScreen = 'home' | 'search' | 'module-docs' | 'reader' | 'topic-browser';
+export type DocBrowserScreen = 'home' | 'search' | 'collection' | 'reader' | 'topic-browser';
 
 export interface DocBrowserLocation {
   screen: DocBrowserScreen;
-  moduleId?: string;
-  slug?: string;
+  mountPath?: DocsMountPath;
+  path?: DocObjectPath;
   query?: string;
   topic?: string;
 }
@@ -48,17 +47,16 @@ export interface DocLinkMenuState {
 }
 
 interface DocBrowserContextValue {
-  mode: DocBrowserMode;
   location: DocBrowserLocation;
   canGoBack: boolean;
   navigateTo: (screen: DocBrowserScreen, params?: Omit<DocBrowserLocation, 'screen'>) => void;
   goBack: () => void;
   goHome: () => void;
   openSearch: (query?: string) => void;
-  openModuleDocs: (moduleId: string) => void;
-  openDoc: (moduleId: string, slug: string) => void;
+  openCollection: (mountPath: DocsMountPath) => void;
+  openDoc: (path: DocObjectPath) => void;
   openTopicBrowser: (topic?: string) => void;
-  openDocNewWindow?: (moduleId: string, slug: string) => void;
+  openDocNewWindow?: (path: DocObjectPath) => void;
   docLinkMenu: DocLinkMenuState | null;
   showDocLinkMenu: (x: number, y: number, target: DocLinkTarget) => void;
   closeDocLinkMenu: () => void;
@@ -75,14 +73,13 @@ export function useDocBrowser(): DocBrowserContextValue {
 }
 
 export interface DocBrowserProviderProps {
-  mode?: DocBrowserMode;
   initialScreen?: DocBrowserScreen;
   initialParams?: Omit<DocBrowserLocation, 'screen'>;
-  onOpenDocNewWindow?: (moduleId: string, slug: string) => void;
+  onOpenDocNewWindow?: (path: DocObjectPath) => void;
   children: ReactNode;
 }
 
-export function DocBrowserProvider({ mode = 'apps', initialScreen = 'home', initialParams, onOpenDocNewWindow, children }: DocBrowserProviderProps) {
+export function DocBrowserProvider({ initialScreen = 'home', initialParams, onOpenDocNewWindow, children }: DocBrowserProviderProps) {
   const [state, dispatch] = useReducer(docBrowserReducer, {
     current: { screen: initialScreen, ...initialParams },
     history: [],
@@ -109,16 +106,16 @@ export function DocBrowserProvider({ mode = 'apps', initialScreen = 'home', init
     [],
   );
 
-  const openModuleDocs = useCallback(
-    (moduleId: string) => {
-      dispatch({ type: 'navigate', location: { screen: 'module-docs', moduleId } });
+  const openCollection = useCallback(
+    (mountPath: DocsMountPath) => {
+      dispatch({ type: 'navigate', location: { screen: 'collection', mountPath } });
     },
     [],
   );
 
   const openDoc = useCallback(
-    (moduleId: string, slug: string) => {
-      dispatch({ type: 'navigate', location: { screen: 'reader', moduleId, slug } });
+    (path: DocObjectPath) => {
+      dispatch({ type: 'navigate', location: { screen: 'reader', path } });
     },
     [],
   );
@@ -143,14 +140,13 @@ export function DocBrowserProvider({ mode = 'apps', initialScreen = 'home', init
 
   const value = useMemo<DocBrowserContextValue>(
     () => ({
-      mode,
       location: state.current,
       canGoBack: state.history.length > 0,
       navigateTo,
       goBack,
       goHome,
       openSearch,
-      openModuleDocs,
+      openCollection,
       openDoc,
       openTopicBrowser,
       openDocNewWindow: onOpenDocNewWindow,
@@ -158,7 +154,7 @@ export function DocBrowserProvider({ mode = 'apps', initialScreen = 'home', init
       showDocLinkMenu,
       closeDocLinkMenu,
     }),
-    [mode, state.current, state.history.length, navigateTo, goBack, goHome, openSearch, openModuleDocs, openDoc, openTopicBrowser, onOpenDocNewWindow, docLinkMenu, showDocLinkMenu, closeDocLinkMenu],
+    [state.current, state.history.length, navigateTo, goBack, goHome, openSearch, openCollection, openDoc, openTopicBrowser, onOpenDocNewWindow, docLinkMenu, showDocLinkMenu, closeDocLinkMenu],
   );
 
   return <DocBrowserContext.Provider value={value}>{children}</DocBrowserContext.Provider>;

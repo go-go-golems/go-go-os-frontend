@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Provider } from 'react-redux';
 import { createAppsBrowserStore } from '../../app/store';
+import { buildDocObjectPath } from '../../domain/docsObjects';
 import { createDefaultAppsHandlers } from '../../mocks/msw/defaultHandlers';
 import { DocBrowserWindow } from './DocBrowserWindow';
 
@@ -27,39 +28,38 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const GuideOverview: Story = {
-  args: { initialModuleId: 'inventory', initialSlug: 'overview' },
+  args: { initialPath: buildDocObjectPath('module', 'inventory', 'overview') },
 };
 
 export const ApiReference: Story = {
-  args: { initialModuleId: 'inventory', initialSlug: 'api-reference' },
+  args: { initialPath: buildDocObjectPath('module', 'inventory', 'api-reference') },
 };
 
 export const Troubleshooting: Story = {
-  args: { initialModuleId: 'inventory', initialSlug: 'troubleshooting' },
+  args: { initialPath: buildDocObjectPath('module', 'inventory', 'troubleshooting') },
 };
 
 export const WithSeeAlso: Story = {
-  args: { initialModuleId: 'arc-agi', initialSlug: 'runtime-modes' },
+  args: { initialPath: buildDocObjectPath('module', 'arc-agi', 'runtime-modes') },
 };
 
 export const SessionLifecycle: Story = {
-  args: { initialModuleId: 'arc-agi', initialSlug: 'session-lifecycle' },
+  args: { initialPath: buildDocObjectPath('module', 'arc-agi', 'session-lifecycle') },
 };
 
 export const DocNotFound: Story = {
-  args: { initialModuleId: 'inventory', initialSlug: 'nonexistent' },
+  args: { initialPath: buildDocObjectPath('module', 'inventory', 'nonexistent') },
 };
 
 /** Showcases syntax highlighting and copy button across TypeScript, Go, JSON, YAML, and bash code blocks */
 export const CodeBlocksAndSyntaxHighlighting: Story = {
-  args: { initialModuleId: 'inventory', initialSlug: 'integration-guide' },
+  args: { initialPath: buildDocObjectPath('module', 'inventory', 'integration-guide') },
 };
 
 /** Reader with see-also links that support Ctrl/Cmd-click to open in new window. Check Actions panel. */
 export const SeeAlsoWithNewWindow: Story = {
   args: {
-    initialModuleId: 'arc-agi',
-    initialSlug: 'runtime-modes',
+    initialPath: buildDocObjectPath('module', 'arc-agi', 'runtime-modes'),
     onOpenDocNewWindow: (...args: unknown[]) => console.log("[story] onOpenDocNewWindow", ...args),
   },
 };
@@ -67,8 +67,7 @@ export const SeeAlsoWithNewWindow: Story = {
 /** API reference page with new-window callback. Right-click see-also links for context menu. */
 export const ApiReferenceWithNewWindow: Story = {
   args: {
-    initialModuleId: 'inventory',
-    initialSlug: 'api-reference',
+    initialPath: buildDocObjectPath('module', 'inventory', 'api-reference'),
     onOpenDocNewWindow: (...args: unknown[]) => console.log("[story] onOpenDocNewWindow", ...args),
   },
 };
@@ -76,8 +75,7 @@ export const ApiReferenceWithNewWindow: Story = {
 /** Prev/next navigation with new-window support. Navigate between pages and test context menus. */
 export const NavigationWithNewWindow: Story = {
   args: {
-    initialModuleId: 'inventory',
-    initialSlug: 'overview',
+    initialPath: buildDocObjectPath('module', 'inventory', 'overview'),
     onOpenDocNewWindow: (...args: unknown[]) => console.log("[story] onOpenDocNewWindow", ...args),
   },
 };

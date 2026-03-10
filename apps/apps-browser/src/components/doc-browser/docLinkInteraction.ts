@@ -1,3 +1,5 @@
+import { buildDocObjectPath, type DocObjectPath } from '../../domain/docsObjects';
+
 /**
  * Utility for consistent doc link interaction behavior across all surfaces.
  *
@@ -29,8 +31,7 @@ export function parseModuleDocUrl(url: string): { moduleId: string; slug: string
 }
 
 export interface DocLinkTarget {
-  moduleId: string;
-  slug: string;
+  path: DocObjectPath;
 }
 
 export interface DocLinkHandlers {
@@ -48,23 +49,23 @@ export interface DocLinkHandlers {
  */
 export function createDocLinkHandlers(
   target: DocLinkTarget,
-  openDoc: (moduleId: string, slug: string) => void,
-  openDocNewWindow?: (moduleId: string, slug: string) => void,
+  openDoc: (path: DocObjectPath) => void,
+  openDocNewWindow?: (path: DocObjectPath) => void,
   showMenu?: (x: number, y: number, target: DocLinkTarget) => void,
 ): DocLinkHandlers {
   return {
     onClick: (event: React.MouseEvent) => {
       if (isNewWindowClick(event.nativeEvent) && openDocNewWindow) {
         event.preventDefault();
-        openDocNewWindow(target.moduleId, target.slug);
+        openDocNewWindow(target.path);
       } else {
-        openDoc(target.moduleId, target.slug);
+        openDoc(target.path);
       }
     },
     onAuxClick: (event: React.MouseEvent) => {
       if (event.button === 1 && openDocNewWindow) {
         event.preventDefault();
-        openDocNewWindow(target.moduleId, target.slug);
+        openDocNewWindow(target.path);
       }
     },
     onContextMenu: (event: React.MouseEvent) => {
@@ -74,4 +75,12 @@ export function createDocLinkHandlers(
       }
     },
   };
+}
+
+export function moduleDocUrlToObjectPath(url: string): DocObjectPath | undefined {
+  const parsed = parseModuleDocUrl(url);
+  if (!parsed) {
+    return undefined;
+  }
+  return buildDocObjectPath('module', parsed.moduleId, parsed.slug);
 }

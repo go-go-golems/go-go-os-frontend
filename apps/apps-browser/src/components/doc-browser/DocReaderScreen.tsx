@@ -4,21 +4,26 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github.css';
-import { useGetAppsQuery, useGetHelpDocQuery, useGetHelpDocsQuery, useGetModuleDocQuery, useGetModuleDocsQuery } from '../../api/appsApi';
-import type { ModuleDocDocument } from '../../domain/types';
+import { useGetAppsQuery } from '../../api/appsApi';
+import { compareDocSummaries, objectPathToMountPath, useDocObject, useDocsMount } from '../../domain/docsHooks';
+import {
+  buildDocObjectPath,
+  parseDocsObjectPath,
+  type DocObject,
+  type DocObjectPath,
+  type DocObjectSummary,
+} from '../../domain/docsObjects';
 import { useDocBrowser } from './DocBrowserContext';
 import { createDocLinkHandlers } from './docLinkInteraction';
 
 interface DocReaderScreenProps {
-  moduleId: string;
-  slug: string;
+  path: DocObjectPath;
 }
 
 function CodeBlock({ children, ...props }: ComponentPropsWithoutRef<'pre'>) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(() => {
-    // Extract text content from the pre element's children
     const text = extractText(children);
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
@@ -56,25 +61,39 @@ const markdownComponents = {
   pre: CodeBlock,
 };
 
-function parseSeeAlso(ref: string): { moduleId: string; slug: string } {
-  const parts = ref.split('/');
-  if (parts.length >= 2) {
-    return { moduleId: parts[0], slug: parts.slice(1).join('/') };
+function parseSeeAlso(ref: string, currentKind?: string, currentOwner?: string): DocObjectPath | null {
+  if (ref.startsWith('/docs/objects/')) {
+    return ref as DocObjectPath;
   }
-  return { moduleId: '', slug: ref };
+  if (ref.includes('/')) {
+    const [owner, ...rest] = ref.split('/');
+    return buildDocObjectPath('module', owner, rest.join('/'));
+  }
+  if (currentKind && currentOwner) {
+    return buildDocObjectPath(currentKind, currentOwner, ref);
+  }
+  return null;
 }
 
-function Breadcrumb({ moduleId, moduleName, doc }: { moduleId: string; moduleName: string; doc: ModuleDocDocument }) {
-  const { openModuleDocs, openSearch } = useDocBrowser();
+function Breadcrumb({
+  doc,
+  collectionLabel,
+  onOpenCollection,
+}: {
+  doc: DocObject;
+  collectionLabel: string;
+  onOpenCollection: () => void;
+}) {
+  const { openSearch } = useDocBrowser();
 
   return (
     <div data-part="doc-breadcrumb">
-      <button type="button" data-part="doc-breadcrumb-link" onClick={() => openModuleDocs(moduleId)}>
-        {moduleName}
+      <button type="button" data-part="doc-breadcrumb-link" onClick={onOpenCollection}>
+        {collectionLabel}
       </button>
       <span data-part="doc-breadcrumb-sep">{'\u203A'}</span>
-      <button type="button" data-part="doc-breadcrumb-link" onClick={() => openSearch()}>
-        {doc.doc_type}
+      <button type="button" data-part="doc-breadcrumb-link" onClick={() => openSearch(doc.docType)}>
+        {doc.docType ?? 'reference'}
       </button>
       <span data-part="doc-breadcrumb-sep">{'\u203A'}</span>
       <span data-part="doc-breadcrumb-current">{doc.title}</span>
@@ -82,8 +101,8 @@ function Breadcrumb({ moduleId, moduleName, doc }: { moduleId: string; moduleNam
   );
 }
 
-function MetadataBar({ moduleId, doc }: { moduleId: string; doc: ModuleDocDocument }) {
-  const { openModuleDocs, openSearch } = useDocBrowser();
+function MetadataBar({ doc, onOpenCollection }: { doc: DocObject; onOpenCollection: () => void }) {
+  const { openSearch } = useDocBrowser();
 
   return (
     <div data-part="doc-meta-bar">
@@ -91,24 +110,24 @@ function MetadataBar({ moduleId, doc }: { moduleId: string; doc: ModuleDocDocume
         type="button"
         data-part="doc-badge"
         data-variant="doc-type"
-        onClick={() => openSearch()}
+        onClick={() => openSearch(doc.docType)}
       >
-        {doc.doc_type}
+        {doc.docType ?? 'reference'}
       </button>
       <button
         type="button"
         data-part="doc-badge"
         data-variant="module"
-        onClick={() => openModuleDocs(moduleId)}
+        onClick={onOpenCollection}
       >
-        {moduleId}
+        {doc.kind}:{doc.owner}
       </button>
       {doc.topics?.map((topic) => (
         <button
           key={topic}
           type="button"
           data-part="doc-badge"
-          onClick={() => openSearch()}
+          onClick={() => openSearch(topic)}
         >
           {topic}
         </button>
@@ -117,7 +136,15 @@ function MetadataBar({ moduleId, doc }: { moduleId: string; doc: ModuleDocDocume
   );
 }
 
-function SeeAlsoSection({ seeAlso }: { seeAlso: string[] }) {
+function SeeAlsoSection({
+  seeAlso,
+  currentKind,
+  currentOwner,
+}: {
+  seeAlso: string[];
+  currentKind?: string;
+  currentOwner?: string;
+}) {
   const { openDoc, openDocNewWindow, showDocLinkMenu } = useDocBrowser();
 
   return (
@@ -125,16 +152,17 @@ function SeeAlsoSection({ seeAlso }: { seeAlso: string[] }) {
       <div data-part="doc-see-also-title">See Also</div>
       <ul data-part="doc-see-also-list">
         {seeAlso.map((ref) => {
-          const parsed = parseSeeAlso(ref);
-          if (!parsed.moduleId) {
+          const path = parseSeeAlso(ref, currentKind, currentOwner);
+          if (!path) {
             return (
               <li key={ref}>
-                <span data-part="doc-see-also-link-slug">{parsed.slug}</span>
+                <span data-part="doc-see-also-link-slug">{ref}</span>
               </li>
             );
           }
+          const parsed = parseDocsObjectPath(path);
           const handlers = createDocLinkHandlers(
-            { moduleId: parsed.moduleId, slug: parsed.slug },
+            { path },
             openDoc,
             openDocNewWindow,
             showDocLinkMenu,
@@ -148,8 +176,8 @@ function SeeAlsoSection({ seeAlso }: { seeAlso: string[] }) {
                 onAuxClick={handlers.onAuxClick}
                 onContextMenu={handlers.onContextMenu}
               >
-                <span data-part="doc-see-also-link-module">{parsed.moduleId}</span>
-                <span data-part="doc-see-also-link-slug">{parsed.slug}</span>
+                <span data-part="doc-see-also-link-module">{parsed?.owner ?? 'docs'}</span>
+                <span data-part="doc-see-also-link-slug">{parsed?.slug ?? ref}</span>
                 <span data-part="doc-see-also-link-arrow">{'\u203A'}</span>
               </button>
             </li>
@@ -161,19 +189,17 @@ function SeeAlsoSection({ seeAlso }: { seeAlso: string[] }) {
 }
 
 function PrevNextNav({
-  moduleId,
-  currentSlug,
-  toc,
+  currentPath,
+  docs,
 }: {
-  moduleId: string;
-  currentSlug: string;
-  toc: ModuleDocDocument[];
+  currentPath: DocObjectPath;
+  docs: DocObjectSummary[];
 }) {
   const { openDoc } = useDocBrowser();
-
-  const currentIndex = toc.findIndex((d) => d.slug === currentSlug);
-  const prevDoc = currentIndex > 0 ? toc[currentIndex - 1] : undefined;
-  const nextDoc = currentIndex >= 0 && currentIndex < toc.length - 1 ? toc[currentIndex + 1] : undefined;
+  const ordered = docs.slice().sort(compareDocSummaries);
+  const currentIndex = ordered.findIndex((entry) => entry.path === currentPath);
+  const prevDoc = currentIndex > 0 ? ordered[currentIndex - 1] : undefined;
+  const nextDoc = currentIndex >= 0 && currentIndex < ordered.length - 1 ? ordered[currentIndex + 1] : undefined;
 
   if (!prevDoc && !nextDoc) return null;
 
@@ -183,7 +209,7 @@ function PrevNextNav({
         type="button"
         data-part="doc-prev-next-btn"
         disabled={!prevDoc}
-        onClick={() => prevDoc && openDoc(moduleId, prevDoc.slug)}
+        onClick={() => prevDoc && openDoc(prevDoc.path)}
       >
         {prevDoc ? `\u25C0 ${prevDoc.title}` : ''}
       </button>
@@ -192,7 +218,7 @@ function PrevNextNav({
         type="button"
         data-part="doc-prev-next-btn"
         disabled={!nextDoc}
-        onClick={() => nextDoc && openDoc(moduleId, nextDoc.slug)}
+        onClick={() => nextDoc && openDoc(nextDoc.path)}
       >
         {nextDoc ? `${nextDoc.title} \u25B6` : ''}
       </button>
@@ -200,34 +226,22 @@ function PrevNextNav({
   );
 }
 
-export function DocReaderScreen({ moduleId, slug }: DocReaderScreenProps) {
-  const { mode } = useDocBrowser();
-  const isHelpMode = mode === 'help';
+export function DocReaderScreen({ path }: DocReaderScreenProps) {
+  const { data: apps } = useGetAppsQuery();
+  const { openCollection } = useDocBrowser();
+  const { status, value } = useDocObject(path);
+  const mountPath = objectPathToMountPath(path) ?? undefined;
+  const mount = useDocsMount(mountPath);
+  const parsed = parseDocsObjectPath(path);
+  const app = parsed?.kind === 'module' ? apps?.find((candidate) => candidate.app_id === parsed.owner) : undefined;
+  const collectionLabel =
+    parsed?.kind === 'module'
+      ? (app?.name ?? parsed.owner)
+      : parsed?.kind === 'help'
+        ? 'Help'
+        : parsed?.owner ?? path;
 
-  // Apps mode queries
-  const { data: apps } = useGetAppsQuery(undefined, { skip: isHelpMode });
-  const { data: appTocResponse, isLoading: appTocLoading } = useGetModuleDocsQuery(moduleId, { skip: isHelpMode });
-  const { data: appFullDoc, isLoading: appDocLoading } = useGetModuleDocQuery({ appId: moduleId, slug }, { skip: isHelpMode });
-
-  // Help mode queries
-  const { data: helpTocResponse, isLoading: helpTocLoading } = useGetHelpDocsQuery(undefined, { skip: !isHelpMode });
-  const { data: helpFullDoc, isLoading: helpDocLoading } = useGetHelpDocQuery(slug, { skip: !isHelpMode });
-
-  const tocResponse = isHelpMode ? helpTocResponse : appTocResponse;
-  const fullDoc = isHelpMode ? helpFullDoc : appFullDoc;
-  const tocLoading = isHelpMode ? helpTocLoading : appTocLoading;
-  const docLoading = isHelpMode ? helpDocLoading : appDocLoading;
-
-  const app = apps?.find((a) => a.app_id === moduleId);
-  const moduleName = isHelpMode ? 'Help' : (app?.name ?? moduleId);
-
-  const tocDoc = useMemo(() => {
-    return tocResponse?.docs?.find((d) => d.slug === slug);
-  }, [tocResponse, slug]);
-
-  const toc = tocResponse?.docs ?? [];
-
-  if (tocLoading || docLoading) {
+  if (status === 'loading' || status === 'idle') {
     return (
       <div data-part="doc-reader">
         <div data-part="doc-center-message">Loading document&hellip;</div>
@@ -235,13 +249,11 @@ export function DocReaderScreen({ moduleId, slug }: DocReaderScreenProps) {
     );
   }
 
-  const displayDoc = fullDoc ?? tocDoc;
-
-  if (!displayDoc) {
+  if (!value) {
     return (
       <div data-part="doc-reader">
         <div data-part="doc-center-message">
-          Document not found: {moduleId}/{slug}
+          Document not found: {path}
         </div>
       </div>
     );
@@ -249,8 +261,8 @@ export function DocReaderScreen({ moduleId, slug }: DocReaderScreenProps) {
 
   return (
     <div data-part="doc-reader">
-      <Breadcrumb moduleId={moduleId} moduleName={moduleName} doc={displayDoc} />
-      <MetadataBar moduleId={moduleId} doc={displayDoc} />
+      <Breadcrumb doc={value} collectionLabel={collectionLabel} onOpenCollection={() => mountPath && openCollection(mountPath)} />
+      <MetadataBar doc={value} onOpenCollection={() => mountPath && openCollection(mountPath)} />
 
       <div data-part="doc-content">
         <Markdown
@@ -258,15 +270,15 @@ export function DocReaderScreen({ moduleId, slug }: DocReaderScreenProps) {
           rehypePlugins={[rehypeHighlight]}
           components={markdownComponents}
         >
-          {displayDoc.content ?? ''}
+          {value.content ?? ''}
         </Markdown>
       </div>
 
-      {displayDoc.see_also && displayDoc.see_also.length > 0 && (
-        <SeeAlsoSection seeAlso={displayDoc.see_also} />
+      {value.seeAlso && value.seeAlso.length > 0 && (
+        <SeeAlsoSection seeAlso={value.seeAlso} currentKind={value.kind} currentOwner={value.owner} />
       )}
 
-      <PrevNextNav moduleId={moduleId} currentSlug={slug} toc={toc} />
+      {mountPath && <PrevNextNav currentPath={path} docs={mount.summaries} />}
     </div>
   );
 }

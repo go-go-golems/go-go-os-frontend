@@ -96,6 +96,7 @@ function moduleDocToSummary(moduleId: string, doc: ModuleDocDocument): DocObject
     title: doc.title,
     summary: doc.summary,
     docType: doc.doc_type,
+    order: doc.order,
     topics: doc.topics ?? [],
   };
 }
@@ -138,6 +139,7 @@ export function createHelpDocsMount(owner = 'wesen-os', fetcher: FetchLike = def
         title: doc.title,
         summary: doc.summary,
         docType: doc.doc_type,
+        order: doc.order,
         topics: doc.topics ?? [],
       }));
     },
@@ -156,6 +158,7 @@ export function createHelpDocsMount(owner = 'wesen-os', fetcher: FetchLike = def
         title: doc.title,
         summary: doc.summary,
         docType: doc.doc_type,
+        order: doc.order,
         topics: doc.topics ?? [],
         content: doc.content,
         seeAlso: doc.see_also ?? [],
@@ -290,8 +293,8 @@ export async function registerDefaultDocsMounts(
   register: (mount: DocsMount) => void,
   fetcher: FetchLike = defaultFetchLike,
 ): Promise<void> {
-  const apps = await fetchJson<AppManifestDocument[]>(fetcher, '/api/os/apps');
-  for (const app of apps ?? []) {
+  const response = await fetchJson<{ apps?: AppManifestDocument[] }>(fetcher, '/api/os/apps');
+  for (const app of response.apps ?? []) {
     if (app.docs?.available) {
       register(createModuleDocsMount(app.app_id, fetcher));
     }

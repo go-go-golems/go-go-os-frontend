@@ -54,10 +54,12 @@ describe('docsMountAdapters', () => {
   it('registers module and help mounts from apps manifest', async () => {
     const fetcher: FetchLike = async (input) => {
       if (input === '/api/os/apps') {
-        return createJsonResponse([
-          { app_id: 'inventory', docs: { available: true } },
-          { app_id: 'chat', docs: { available: false } },
-        ]);
+        return createJsonResponse({
+          apps: [
+            { app_id: 'inventory', docs: { available: true } },
+            { app_id: 'chat', docs: { available: false } },
+          ],
+        });
       }
       if (input === '/api/os/help') {
         return createJsonResponse({ module_id: 'wesen-os', docs: [] });

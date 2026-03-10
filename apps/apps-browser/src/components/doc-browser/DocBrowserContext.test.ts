@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { buildDocObjectPath } from '../../domain/docsObjects';
 import { docBrowserReducer, type DocBrowserState } from './DocBrowserContext';
 
 describe('docBrowserReducer', () => {
@@ -17,10 +18,10 @@ describe('docBrowserReducer', () => {
     });
     const toReader = docBrowserReducer(toSearch, {
       type: 'navigate',
-      location: { screen: 'reader', moduleId: 'inventory', slug: 'overview' },
+      location: { screen: 'reader', path: buildDocObjectPath('module', 'inventory', 'overview') },
     });
 
-    expect(toReader.current).toEqual({ screen: 'reader', moduleId: 'inventory', slug: 'overview' });
+    expect(toReader.current).toEqual({ screen: 'reader', path: '/docs/objects/module/inventory/overview' });
     expect(toReader.history).toEqual([
       { screen: 'home' },
       { screen: 'search', query: 'inventory' },
@@ -29,7 +30,7 @@ describe('docBrowserReducer', () => {
 
   it('returns to previous location on back', () => {
     const state: DocBrowserState = {
-      current: { screen: 'reader', moduleId: 'inventory', slug: 'overview' },
+      current: { screen: 'reader', path: '/docs/objects/module/inventory/overview' },
       history: [{ screen: 'home' }, { screen: 'search', query: 'inventory' }],
     };
 

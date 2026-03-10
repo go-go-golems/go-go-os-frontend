@@ -13,6 +13,7 @@ export interface DocObjectSummary {
   title: string;
   summary?: string;
   docType?: string;
+  order?: number;
   topics?: string[];
   tags?: string[];
 }

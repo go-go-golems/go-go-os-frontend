@@ -1,4 +1,5 @@
-import { DocBrowserProvider, useDocBrowser, type DocBrowserMode } from './DocBrowserContext';
+import { mountPathFromObjectPath, type DocObjectPath, type DocsMountPath } from '../../domain/docsObjects';
+import { DocBrowserProvider, useDocBrowser } from './DocBrowserContext';
 import { DocCenterHome } from './DocCenterHome';
 import { DocReaderScreen } from './DocReaderScreen';
 import { DocSearchScreen } from './DocSearchScreen';
@@ -7,10 +8,11 @@ import { TopicBrowserScreen } from './TopicBrowserScreen';
 import './DocBrowserWindow.css';
 
 function DocBrowserToolbar() {
-  const { mode, location, canGoBack, goBack, goHome, openSearch, openModuleDocs, openTopicBrowser } = useDocBrowser();
-  const isHelpMode = mode === 'help';
-
-  const showModuleBtn = !isHelpMode && (location.screen === 'reader' || location.screen === 'module-docs') && location.moduleId;
+  const { location, canGoBack, goBack, goHome, openSearch, openCollection, openTopicBrowser } = useDocBrowser();
+  const activeMountPath =
+    location.mountPath ??
+    (location.path ? mountPathFromObjectPath(location.path) ?? undefined : undefined);
+  const showCollectionBtn = (location.screen === 'reader' || location.screen === 'collection') && activeMountPath;
 
   return (
     <div data-part="doc-browser-toolbar">
@@ -39,24 +41,22 @@ function DocBrowserToolbar() {
       >
         Search
       </button>
-      {!isHelpMode && (
+      <button
+        type="button"
+        data-part="doc-browser-nav-btn"
+        data-state={location.screen === 'topic-browser' ? 'active' : undefined}
+        onClick={() => openTopicBrowser()}
+      >
+        Topics
+      </button>
+      {showCollectionBtn && (
         <button
           type="button"
           data-part="doc-browser-nav-btn"
-          data-state={location.screen === 'topic-browser' ? 'active' : undefined}
-          onClick={() => openTopicBrowser()}
+          data-state={location.screen === 'collection' ? 'active' : undefined}
+          onClick={() => openCollection(activeMountPath!)}
         >
-          Topics
-        </button>
-      )}
-      {showModuleBtn && (
-        <button
-          type="button"
-          data-part="doc-browser-nav-btn"
-          data-state={location.screen === 'module-docs' ? 'active' : undefined}
-          onClick={() => openModuleDocs(location.moduleId!)}
-        >
-          Module
+          Collection
         </button>
       )}
       <div data-part="doc-browser-toolbar-spacer" />
@@ -72,17 +72,17 @@ function DocBrowserScreenRouter() {
       return <DocCenterHome />;
     case 'search':
       return <DocSearchScreen initialQuery={location.query} />;
-    case 'module-docs':
-      return location.moduleId ? (
-        <ModuleDocsScreen moduleId={location.moduleId} />
+    case 'collection':
+      return location.mountPath ? (
+        <ModuleDocsScreen mountPath={location.mountPath} />
       ) : (
         <div data-part="doc-center-home">
-          <div data-part="doc-center-message">No module selected.</div>
+          <div data-part="doc-center-message">No collection selected.</div>
         </div>
       );
     case 'reader':
-      return location.moduleId && location.slug ? (
-        <DocReaderScreen moduleId={location.moduleId} slug={location.slug} />
+      return location.path ? (
+        <DocReaderScreen path={location.path} />
       ) : (
         <div data-part="doc-center-home">
           <div data-part="doc-center-message">No document selected.</div>
@@ -94,32 +94,31 @@ function DocBrowserScreenRouter() {
 }
 
 export interface DocBrowserWindowProps {
-  mode?: DocBrowserMode;
-  initialScreen?: 'home' | 'search' | 'module-docs' | 'reader' | 'topic-browser';
-  initialModuleId?: string;
-  initialSlug?: string;
+  initialScreen?: 'home' | 'search' | 'collection' | 'reader' | 'topic-browser';
+  initialMountPath?: DocsMountPath;
+  initialPath?: DocObjectPath;
   initialQuery?: string;
   initialTopic?: string;
-  onOpenDocNewWindow?: (moduleId: string, slug: string) => void;
+  onOpenDocNewWindow?: (path: DocObjectPath) => void;
 }
 
 export function resolveInitialDocBrowserScreen({
   screen,
-  initialModuleId,
-  initialSlug,
+  initialMountPath,
+  initialPath,
 }: {
-  screen?: 'home' | 'search' | 'module-docs' | 'reader' | 'topic-browser';
-  initialModuleId?: string;
-  initialSlug?: string;
-}): 'home' | 'search' | 'module-docs' | 'reader' | 'topic-browser' {
+  screen?: 'home' | 'search' | 'collection' | 'reader' | 'topic-browser';
+  initialMountPath?: DocsMountPath;
+  initialPath?: DocObjectPath;
+}): 'home' | 'search' | 'collection' | 'reader' | 'topic-browser' {
   if (screen) {
     return screen;
   }
-  if (initialModuleId && initialSlug) {
+  if (initialPath) {
     return 'reader';
   }
-  if (initialModuleId) {
-    return 'module-docs';
+  if (initialMountPath) {
+    return 'collection';
   }
   return 'home';
 }
@@ -140,7 +139,7 @@ function DocLinkContextMenu() {
           type="button"
           data-part="doc-link-menu-item"
           onClick={() => {
-            openDoc(docLinkMenu.target.moduleId, docLinkMenu.target.slug);
+            openDoc(docLinkMenu.target.path);
             closeDocLinkMenu();
           }}
         >
@@ -151,7 +150,7 @@ function DocLinkContextMenu() {
             type="button"
             data-part="doc-link-menu-item"
             onClick={() => {
-              openDocNewWindow(docLinkMenu.target.moduleId, docLinkMenu.target.slug);
+              openDocNewWindow(docLinkMenu.target.path);
               closeDocLinkMenu();
             }}
           >
@@ -164,28 +163,27 @@ function DocLinkContextMenu() {
 }
 
 export function DocBrowserWindow({
-  mode,
   initialScreen: screen,
-  initialModuleId,
-  initialSlug,
+  initialMountPath,
+  initialPath,
   initialQuery,
   initialTopic,
   onOpenDocNewWindow,
 }: DocBrowserWindowProps) {
   const resolvedScreen = resolveInitialDocBrowserScreen({
     screen,
-    initialModuleId,
-    initialSlug,
+    initialMountPath,
+    initialPath,
   });
   const initialParams = {
-    moduleId: initialModuleId,
-    slug: initialSlug,
+    mountPath: initialMountPath,
+    path: initialPath,
     query: initialQuery,
     topic: initialTopic,
   };
 
   return (
-    <DocBrowserProvider mode={mode} initialScreen={resolvedScreen} initialParams={initialParams} onOpenDocNewWindow={onOpenDocNewWindow}>
+    <DocBrowserProvider initialScreen={resolvedScreen} initialParams={initialParams} onOpenDocNewWindow={onOpenDocNewWindow}>
       <div data-part="doc-browser">
         <DocBrowserToolbar />
         <div data-part="doc-browser-content">
