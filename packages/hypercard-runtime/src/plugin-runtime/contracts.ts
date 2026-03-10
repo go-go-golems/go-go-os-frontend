@@ -68,6 +68,7 @@ export interface LoadedStackBundle {
   initialSessionState?: unknown;
   initialCardState?: Record<string, unknown>;
   cards: string[];
+  cardPacks?: Record<string, string>;
 }
 
 export interface LoadStackBundleRequest {

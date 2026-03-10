@@ -225,6 +225,12 @@ globalThis.__stackHost = {
       initialSessionState: __stackBundle.initialSessionState,
       initialCardState: __stackBundle.initialCardState,
       cards: Object.keys(__stackBundle.cards),
+      cardPacks: Object.fromEntries(
+        Object.entries(__stackBundle.cards).map(([key, card]) => [
+          key,
+          typeof card?.packId === 'string' && card.packId.length > 0 ? card.packId : 'ui.card.v1',
+        ]),
+      ),
     };
   },
 

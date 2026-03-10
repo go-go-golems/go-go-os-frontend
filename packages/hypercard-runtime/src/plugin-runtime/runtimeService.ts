@@ -124,6 +124,18 @@ function validateLoadedStackBundleMeta(stackId: StackId, sessionId: SessionId, v
     throw new Error('Stack bundle metadata initialCardState must be an object when provided');
   }
 
+  const cardPacks = value.cardPacks;
+  if (cardPacks !== undefined) {
+    if (!isRecord(cardPacks)) {
+      throw new Error('Stack bundle metadata cardPacks must be an object when provided');
+    }
+    for (const [cardId, packId] of Object.entries(cardPacks)) {
+      if (typeof cardId !== 'string' || typeof packId !== 'string') {
+        throw new Error('Stack bundle metadata cardPacks must be Record<string, string>');
+      }
+    }
+  }
+
   return {
     stackId,
     sessionId,
@@ -133,6 +145,9 @@ function validateLoadedStackBundleMeta(stackId: StackId, sessionId: SessionId, v
     initialSessionState: value.initialSessionState,
     initialCardState,
     cards,
+    cardPacks: isRecord(cardPacks) ? Object.fromEntries(
+      Object.entries(cardPacks).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+    ) : undefined,
   };
 }
 

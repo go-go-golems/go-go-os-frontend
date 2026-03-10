@@ -9,6 +9,34 @@ import PATCHED_LOW_STOCK_RENDER from './fixtures/patched-low-stock-render.vm.js?
 import { QuickJSCardRuntimeService } from './runtimeService';
 import { validateRuntimeTree } from '../runtime-packs';
 
+const BUILTIN_KANBAN_STACK = `
+defineStackBundle(({ ui }) => ({
+  id: 'builtin-kanban',
+  title: 'Built-in Kanban',
+  cards: {
+    home: {
+      render() {
+        return ui.text('home');
+      },
+    },
+  },
+}));
+
+defineCard('board', ({ widgets }) => ({
+  render() {
+    return widgets.kanban.board({
+      columns: [{ id: 'todo', title: 'To Do', icon: '📋' }],
+      tasks: [],
+      editingTask: null,
+      filterTag: null,
+      filterPriority: null,
+      searchQuery: '',
+      collapsedCols: {},
+    });
+  },
+}), 'kanban.v1');
+`;
+
 describe('QuickJSCardRuntimeService', () => {
   const services: QuickJSCardRuntimeService[] = [];
 
@@ -209,6 +237,22 @@ describe('QuickJSCardRuntimeService', () => {
         payload: { id: 'task-1', col: 'done' },
       },
     ]);
+  });
+
+  it('reports pack metadata for built-in stack cards defined with defineCard', async () => {
+    const service = new QuickJSCardRuntimeService();
+    services.push(service);
+
+    const bundle = await service.loadStackBundle('builtin-kanban', 'builtin-kanban@one', BUILTIN_KANBAN_STACK);
+    expect(bundle.cards).toEqual(expect.arrayContaining(['home', 'board']));
+    expect(bundle.cardPacks).toMatchObject({
+      home: 'ui.card.v1',
+      board: 'kanban.v1',
+    });
+
+    const rawTree = service.renderCard('builtin-kanban@one', 'board', {});
+    const tree = validateRuntimeTree('kanban.v1', rawTree);
+    expect(tree.kind).toBe('kanban.board');
   });
 
   it('rejects unknown runtime packs during card definition', async () => {

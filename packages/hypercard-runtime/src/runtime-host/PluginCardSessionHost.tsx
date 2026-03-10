@@ -13,7 +13,7 @@ import {
 } from '../features/pluginCardRuntime';
 import { selectFocusedWindowId, selectSessionCurrentNav, selectSessionNavDepth } from '@hypercard/engine/desktop-core';
 import { markRuntimeCardInjectionResults } from '../hypercard/artifacts/artifactsSlice';
-import type { RuntimeAction } from '../plugin-runtime/contracts';
+import type { LoadedStackBundle, RuntimeAction } from '../plugin-runtime/contracts';
 import { getPendingRuntimeCards, hasRuntimeCard, injectPendingCardsWithReport, onRegistryChange } from '../plugin-runtime/runtimeCardRegistry';
 import { QuickJSCardRuntimeService } from '../plugin-runtime/runtimeService';
 import { dispatchRuntimeAction } from './pluginIntentRouting';
@@ -129,6 +129,7 @@ export function PluginCardSessionHost({
   );
 
   const runtimeServiceRef = useRef<QuickJSCardRuntimeService | null>(null);
+  const loadedBundleRef = useRef<LoadedStackBundle | null>(null);
   const isPreview = mode === 'preview';
   if (!runtimeServiceRef.current) {
     runtimeServiceRef.current = new QuickJSCardRuntimeService();
@@ -176,6 +177,7 @@ export function PluginCardSessionHost({
         if (cancelled) {
           return;
         }
+        loadedBundleRef.current = bundle;
 
         dispatch(setRuntimeSessionStatus({ sessionId, status: 'ready' }));
 
@@ -239,6 +241,7 @@ export function PluginCardSessionHost({
         }
 
         const message = error instanceof Error ? error.message : String(error);
+        loadedBundleRef.current = null;
         dispatch(setRuntimeSessionStatus({ sessionId, status: 'error', error: message }));
       }
     }
@@ -286,6 +289,7 @@ export function PluginCardSessionHost({
     return () => {
       const runtimeService = runtimeServiceRef.current;
       runtimeService?.disposeSession(sessionId);
+      loadedBundleRef.current = null;
       dispatch(removeRuntimeSession({ sessionId }));
     };
   }, [dispatch, pluginConfig, sessionId]);
@@ -330,7 +334,7 @@ export function PluginCardSessionHost({
       return {
         tree: (() => {
           const runtimeCard = getPendingRuntimeCards().find((card) => card.cardId === currentCardId);
-          const packId = normalizeRuntimePackId(runtimeCard?.packId);
+          const packId = normalizeRuntimePackId(runtimeCard?.packId ?? loadedBundleRef.current?.cardPacks?.[currentCardId]);
           const rawTree = runtimeServiceRef.current?.renderCard(sessionId, currentCardId, projectedState) ?? null;
           return rawTree === null ? null : validateRuntimeTree(packId, rawTree);
         })(),
@@ -425,7 +429,7 @@ export function PluginCardSessionHost({
   }
 
   const runtimeCard = getPendingRuntimeCards().find((card) => card.cardId === currentCardId);
-  const packId = normalizeRuntimePackId(runtimeCard?.packId);
+  const packId = normalizeRuntimePackId(runtimeCard?.packId ?? loadedBundleRef.current?.cardPacks?.[currentCardId]);
 
   return <>{renderRuntimeTree(packId, tree, emitRuntimeEvent)}</>;
 }
