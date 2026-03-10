@@ -2,22 +2,32 @@
   render({ state }) {
     const board = state?.app_kanban ?? {};
 
-    return widgets.kanban.shell({
-      taxonomy: widgets.kanban.taxonomy({
+    return widgets.kanban.page(
+      widgets.kanban.taxonomy({
         issueTypes: Array.isArray(board.taxonomy?.issueTypes) ? board.taxonomy.issueTypes : [{ id: 'feature', label: 'Feature', icon: '✨' }],
         priorities: Array.isArray(board.taxonomy?.priorities) ? board.taxonomy.priorities : [{ id: 'high', label: 'High', icon: '▲' }],
         labels: Array.isArray(board.taxonomy?.labels) ? board.taxonomy.labels : [{ id: 'frontend', label: 'Frontend', icon: '🖼️' }],
       }),
-      header: widgets.kanban.header({
+      widgets.kanban.header({
         title: 'Sprint Board',
         subtitle: 'Fixture board',
         searchQuery: typeof board.searchQuery === 'string' ? board.searchQuery : '',
       }),
-      filters: widgets.kanban.filters({
+      widgets.kanban.highlights({
+        items: [
+          {
+            id: 'total',
+            label: 'Total',
+            value: Array.isArray(board.tasks) ? board.tasks.length : 0,
+            tone: 'accent',
+          },
+        ],
+      }),
+      widgets.kanban.filters({
         filterType: board.filterType ?? null,
         filterPriority: board.filterPriority ?? null,
       }),
-      board: widgets.kanban.board({
+      widgets.kanban.board({
         columns: Array.isArray(board.columns) ? board.columns : [],
         tasks: Array.isArray(board.tasks) ? board.tasks : [],
         editingTask: board.editingTask ?? null,
@@ -27,12 +37,12 @@
             : {},
         onMoveTask: { handler: 'moveTask' },
       }),
-      status: widgets.kanban.status({
+      widgets.kanban.status({
         metrics: [
           { label: 'total', value: Array.isArray(board.tasks) ? board.tasks.length : 0 },
         ],
       }),
-    });
+    );
   },
   handlers: {
     moveTask({ dispatch }, args) {

@@ -24,26 +24,26 @@ defineStackBundle(({ ui }) => ({
 
 defineCard('board', ({ widgets }) => ({
   render() {
-    return widgets.kanban.shell({
-      taxonomy: widgets.kanban.taxonomy({
+    return widgets.kanban.page(
+      widgets.kanban.taxonomy({
         issueTypes: [{ id: 'task', label: 'Task', icon: '🧩' }],
         priorities: [{ id: 'medium', label: 'Medium', icon: '●' }],
         labels: [{ id: 'docs', label: 'Docs', icon: '📚' }],
       }),
-      header: widgets.kanban.header({
+      widgets.kanban.header({
         title: 'Built-in Kanban',
         searchQuery: '',
       }),
-      board: widgets.kanban.board({
+      widgets.kanban.board({
         columns: [{ id: 'todo', title: 'To Do', icon: '📋' }],
         tasks: [],
         editingTask: null,
         collapsedCols: {},
       }),
-      status: widgets.kanban.status({
+      widgets.kanban.status({
         metrics: [{ label: 'total', value: 0 }],
       }),
-    });
+    );
   },
 }), 'kanban.v1');
 `;
@@ -239,7 +239,7 @@ describe('QuickJSCardRuntimeService', () => {
       },
     });
     const tree = validateRuntimeTree('kanban.v1', rawTree);
-    expect(tree.kind).toBe('kanban.shell');
+    expect(tree.kind).toBe('kanban.page');
 
     const actions = service.eventCard(
       'inventory@kanban',
@@ -269,7 +269,7 @@ describe('QuickJSCardRuntimeService', () => {
 
     const rawTree = service.renderCard('builtin-kanban@one', 'board', {});
     const tree = validateRuntimeTree('kanban.v1', rawTree);
-    expect(tree.kind).toBe('kanban.shell');
+    expect(tree.kind).toBe('kanban.page');
   });
 
   it('rejects unknown runtime packs during card definition', async () => {

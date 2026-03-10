@@ -2,6 +2,7 @@ import { KanbanBoardView } from '@hypercard/rich-widgets/kanban-runtime';
 import type {
   KanbanState,
   Column,
+  KanbanHighlight,
   KanbanOptionDescriptor,
   KanbanPriorityId,
   KanbanIssueTypeId,
@@ -203,6 +204,11 @@ interface RawKanbanNode {
   props: Record<string, unknown>;
 }
 
+interface RawKanbanPageNode {
+  kind: string;
+  children: unknown[];
+}
+
 function assertKanbanNodeKind(value: unknown, kind: string, path: string): asserts value is RawKanbanNode {
   if (!isRecord(value)) {
     throw new Error(`${path} must be an object`);
@@ -212,6 +218,18 @@ function assertKanbanNodeKind(value: unknown, kind: string, path: string): asser
   }
   if (!isRecord(value.props)) {
     throw new Error(`${path}.props must be an object`);
+  }
+}
+
+function assertKanbanPageNodeKind(value: unknown, kind: string, path: string): asserts value is RawKanbanPageNode {
+  if (!isRecord(value)) {
+    throw new Error(`${path} must be an object`);
+  }
+  if (value.kind !== kind) {
+    throw new Error(`${path}.kind must be '${kind}'`);
+  }
+  if (!Array.isArray(value.children)) {
+    throw new Error(`${path}.children must be an array`);
   }
 }
 
@@ -243,6 +261,13 @@ export interface KanbanFiltersNode {
   };
 }
 
+export interface KanbanHighlightsNode {
+  kind: 'kanban.highlights';
+  props: {
+    items: KanbanHighlight[];
+  };
+}
+
 export interface KanbanBoardNode {
   kind: 'kanban.board';
   props: {
@@ -269,14 +294,15 @@ export interface KanbanStatusNode {
 }
 
 export interface KanbanV1Node {
-  kind: 'kanban.shell';
-  props: {
-    taxonomy: KanbanTaxonomyNode;
-    header: KanbanHeaderNode;
-    filters?: KanbanFiltersNode;
-    board: KanbanBoardNode;
-    status?: KanbanStatusNode;
-  };
+  kind: 'kanban.page';
+  children: Array<
+    | KanbanTaxonomyNode
+    | KanbanHeaderNode
+    | KanbanFiltersNode
+    | KanbanHighlightsNode
+    | KanbanBoardNode
+    | KanbanStatusNode
+  >;
 }
 
 function validateTaxonomyNode(value: unknown, path: string): KanbanTaxonomyNode {
@@ -346,6 +372,58 @@ function validateFiltersNode(value: unknown, path: string): KanbanFiltersNode {
   };
 }
 
+function assertHighlights(value: unknown, path: string): asserts value is KanbanHighlight[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`${path} must be an array`);
+  }
+
+  value.forEach((entry, index) => {
+    if (!isRecord(entry)) {
+      throw new Error(`${path}[${index}] must be an object`);
+    }
+    if (typeof entry.id !== 'string' || entry.id.length === 0) {
+      throw new Error(`${path}[${index}].id must be a non-empty string`);
+    }
+    if (typeof entry.label !== 'string' || entry.label.length === 0) {
+      throw new Error(`${path}[${index}].label must be a non-empty string`);
+    }
+    if (typeof entry.value !== 'string' && typeof entry.value !== 'number') {
+      throw new Error(`${path}[${index}].value must be a string or number`);
+    }
+    if (entry.caption !== undefined && typeof entry.caption !== 'string') {
+      throw new Error(`${path}[${index}].caption must be a string`);
+    }
+    if (entry.progress !== undefined && typeof entry.progress !== 'number') {
+      throw new Error(`${path}[${index}].progress must be a number`);
+    }
+    if (entry.trend !== undefined) {
+      if (!Array.isArray(entry.trend)) {
+        throw new Error(`${path}[${index}].trend must be an array`);
+      }
+      entry.trend.forEach((point, pointIndex) => {
+        if (typeof point !== 'number') {
+          throw new Error(`${path}[${index}].trend[${pointIndex}] must be a number`);
+        }
+      });
+    }
+    if (entry.tone !== undefined && typeof entry.tone !== 'string') {
+      throw new Error(`${path}[${index}].tone must be a string`);
+    }
+  });
+}
+
+function validateHighlightsNode(value: unknown, path: string): KanbanHighlightsNode {
+  assertKanbanNodeKind(value, 'kanban.highlights', path);
+  assertHighlights(value.props.items, `${path}.props.items`);
+
+  return {
+    kind: 'kanban.highlights',
+    props: {
+      items: value.props.items as KanbanHighlight[],
+    },
+  };
+}
+
 function validateBoardNode(value: unknown, path: string): KanbanBoardNode {
   assertKanbanNodeKind(value, 'kanban.board', path);
   const { props } = value;
@@ -409,18 +487,41 @@ function validateStatusNode(value: unknown, path: string): KanbanStatusNode {
 }
 
 export function validateKanbanV1Node(value: unknown): KanbanV1Node {
-  assertKanbanNodeKind(value, 'kanban.shell', 'root');
-  const { props } = value;
+  assertKanbanPageNodeKind(value, 'kanban.page', 'root');
+
+  const children = value.children.map((child, index) => {
+    if (!isRecord(child) || typeof child.kind !== 'string') {
+      throw new Error(`root.children[${index}] must be a kanban node`);
+    }
+
+    switch (child.kind) {
+      case 'kanban.taxonomy':
+        return validateTaxonomyNode(child, `root.children[${index}]`);
+      case 'kanban.header':
+        return validateHeaderNode(child, `root.children[${index}]`);
+      case 'kanban.filters':
+        return validateFiltersNode(child, `root.children[${index}]`);
+      case 'kanban.highlights':
+        return validateHighlightsNode(child, `root.children[${index}]`);
+      case 'kanban.board':
+        return validateBoardNode(child, `root.children[${index}]`);
+      case 'kanban.status':
+        return validateStatusNode(child, `root.children[${index}]`);
+      default:
+        throw new Error(`root.children[${index}].kind '${child.kind}' is not supported by kanban.v1`);
+    }
+  });
+
+  if (!children.some((child) => child.kind === 'kanban.taxonomy')) {
+    throw new Error('kanban.page requires a kanban.taxonomy child');
+  }
+  if (!children.some((child) => child.kind === 'kanban.board')) {
+    throw new Error('kanban.page requires a kanban.board child');
+  }
 
   return {
-    kind: 'kanban.shell',
-    props: {
-      taxonomy: validateTaxonomyNode(props.taxonomy, 'root.props.taxonomy'),
-      header: validateHeaderNode(props.header, 'root.props.header'),
-      filters: props.filters === undefined ? undefined : validateFiltersNode(props.filters, 'root.props.filters'),
-      board: validateBoardNode(props.board, 'root.props.board'),
-      status: props.status === undefined ? undefined : validateStatusNode(props.status, 'root.props.status'),
-    },
+    kind: 'kanban.page',
+    children,
   };
 }
 
@@ -454,7 +555,19 @@ export interface KanbanV1RendererProps {
 }
 
 export function KanbanV1Renderer({ tree, onEvent }: KanbanV1RendererProps) {
-  const { taxonomy, header, filters, board, status } = tree.props;
+  const taxonomy = tree.children.find((child): child is KanbanTaxonomyNode => child.kind === 'kanban.taxonomy');
+  const header = tree.children.find((child): child is KanbanHeaderNode => child.kind === 'kanban.header');
+  const filters = tree.children.find((child): child is KanbanFiltersNode => child.kind === 'kanban.filters');
+  const highlights = tree.children
+    .filter((child): child is KanbanHighlightsNode => child.kind === 'kanban.highlights')
+    .flatMap((child) => child.props.items);
+  const board = tree.children.find((child): child is KanbanBoardNode => child.kind === 'kanban.board');
+  const status = tree.children.find((child): child is KanbanStatusNode => child.kind === 'kanban.status');
+
+  if (!taxonomy || !board) {
+    throw new Error('kanban.page requires taxonomy and board nodes');
+  }
+
   const state: KanbanState = {
     initialized: true,
     tasks: board.props.tasks,
@@ -463,27 +576,28 @@ export function KanbanV1Renderer({ tree, onEvent }: KanbanV1RendererProps) {
     editingTask: board.props.editingTask,
     filterType: filters?.props.filterType ?? null,
     filterPriority: filters?.props.filterPriority ?? null,
-    searchQuery: header.props.searchQuery ?? '',
+    searchQuery: header?.props.searchQuery ?? '',
     collapsedCols: board.props.collapsedCols,
   };
 
   return (
     <KanbanBoardView
       state={state}
-      title={header.props.title}
-      subtitle={header.props.subtitle}
-      primaryActionLabel={header.props.primaryActionLabel}
+      title={header?.props.title ?? 'Kanban'}
+      subtitle={header?.props.subtitle}
+      primaryActionLabel={header?.props.primaryActionLabel}
       showFilterBar={Boolean(filters)}
       statusMetrics={status?.props.metrics ?? null}
+      highlights={highlights.length > 0 ? highlights : null}
       emptyColumnMessage={board.props.emptyColumnMessage}
       dropHintMessage={board.props.dropHintMessage}
-      onPrimaryAction={() => emitEvent(header.props.onPrimaryAction, onEvent)}
+      onPrimaryAction={() => emitEvent(header?.props.onPrimaryAction, onEvent)}
       onOpenTaskEditor={(task) => emitEvent(board.props.onOpenTaskEditor, onEvent, { task: task as unknown as Record<string, unknown> })}
       onCloseTaskEditor={() => emitEvent(board.props.onCloseTaskEditor, onEvent)}
       onSaveTask={(task) => emitEvent(board.props.onSaveTask, onEvent, { task: task as unknown as Record<string, unknown> })}
       onDeleteTask={(id) => emitEvent(board.props.onDeleteTask, onEvent, { id })}
       onMoveTask={(payload) => emitEvent(board.props.onMoveTask, onEvent, payload)}
-      onSearchChange={(value) => emitEvent(header.props.onSearchChange, onEvent, { value })}
+      onSearchChange={(value) => emitEvent(header?.props.onSearchChange, onEvent, { value })}
       onSetFilterType={(type) => emitEvent(filters?.props.onSetFilterType, onEvent, { type })}
       onSetFilterPriority={(priority) => emitEvent(filters?.props.onSetFilterPriority, onEvent, { priority })}
       onClearFilters={() => emitEvent(filters?.props.onClearFilters, onEvent)}

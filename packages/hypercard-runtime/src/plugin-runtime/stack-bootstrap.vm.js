@@ -83,9 +83,9 @@ const __ui = {
 
 const __widgets = {
   kanban: {
-    shell(props = {}) {
-      const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
-      return { kind: 'kanban.shell', props: safeProps };
+    page(...children) {
+      const flatChildren = children.flat().filter(Boolean);
+      return { kind: 'kanban.page', children: flatChildren };
     },
     taxonomy(props = {}) {
       const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
@@ -98,6 +98,10 @@ const __widgets = {
     filters(props = {}) {
       const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
       return { kind: 'kanban.filters', props: safeProps };
+    },
+    highlights(props = {}) {
+      const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
+      return { kind: 'kanban.highlights', props: safeProps };
     },
     board(props = {}) {
       const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};

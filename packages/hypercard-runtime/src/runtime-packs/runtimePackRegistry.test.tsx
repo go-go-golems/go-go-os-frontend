@@ -9,9 +9,9 @@ describe('runtimePackRegistry', () => {
 
   it('validates and renders kanban.v1 trees', () => {
     const tree = validateRuntimeTree(KANBAN_V1_PACK_ID, {
-      kind: 'kanban.shell',
-      props: {
-        taxonomy: {
+      kind: 'kanban.page',
+      children: [
+        {
           kind: 'kanban.taxonomy',
           props: {
             issueTypes: [{ id: 'task', label: 'Task', icon: '🧩' }],
@@ -19,21 +19,27 @@ describe('runtimePackRegistry', () => {
             labels: [{ id: 'docs', label: 'Docs', icon: '📚' }],
           },
         },
-        header: {
+        {
           kind: 'kanban.header',
           props: {
             title: 'Docs Board',
             searchQuery: '',
           },
         },
-        filters: {
+        {
+          kind: 'kanban.highlights',
+          props: {
+            items: [{ id: 'total', label: 'Total', value: 1, tone: 'accent' }],
+          },
+        },
+        {
           kind: 'kanban.filters',
           props: {
             filterType: null,
             filterPriority: null,
           },
         },
-        board: {
+        {
           kind: 'kanban.board',
           props: {
             columns: [{ id: 'todo', title: 'To Do', icon: '📋' }],
@@ -52,16 +58,16 @@ describe('runtimePackRegistry', () => {
             collapsedCols: {},
           },
         },
-        status: {
+        {
           kind: 'kanban.status',
           props: {
             metrics: [{ label: 'total', value: 1 }],
           },
         },
-      },
+      ],
     });
 
-    expect(tree.kind).toBe('kanban.shell');
+    expect(tree.kind).toBe('kanban.page');
 
     const markup = renderToStaticMarkup(
       <>{renderRuntimeTree(KANBAN_V1_PACK_ID, tree, () => {})}</>,
