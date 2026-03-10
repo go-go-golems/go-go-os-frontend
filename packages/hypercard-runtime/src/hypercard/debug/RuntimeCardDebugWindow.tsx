@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { type CardStackDefinition } from '@hypercard/engine';
@@ -10,6 +10,7 @@ import {
 import { SyntaxHighlight } from '@hypercard/chat-runtime';
 import type { ArtifactRecord } from '../artifacts/artifactsSlice';
 import { openCodeEditor } from '../editor/editorLaunch';
+import { useRegisteredRuntimeDebugStacks } from './runtimeDebugRegistry';
 
 interface StoreSlice {
   hypercardArtifacts?: { byId: Record<string, ArtifactRecord> };
@@ -24,7 +25,9 @@ interface StoreSlice {
 }
 
 export interface RuntimeCardDebugWindowProps {
+  ownerAppId: string;
   stacks?: CardStackDefinition[];
+  initialStackId?: string;
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -59,19 +62,41 @@ function Badge({ text, color }: { text: string; color: string }) {
   );
 }
 
-export function RuntimeCardDebugWindow({ stacks = [] }: RuntimeCardDebugWindowProps) {
+export function RuntimeCardDebugWindow({
+  ownerAppId,
+  stacks,
+  initialStackId,
+}: RuntimeCardDebugWindowProps) {
   const dispatch = useDispatch();
   const [registryCards, setRegistryCards] = useState<RuntimeCardDefinition[]>(getPendingRuntimeCards());
+  const registeredStacks = useRegisteredRuntimeDebugStacks();
+  const availableStacks = useMemo(
+    () => (stacks && stacks.length > 0 ? [...stacks] : registeredStacks),
+    [registeredStacks, stacks],
+  );
+  const [selectedStackId, setSelectedStackId] = useState<string | null>(
+    initialStackId ?? availableStacks[0]?.id ?? null,
+  );
 
   useEffect(() => {
     const update = () => setRegistryCards(getPendingRuntimeCards());
     return onRegistryChange(update);
   }, []);
 
+  useEffect(() => {
+    const candidateId =
+      (selectedStackId && availableStacks.some((stack) => stack.id === selectedStackId))
+        ? selectedStackId
+        : initialStackId ?? availableStacks[0]?.id ?? null;
+    if (candidateId !== selectedStackId) {
+      setSelectedStackId(candidateId);
+    }
+  }, [availableStacks, initialStackId, selectedStackId]);
+
   const artifacts = useSelector((s: StoreSlice) => s.hypercardArtifacts?.byId ?? {});
   const sessions = useSelector((s: StoreSlice) => s.pluginCardRuntime?.sessions ?? {});
 
-  const activeStack = stacks[0];
+  const activeStack = availableStacks.find((stack) => stack.id === selectedStackId) ?? availableStacks[0];
   const stackCards = activeStack ? Object.values(activeStack.cards) : [];
   const runtimeArtifacts = Object.values(artifacts).filter(a => a.runtimeCardId);
 
@@ -81,6 +106,22 @@ export function RuntimeCardDebugWindow({ stacks = [] }: RuntimeCardDebugWindowPr
   return (
     <div style={{ padding: 12, fontFamily: 'monospace', fontSize: 12, color: '#111', overflow: 'auto', height: '100%' }}>
       <Section title={activeStack ? `📇 Stack: ${activeStack.name} (${activeStack.id})` : '📇 Stack: (none provided)'}>
+        {availableStacks.length > 1 && (
+          <label style={{ display: 'grid', gap: 4, marginBottom: 8, fontSize: 11 }}>
+            <span style={{ color: '#555' }}>Selected stack</span>
+            <select
+              value={activeStack?.id ?? ''}
+              onChange={(event) => setSelectedStackId(event.target.value)}
+              style={{ width: 260, padding: '4px 6px', fontFamily: 'inherit', fontSize: 12 }}
+            >
+              {availableStacks.map((stack) => (
+                <option key={stack.id} value={stack.id}>
+                  {stack.name} ({stack.id})
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <div style={{ fontSize: 11, color: '#555', marginBottom: 6 }}>
           homeCard: <code>{activeStack?.homeCard ?? '—'}</code> · {stackCards.length} predefined cards
         </div>
@@ -119,7 +160,7 @@ export function RuntimeCardDebugWindow({ stacks = [] }: RuntimeCardDebugWindowPr
                   {new Date(card.registeredAt).toLocaleTimeString()}
                 </span>
                 <button
-                  onClick={() => openCodeEditor(dispatch, { ownerAppId: 'inventory', cardId: card.cardId }, card.code)}
+                  onClick={() => openCodeEditor(dispatch, { ownerAppId, cardId: card.cardId }, card.code)}
                   style={{
                     fontSize: 10, padding: '1px 6px', borderRadius: 3,
                     border: '1px solid #999', background: '#f0f0f0', cursor: 'pointer',
