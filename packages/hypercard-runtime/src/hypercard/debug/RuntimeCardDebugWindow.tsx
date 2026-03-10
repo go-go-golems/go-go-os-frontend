@@ -23,6 +23,14 @@ interface StoreSlice {
       cardState: Record<string, Record<string, unknown>>;
     }>;
   };
+  windowing?: {
+    sessions: Record<string, {
+      nav?: Array<{
+        card?: string;
+        param?: string;
+      }>;
+    }>;
+  };
 }
 
 export interface RuntimeCardDebugWindowProps {
@@ -135,6 +143,7 @@ export function RuntimeCardDebugWindow({
 
   const artifacts = useSelector((s: StoreSlice) => s.hypercardArtifacts?.byId ?? {});
   const sessions = useSelector((s: StoreSlice) => s.pluginCardRuntime?.sessions ?? {});
+  const windowingSessions = useSelector((s: StoreSlice) => s.windowing?.sessions ?? {});
   const stacksById = useMemo(
     () => new Map(availableStacks.map((stack) => [stack.id, stack])),
     [availableStacks],
@@ -158,6 +167,19 @@ export function RuntimeCardDebugWindow({
     }
     dispatch(openWindow(payload));
   };
+
+  const sessionCurrentCardIds = useMemo(() => {
+    const entries = Object.entries(sessions).map(([sessionId, session]) => {
+      const nav = windowingSessions[sessionId]?.nav;
+      const navCard =
+        Array.isArray(nav) && nav.length > 0 && typeof nav[nav.length - 1]?.card === 'string'
+          ? nav[nav.length - 1]?.card ?? null
+          : null;
+      const fallbackCard = Object.keys(session.cardState ?? {})[0] ?? null;
+      return [sessionId, navCard ?? fallbackCard] as const;
+    });
+    return new Map(entries);
+  }, [sessions, windowingSessions]);
 
   return (
     <div style={{ padding: 12, fontFamily: 'monospace', fontSize: 12, color: '#111', overflow: 'auto', height: '100%' }}>
@@ -316,7 +338,7 @@ export function RuntimeCardDebugWindow({
                 <th style={th}>Session ID</th>
                 <th style={th}>Stack</th>
                 <th style={th}>Status</th>
-                <th style={th}>Card States</th>
+                <th style={th}>Current Card</th>
                 <th style={th}>Actions</th>
               </tr>
             </thead>
@@ -332,21 +354,25 @@ export function RuntimeCardDebugWindow({
                     {s.error && <div style={{ fontSize: 10, color: '#c0392b', marginTop: 2 }}>{s.error}</div>}
                   </td>
                   <td style={td}>
-                    {Object.keys(s.cardState ?? {}).map(cid => (
-                      <div key={cid}><code style={{ fontSize: 10 }}>{cid}</code></div>
-                    ))}
-                    {Object.keys(s.cardState ?? {}).length === 0 && <span style={{ color: '#555' }}>—</span>}
+                    {sessionCurrentCardIds.get(sid) ? (
+                      <code style={{ fontSize: 10 }}>{sessionCurrentCardIds.get(sid)}</code>
+                    ) : (
+                      <span style={{ color: '#555' }}>—</span>
+                    )}
                   </td>
                   <td style={td}>
-                    {Object.keys(s.cardState ?? {}).map((cid) => {
+                    {(() => {
+                      const currentCardId = sessionCurrentCardIds.get(sid);
+                      if (!currentCardId) {
+                        return <span style={{ color: '#555' }}>—</span>;
+                      }
                       const stack = stacksById.get(s.stackId);
-                      const card = stack?.cards[cid];
+                      const card = stack?.cards[currentCardId];
                       const source = card ? cardSource(card) : null;
                       return (
-                        <div key={cid} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
-                          <code style={{ fontSize: 10 }}>{cid}</code>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                           <button
-                            onClick={() => launchStackCard(s.stackId, cid)}
+                            onClick={() => launchStackCard(s.stackId, currentCardId)}
                             style={{
                               fontSize: 10,
                               padding: '1px 6px',
@@ -360,7 +386,7 @@ export function RuntimeCardDebugWindow({
                           </button>
                           {source ? (
                             <button
-                              onClick={() => openCodeEditor(dispatch, { ownerAppId, cardId: cid }, source)}
+                              onClick={() => openCodeEditor(dispatch, { ownerAppId, cardId: currentCardId }, source)}
                               style={{
                                 fontSize: 10,
                                 padding: '1px 6px',
@@ -375,8 +401,7 @@ export function RuntimeCardDebugWindow({
                           ) : null}
                         </div>
                       );
-                    })}
-                    {Object.keys(s.cardState ?? {}).length === 0 && <span style={{ color: '#555' }}>—</span>}
+                    })()}
                   </td>
                 </tr>
               ))}
