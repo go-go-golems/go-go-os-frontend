@@ -14,11 +14,10 @@ import {
 import { selectFocusedWindowId, selectSessionCurrentNav, selectSessionNavDepth } from '@hypercard/engine/desktop-core';
 import { markRuntimeCardInjectionResults } from '../hypercard/artifacts/artifactsSlice';
 import type { RuntimeAction } from '../plugin-runtime/contracts';
-import { hasRuntimeCard, injectPendingCardsWithReport, onRegistryChange } from '../plugin-runtime/runtimeCardRegistry';
+import { getPendingRuntimeCards, hasRuntimeCard, injectPendingCardsWithReport, onRegistryChange } from '../plugin-runtime/runtimeCardRegistry';
 import { QuickJSCardRuntimeService } from '../plugin-runtime/runtimeService';
-import type { UINode } from '../plugin-runtime/uiTypes';
 import { dispatchRuntimeAction } from './pluginIntentRouting';
-import { PluginCardRenderer } from './PluginCardRenderer';
+import { normalizeRuntimePackId, renderRuntimeTree, validateRuntimeTree } from '../runtime-packs';
 
 type StoreState = Record<string, unknown>;
 
@@ -320,7 +319,7 @@ export function PluginCardSessionHost({
     ]
   );
 
-  const renderOutcome = useMemo<{ tree: UINode | null; error: string | null }>(() => {
+  const renderOutcome = useMemo<{ tree: unknown | null; error: string | null }>(() => {
     if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready') {
       return { tree: null, error: null };
     }
@@ -329,8 +328,12 @@ export function PluginCardSessionHost({
 
     try {
       return {
-        tree:
-          runtimeServiceRef.current?.renderCard(sessionId, currentCardId, projectedState) ?? null,
+        tree: (() => {
+          const runtimeCard = getPendingRuntimeCards().find((card) => card.cardId === currentCardId);
+          const packId = normalizeRuntimePackId(runtimeCard?.packId);
+          const rawTree = runtimeServiceRef.current?.renderCard(sessionId, currentCardId, projectedState) ?? null;
+          return rawTree === null ? null : validateRuntimeTree(packId, rawTree);
+        })(),
         error: null,
       };
     } catch (error) {
@@ -421,5 +424,8 @@ export function PluginCardSessionHost({
     return <div style={{ padding: 12 }}>No plugin output for card: {currentCardId}</div>;
   }
 
-  return <PluginCardRenderer tree={tree} onEvent={emitRuntimeEvent} />;
+  const runtimeCard = getPendingRuntimeCards().find((card) => card.cardId === currentCardId);
+  const packId = normalizeRuntimePackId(runtimeCard?.packId);
+
+  return <>{renderRuntimeTree(packId, tree, emitRuntimeEvent)}</>;
 }

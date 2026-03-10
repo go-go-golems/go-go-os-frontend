@@ -11,7 +11,6 @@ import type {
   StackId,
 } from './contracts';
 import stackBootstrapSource from './stack-bootstrap.vm.js?raw';
-import { validateUINode } from './uiSchema';
 
 interface SessionVm {
   stackId: StackId;
@@ -217,11 +216,11 @@ export class QuickJSCardRuntimeService {
     }
   }
 
-  defineCard(sessionId: SessionId, cardId: CardId, code: string): LoadedStackBundle {
+  defineCard(sessionId: SessionId, cardId: CardId, code: string, packId?: string): LoadedStackBundle {
     const vm = this.getVmOrThrow(sessionId);
     evalCodeOrThrow(
       vm,
-      `globalThis.__stackHost.defineCard(${toJsLiteral(cardId)}, (${code}))`,
+      `globalThis.__stackHost.defineCard(${toJsLiteral(cardId)}, (${code}), ${toJsLiteral(packId)})`,
       `${sessionId}.define-card.js`,
       this.options.loadTimeoutMs
     );
@@ -254,16 +253,14 @@ export class QuickJSCardRuntimeService {
     sessionId: SessionId,
     cardId: CardId,
     state: unknown
-  ) {
+  ): unknown {
     const vm = this.getVmOrThrow(sessionId);
-    const tree = evalToNative<unknown>(
+    return evalToNative<unknown>(
       vm,
       `globalThis.__stackHost.render(${toJsLiteral(cardId)}, ${toJsLiteral(state)})`,
       `${sessionId}.render.js`,
       this.options.renderTimeoutMs
     );
-
-    return validateUINode(tree);
   }
 
   eventCard(

@@ -52,14 +52,14 @@ describe('runtimeCardRegistry', () => {
   });
 
   it('injects pending cards into a service', () => {
-    registerRuntimeCard('lowStock', 'code-a');
+    registerRuntimeCard('lowStock', 'code-a', 'ui.card.v1');
     registerRuntimeCard('catBrowser', 'code-b');
     const service = { defineCard: vi.fn() };
     const injected = injectPendingCards(service, 'session-1');
     expect(injected).toEqual(['lowStock', 'catBrowser']);
     expect(service.defineCard).toHaveBeenCalledTimes(2);
-    expect(service.defineCard).toHaveBeenCalledWith('session-1', 'lowStock', 'code-a');
-    expect(service.defineCard).toHaveBeenCalledWith('session-1', 'catBrowser', 'code-b');
+    expect(service.defineCard).toHaveBeenCalledWith('session-1', 'lowStock', 'code-a', 'ui.card.v1');
+    expect(service.defineCard).toHaveBeenCalledWith('session-1', 'catBrowser', 'code-b', undefined);
   });
 
   it('continues injecting if one card fails', () => {

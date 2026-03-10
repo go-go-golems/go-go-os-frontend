@@ -230,7 +230,7 @@ function createInitialSeed(props: KanbanBoardProps) {
   });
 }
 
-function KanbanBoardFrame({
+export function KanbanBoardFrame({
   state,
   dispatch,
 }: {

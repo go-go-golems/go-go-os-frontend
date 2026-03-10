@@ -72,13 +72,15 @@ export { parseMarkdown } from './mac-write/markdown';
 export { SAMPLE_DOCUMENT } from './mac-write/sampleData';
 
 // KanbanBoard
-export { KanbanBoard, type KanbanBoardProps } from './kanban/KanbanBoard';
+export { KanbanBoard, KanbanBoardFrame, type KanbanBoardProps } from './kanban/KanbanBoard';
 export {
   KANBAN_STATE_KEY,
   createKanbanStateSeed,
   kanbanActions,
   kanbanReducer,
   selectKanbanState,
+  type KanbanAction,
+  type KanbanState,
 } from './kanban/kanbanState';
 export {
   type Task,

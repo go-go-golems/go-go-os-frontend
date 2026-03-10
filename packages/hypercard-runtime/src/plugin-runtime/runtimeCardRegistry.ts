@@ -72,21 +72,21 @@ export function clearRuntimeCardRegistry(): void {
  * Returns the list of card IDs that were successfully injected.
  */
 export function injectPendingCards(
-  service: { defineCard(sessionId: string, cardId: string, code: string): unknown },
+  service: { defineCard(sessionId: string, cardId: string, code: string, packId?: string): unknown },
   sessionId: string,
 ): string[] {
   return injectPendingCardsWithReport(service, sessionId).injected;
 }
 
 export function injectPendingCardsWithReport(
-  service: { defineCard(sessionId: string, cardId: string, code: string): unknown },
+  service: { defineCard(sessionId: string, cardId: string, code: string, packId?: string): unknown },
   sessionId: string,
 ): RuntimeCardInjectionResult {
   const injected: string[] = [];
   const failed: RuntimeCardInjectionFailure[] = [];
   for (const def of registry.values()) {
     try {
-      service.defineCard(sessionId, def.cardId, def.code);
+      service.defineCard(sessionId, def.cardId, def.code, def.packId);
       injected.push(def.cardId);
     } catch (err) {
       console.error(`[runtimeCardRegistry] Failed to inject card ${def.cardId} into ${sessionId}:`, err);

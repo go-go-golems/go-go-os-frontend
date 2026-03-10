@@ -81,6 +81,15 @@ const __ui = {
   },
 };
 
+const __widgets = {
+  kanban: {
+    board(props = {}) {
+      const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
+      return { kind: 'kanban.board', props: safeProps };
+    },
+  },
+};
+
 let __stackBundle = null;
 let __runtimeActions = [];
 
@@ -106,10 +115,33 @@ function assertCardsMap() {
   return __stackBundle.cards;
 }
 
-function normalizeCardDefinition(cardId, definitionOrFactory) {
+function normalizePackId(packId) {
+  if (typeof packId !== 'string' || packId.trim().length === 0) {
+    return 'ui.card.v1';
+  }
+
+  return packId.trim();
+}
+
+function createPackHelpers(packId) {
+  const normalizedPackId = normalizePackId(packId);
+
+  if (normalizedPackId === 'ui.card.v1') {
+    return { ui: __ui };
+  }
+
+  if (normalizedPackId === 'kanban.v1') {
+    return { widgets: __widgets };
+  }
+
+  throw new Error('Unknown runtime pack: ' + String(normalizedPackId));
+}
+
+function normalizeCardDefinition(cardId, definitionOrFactory, packId) {
+  const normalizedPackId = normalizePackId(packId);
   const definition =
     typeof definitionOrFactory === 'function'
-      ? definitionOrFactory({ ui: __ui })
+      ? definitionOrFactory(createPackHelpers(normalizedPackId))
       : definitionOrFactory;
 
   if (!definition || typeof definition !== 'object') {
@@ -128,6 +160,7 @@ function normalizeCardDefinition(cardId, definitionOrFactory) {
     definition.handlers = {};
   }
 
+  definition.packId = normalizedPackId;
   return definition;
 }
 
@@ -145,10 +178,10 @@ function ensureCardRecord(cardId) {
   return cards[key];
 }
 
-function defineCard(cardId, definitionOrFactory) {
+function defineCard(cardId, definitionOrFactory, packId) {
   const cards = assertCardsMap();
   const key = String(cardId);
-  cards[key] = normalizeCardDefinition(key, definitionOrFactory);
+  cards[key] = normalizeCardDefinition(key, definitionOrFactory, packId);
 }
 
 function defineCardRender(cardId, renderFn) {
@@ -232,8 +265,8 @@ globalThis.__stackHost = {
     return __runtimeActions.slice();
   },
 
-  defineCard(cardId, definitionOrFactory) {
-    defineCard(cardId, definitionOrFactory);
+  defineCard(cardId, definitionOrFactory, packId) {
+    defineCard(cardId, definitionOrFactory, packId);
     return this.getMeta();
   },
 

@@ -1,5 +1,3 @@
-import type { UINode } from './uiTypes';
-
 export type StackId = string;
 export type SessionId = string;
 export type CardId = string;
@@ -149,7 +147,7 @@ export interface LoadStackBundleResult {
 }
 
 export interface RenderCardResult {
-  tree: UINode;
+  tree: unknown;
 }
 
 export interface EventCardResult {
