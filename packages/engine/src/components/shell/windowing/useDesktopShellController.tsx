@@ -33,6 +33,7 @@ import {
   moveWindow,
   openWindow,
   resizeWindow,
+  updateWindowMinSize,
   setDesktopContextMenu,
   setActiveMenu,
   setSelectedIcon,
@@ -59,6 +60,7 @@ import {
   createFallbackWindowContentAdapter,
 } from './defaultWindowContentAdapters';
 import { dragOverlayStore, useDragOverlaySnapshot } from './dragOverlayStore';
+import type { ContentMinSize } from './useContentMinSize';
 import { routeDesktopCommand } from './desktopCommandRouter';
 import type { DesktopShellProps } from './desktopShellTypes';
 import type {
@@ -336,6 +338,7 @@ export interface DesktopShellControllerResult {
   unregisterContextActions: (target: DesktopContextTargetRef) => void;
   registerWindowContextActions: (windowId: string, actions: DesktopActionEntry[]) => void;
   unregisterWindowContextActions: (windowId: string) => void;
+  onContentMinSize: (windowId: string, size: ContentMinSize) => void;
   onToastDone: () => void;
 }
 
@@ -666,6 +669,23 @@ export function useDesktopShellController({
   );
   const getWindowDefById = useCallback((id: string) => windowDefsByIdRef.current[id], []);
 
+  const getMinSizeForWindow = useCallback(
+    (windowId: string) => {
+      const state = store.getState() as ShellState;
+      const win = state.windowing.windows[windowId];
+      if (!win) return undefined;
+      return { minWidth: win.minW, minHeight: win.minH };
+    },
+    [store],
+  );
+
+  const handleContentMinSize = useCallback(
+    (windowId: string, size: ContentMinSize) => {
+      dispatch(updateWindowMinSize({ id: windowId, minW: size.minW, minH: size.minH }));
+    },
+    [dispatch],
+  );
+
   const { beginMove, beginResize } = useWindowInteractionController({
     getWindowById: getWindowDefById,
     onBeginWindowInteraction: handleBeginInteraction,
@@ -676,6 +696,7 @@ export function useDesktopShellController({
     onCancelWindowInteraction: handleCancelInteraction,
     onFocusWindow: handleFocus,
     constraints: { minX: 0, minY: 0, minWidth: 220, minHeight: 140 },
+    getMinSizeForWindow,
   });
 
   useEffect(() => {
@@ -1182,6 +1203,7 @@ export function useDesktopShellController({
     unregisterContextActions,
     registerWindowContextActions,
     unregisterWindowContextActions,
+    onContentMinSize: handleContentMinSize,
     onToastDone: handleToastDone,
   };
 }

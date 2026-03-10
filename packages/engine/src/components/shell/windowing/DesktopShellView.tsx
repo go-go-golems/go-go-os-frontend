@@ -41,6 +41,7 @@ export function DesktopShellView({
   unregisterContextActions,
   registerWindowContextActions,
   unregisterWindowContextActions,
+  onContentMinSize,
   onToastDone,
 }: DesktopShellViewProps) {
   return (
@@ -75,6 +76,7 @@ export function DesktopShellView({
             onWindowDragStart={onWindowDragStart}
             onWindowResizeStart={onWindowResizeStart}
             onWindowContextMenu={onWindowContextMenu}
+            onContentMinSize={onContentMinSize}
             renderWindowBody={renderWindowBody}
           />
         </DesktopWindowMenuRuntimeProvider>

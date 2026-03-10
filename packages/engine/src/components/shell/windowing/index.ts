@@ -78,6 +78,10 @@ export type {
   DesktopWindowDef,
 } from './types';
 export {
+  useContentMinSize,
+  type ContentMinSize,
+} from './useContentMinSize';
+export {
   useWindowInteractionController,
   type WindowInteractionConstraints,
   type WindowInteractionControllerOptions,

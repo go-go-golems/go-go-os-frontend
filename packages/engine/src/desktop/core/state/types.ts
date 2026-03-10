@@ -31,6 +31,9 @@ export interface WindowInstance {
   z: number;
   minW: number;
   minH: number;
+  /** Floor from OpenWindowPayload — content measurement cannot go below this. */
+  baseMinW: number;
+  baseMinH: number;
   isDialog?: boolean;
   isResizable?: boolean;
   content: WindowContent;

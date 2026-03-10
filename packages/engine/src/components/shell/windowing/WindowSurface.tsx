@@ -1,6 +1,7 @@
-import { memo, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
+import { memo, type MouseEvent, type PointerEvent, type ReactNode, useCallback } from 'react';
 import { PARTS } from '../../../parts';
 import type { DesktopWindowDef } from './types';
+import { type ContentMinSize, useContentMinSize } from './useContentMinSize';
 import { WindowResizeHandle } from './WindowResizeHandle';
 import { WindowTitleBar } from './WindowTitleBar';
 
@@ -16,14 +17,21 @@ export interface WindowSurfaceProps {
     event: MouseEvent<HTMLElement>,
     source: 'surface' | 'title-bar',
   ) => void;
+  onContentMinSize?: (windowId: string, size: ContentMinSize) => void;
 }
 
 interface WindowBodyProps {
   children?: ReactNode;
+  onMinSize?: (size: ContentMinSize) => void;
 }
 
-const WindowBody = memo(function WindowBody({ children }: WindowBodyProps) {
-  return <div data-part={PARTS.windowingWindowBody}>{children}</div>;
+const WindowBody = memo(function WindowBody({ children, onMinSize }: WindowBodyProps) {
+  const ref = useContentMinSize(onMinSize);
+  return (
+    <div ref={ref} data-part={PARTS.windowingWindowBody}>
+      {children}
+    </div>
+  );
 });
 
 function WindowSurfaceBase({
@@ -34,7 +42,13 @@ function WindowSurfaceBase({
   onWindowDragStart,
   onWindowResizeStart,
   onWindowContextMenu,
+  onContentMinSize,
 }: WindowSurfaceProps) {
+  const handleMinSize = useCallback(
+    (size: ContentMinSize) => onContentMinSize?.(window.id, size),
+    [onContentMinSize, window.id],
+  );
+
   return (
     <section
       data-part={PARTS.windowingWindow}
@@ -74,7 +88,7 @@ function WindowSurfaceBase({
           onWindowContextMenu?.(window.id, event, 'title-bar');
         }}
       />
-      <WindowBody>{children}</WindowBody>
+      <WindowBody onMinSize={handleMinSize}>{children}</WindowBody>
       {window.isResizable !== false && !window.isDialog ? (
         <WindowResizeHandle onPointerDown={(event) => onWindowResizeStart?.(window.id, event)} />
       ) : null}
@@ -90,6 +104,7 @@ function areWindowSurfacePropsEqual(prev: WindowSurfaceProps, next: WindowSurfac
     prev.onWindowDragStart === next.onWindowDragStart &&
     prev.onWindowResizeStart === next.onWindowResizeStart &&
     prev.onWindowContextMenu === next.onWindowContextMenu &&
+    prev.onContentMinSize === next.onContentMinSize &&
     prev.window.id === next.window.id &&
     prev.window.title === next.window.title &&
     prev.window.icon === next.window.icon &&

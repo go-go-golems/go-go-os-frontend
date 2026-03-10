@@ -38,6 +38,7 @@ export interface WindowInteractionControllerOptions {
   onCancelWindowInteraction?: (windowId: string) => void;
   onFocusWindow?: (windowId: string) => void;
   constraints?: WindowInteractionConstraints;
+  getMinSizeForWindow?: (windowId: string) => { minWidth: number; minHeight: number } | undefined;
 }
 
 export function useWindowInteractionController({
@@ -50,6 +51,7 @@ export function useWindowInteractionController({
   onCancelWindowInteraction,
   onFocusWindow,
   constraints,
+  getMinSizeForWindow,
 }: WindowInteractionControllerOptions) {
   const activeRef = useRef<ActiveInteraction | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
@@ -140,8 +142,9 @@ export function useWindowInteractionController({
           return;
         }
 
-        active.latestWidth = Math.max(constraints?.minWidth ?? 220, active.startWidth + dx);
-        active.latestHeight = Math.max(constraints?.minHeight ?? 140, active.startHeight + dy);
+        const perWindow = getMinSizeForWindow?.(active.windowId);
+        active.latestWidth = Math.max(perWindow?.minWidth ?? constraints?.minWidth ?? 220, active.startWidth + dx);
+        active.latestHeight = Math.max(perWindow?.minHeight ?? constraints?.minHeight ?? 140, active.startHeight + dy);
         onResizeWindow(windowId, {
           width: active.latestWidth,
           height: active.latestHeight,
@@ -173,6 +176,7 @@ export function useWindowInteractionController({
       constraints?.minX,
       constraints?.minY,
       finalizeInteraction,
+      getMinSizeForWindow,
       getWindowById,
       onBeginWindowInteraction,
       onFocusWindow,

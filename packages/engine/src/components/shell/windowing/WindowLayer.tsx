@@ -2,6 +2,7 @@ import type { MouseEvent, PointerEvent, ReactNode } from 'react';
 import { PARTS } from '../../../parts';
 import { DesktopWindowScopeProvider } from './desktopMenuRuntime';
 import type { DesktopWindowDef } from './types';
+import type { ContentMinSize } from './useContentMinSize';
 import { WindowSurface } from './WindowSurface';
 
 export interface WindowLayerProps {
@@ -17,6 +18,7 @@ export interface WindowLayerProps {
     event: MouseEvent<HTMLElement>,
     source: 'surface' | 'title-bar',
   ) => void;
+  onContentMinSize?: (windowId: string, size: ContentMinSize) => void;
 }
 
 export function WindowLayer({
@@ -27,6 +29,7 @@ export function WindowLayer({
   onWindowDragStart,
   onWindowResizeStart,
   onWindowContextMenu,
+  onContentMinSize,
 }: WindowLayerProps) {
   return (
     <section data-part={PARTS.windowingWindowLayer} aria-label="Window layer">
@@ -39,6 +42,7 @@ export function WindowLayer({
           onWindowDragStart={onWindowDragStart}
           onWindowResizeStart={onWindowResizeStart}
           onWindowContextMenu={onWindowContextMenu}
+          onContentMinSize={onContentMinSize}
         >
           <DesktopWindowScopeProvider windowId={window.id}>{renderWindowBody?.(window)}</DesktopWindowScopeProvider>
         </WindowSurface>
