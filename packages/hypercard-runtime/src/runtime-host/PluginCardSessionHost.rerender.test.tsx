@@ -21,11 +21,11 @@ vi.mock('../plugin-runtime/runtimeService', () => {
       };
     }
 
-    renderCard(_sessionId: string, _cardId: string, _cardState: unknown, _sessionState: unknown, globalState: unknown) {
-      const root = (globalState ?? {}) as Record<string, unknown>;
-      const domains = (root.domains ?? {}) as Record<string, unknown>;
-      const counter = (domains.counter ?? {}) as Record<string, unknown>;
-      const value = typeof counter.value === 'number' ? counter.value : 0;
+    renderCard(_sessionId: string, _cardId: string, state: unknown) {
+      const root = (state ?? {}) as Record<string, unknown>;
+      const inventory = (root.inventory ?? {}) as Record<string, unknown>;
+      const items = Array.isArray(inventory.items) ? inventory.items : [];
+      const value = items.length;
       return {
         kind: 'panel',
         children: [{ kind: 'text', text: `Count: ${value}` }],
@@ -63,9 +63,21 @@ const TEST_STACK: CardStackDefinition = {
   },
 };
 
-function counterReducer(state = { value: 0 }, action: { type: string; payload?: unknown }) {
-  if (action.type === 'counter/set') {
-    return { value: Number(action.payload ?? 0) };
+function createTestStack(
+  capabilities?: NonNullable<CardStackDefinition['plugin']>['capabilities'],
+): CardStackDefinition {
+  return {
+    ...TEST_STACK,
+    plugin: {
+      ...TEST_STACK.plugin!,
+      capabilities,
+    },
+  };
+}
+
+function inventoryReducer(state = { items: [] as Array<{ sku: string }> }, action: { type: string; payload?: unknown }) {
+  if (action.type === 'inventory/setItems' && Array.isArray(action.payload)) {
+    return { items: action.payload as Array<{ sku: string }> };
   }
   return state;
 }
@@ -102,8 +114,8 @@ async function waitForText(container: HTMLElement, text: string, timeoutMs = 300
 }
 
 describe('PluginCardSessionHost rerender invalidation', () => {
-  it('rerenders when only projected domain state changes', async () => {
-    const { createStore } = createAppStore({ counter: counterReducer });
+  async function renderAndUpdateCount(stack: CardStackDefinition) {
+    const { createStore } = createAppStore({ inventory: inventoryReducer });
     const store = createStore();
 
     const container = document.createElement('div');
@@ -116,7 +128,7 @@ describe('PluginCardSessionHost rerender invalidation', () => {
     await act(async () => {
       root.render(
         <Provider store={store}>
-          <PluginCardSessionHost windowId="window:runtime-rerender" sessionId="session-rerender" stack={TEST_STACK} />
+          <PluginCardSessionHost windowId="window:runtime-rerender" sessionId="session-rerender" stack={stack} />
         </Provider>,
       );
     });
@@ -124,9 +136,17 @@ describe('PluginCardSessionHost rerender invalidation', () => {
     await waitForText(container, 'Count: 0');
 
     await act(async () => {
-      store.dispatch({ type: 'counter/set', payload: 7 });
+      store.dispatch({ type: 'inventory/setItems', payload: [{ sku: 'A-1' }, { sku: 'A-2' }] });
     });
 
-    await waitForText(container, 'Count: 7');
+    await waitForText(container, 'Count: 2');
+  }
+
+  it('rerenders when only projected domain state changes and capabilities are omitted', async () => {
+    await renderAndUpdateCount(createTestStack());
+  });
+
+  it('rerenders when only projected domain state changes and capabilities.domain is all', async () => {
+    await renderAndUpdateCount(createTestStack({ domain: 'all' }));
   });
 });

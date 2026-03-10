@@ -1,11 +1,12 @@
 import { createSlice, nanoid, type PayloadAction } from '@reduxjs/toolkit';
-import type { RuntimeIntent } from '../../plugin-runtime/contracts';
+import type { RuntimeAction, RuntimeActionKind } from '../../plugin-runtime/contracts';
 import {
   authorizeDomainIntent,
   authorizeSystemIntent,
   resolveCapabilityPolicy,
   type CapabilityPolicy,
 } from './capabilityPolicy';
+import { getRuntimeActionDomain, getRuntimeActionKind, getRuntimeActionOperation } from '../../plugin-runtime/contracts';
 
 export type DispatchOutcome = 'applied' | 'denied' | 'ignored';
 
@@ -16,10 +17,8 @@ export interface RuntimeTimelineEntry {
   timestamp: string;
   sessionId: string;
   cardId: string;
-  scope: RuntimeIntent['scope'];
-  actionType?: string;
-  domain?: string;
-  command?: string;
+  kind: RuntimeActionKind;
+  actionType: string;
   payload?: unknown;
   outcome: DispatchOutcome;
   reason: string | null;
@@ -31,7 +30,7 @@ export interface DomainIntentEnvelope {
   sessionId: string;
   cardId: string;
   domain: string;
-  actionType: string;
+  type: string;
   payload?: unknown;
 }
 
@@ -40,7 +39,7 @@ export interface SystemIntentEnvelope {
   timestamp: string;
   sessionId: string;
   cardId: string;
-  command: string;
+  type: string;
   payload?: unknown;
 }
 
@@ -84,12 +83,12 @@ interface SetSessionStatusPayload {
   error?: string | null;
 }
 
-interface IngestIntentPayload {
+interface IngestActionPayload {
   id: string;
   timestamp: string;
   sessionId: string;
   cardId: string;
-  intent: RuntimeIntent;
+  action: RuntimeAction;
 }
 
 const MAX_TIMELINE_ENTRIES = 300;
@@ -129,12 +128,12 @@ function clearObject(target: Record<string, unknown>) {
   }
 }
 
-function applyStateAction(
+function applyLocalStateAction(
   target: Record<string, unknown>,
-  actionType: string,
+  operation: string,
   payload: unknown
 ): { outcome: DispatchOutcome; reason: string | null } {
-  if (actionType === 'patch') {
+  if (operation === 'patch') {
     if (!isRecord(payload)) {
       return { outcome: 'ignored', reason: 'patch_requires_object_payload' };
     }
@@ -143,7 +142,7 @@ function applyStateAction(
     return { outcome: 'applied', reason: null };
   }
 
-  if (actionType === 'set') {
+  if (operation === 'set') {
     if (!isRecord(payload) || typeof payload.path !== 'string') {
       return { outcome: 'ignored', reason: 'set_requires_{path,value}_payload' };
     }
@@ -152,44 +151,32 @@ function applyStateAction(
     return { outcome: 'applied', reason: null };
   }
 
-  if (actionType === 'reset') {
+  if (operation === 'reset') {
     clearObject(target);
     return { outcome: 'applied', reason: null };
   }
 
-  return { outcome: 'ignored', reason: `unsupported_local_action:${actionType}` };
+  return { outcome: 'ignored', reason: `unsupported_local_action:${operation}` };
 }
 
 function appendTimeline(
   state: PluginCardRuntimeState,
-  payload: IngestIntentPayload,
+  payload: IngestActionPayload,
+  kind: RuntimeActionKind,
   outcome: DispatchOutcome,
   reason: string | null
 ) {
-  const base: RuntimeTimelineEntry = {
+  state.timeline.push({
     id: payload.id,
     timestamp: payload.timestamp,
     sessionId: payload.sessionId,
     cardId: payload.cardId,
-    scope: payload.intent.scope,
-    payload: 'payload' in payload.intent ? payload.intent.payload : undefined,
+    kind,
+    actionType: payload.action.type,
+    payload: payload.action.payload,
     outcome,
     reason,
-  };
-
-  if (payload.intent.scope === 'card' || payload.intent.scope === 'session' || payload.intent.scope === 'domain') {
-    base.actionType = payload.intent.actionType;
-  }
-
-  if (payload.intent.scope === 'domain') {
-    base.domain = payload.intent.domain;
-  }
-
-  if (payload.intent.scope === 'system') {
-    base.command = payload.intent.command;
-  }
-
-  state.timeline.push(base);
+  });
 
   if (state.timeline.length > MAX_TIMELINE_ENTRIES) {
     state.timeline.splice(0, state.timeline.length - MAX_TIMELINE_ENTRIES);
@@ -232,43 +219,51 @@ const pluginCardRuntimeSlice = createSlice({
       session.error = action.payload.error ?? null;
     },
 
-    ingestRuntimeIntent: {
-      reducer(state, action: PayloadAction<IngestIntentPayload>) {
+    ingestRuntimeAction: {
+      reducer(state, action: PayloadAction<IngestActionPayload>) {
         const payload = action.payload;
         const session = state.sessions[payload.sessionId];
         if (!session) {
-          appendTimeline(state, payload, 'denied', `missing_session:${payload.sessionId}`);
+          appendTimeline(state, payload, 'unknown', 'denied', `missing_session:${payload.sessionId}`);
           return;
         }
 
-        if (payload.intent.scope === 'card') {
+        const kind = getRuntimeActionKind(payload.action.type);
+
+        if (kind === 'draft') {
           if (!session.cardState[payload.cardId]) {
             session.cardState[payload.cardId] = {};
           }
 
-          const result = applyStateAction(
+          const result = applyLocalStateAction(
             session.cardState[payload.cardId],
-            payload.intent.actionType,
-            payload.intent.payload
+            getRuntimeActionOperation(payload.action.type),
+            payload.action.payload,
           );
-          appendTimeline(state, payload, result.outcome, result.reason);
+          appendTimeline(state, payload, kind, result.outcome, result.reason);
           return;
         }
 
-        if (payload.intent.scope === 'session') {
-          const result = applyStateAction(
+        if (kind === 'filters') {
+          const result = applyLocalStateAction(
             session.sessionState,
-            payload.intent.actionType,
-            payload.intent.payload
+            getRuntimeActionOperation(payload.action.type),
+            payload.action.payload,
           );
-          appendTimeline(state, payload, result.outcome, result.reason);
+          appendTimeline(state, payload, kind, result.outcome, result.reason);
           return;
         }
 
-        if (payload.intent.scope === 'domain') {
-          const decision = authorizeDomainIntent(session.capabilities, payload.intent.domain);
+        if (kind === 'domain') {
+          const domain = getRuntimeActionDomain(payload.action.type);
+          if (!domain) {
+            appendTimeline(state, payload, kind, 'ignored', `missing_domain_prefix:${payload.action.type}`);
+            return;
+          }
+
+          const decision = authorizeDomainIntent(session.capabilities, domain);
           if (!decision.allowed) {
-            appendTimeline(state, payload, 'denied', decision.reason);
+            appendTimeline(state, payload, kind, 'denied', decision.reason);
             return;
           }
 
@@ -277,38 +272,42 @@ const pluginCardRuntimeSlice = createSlice({
             timestamp: payload.timestamp,
             sessionId: payload.sessionId,
             cardId: payload.cardId,
-            domain: payload.intent.domain,
-            actionType: payload.intent.actionType,
-            payload: payload.intent.payload,
+            domain,
+            type: payload.action.type,
+            payload: payload.action.payload,
           });
-
-          appendTimeline(state, payload, 'applied', null);
+          appendTimeline(state, payload, kind, 'applied', null);
           return;
         }
 
-        const decision = authorizeSystemIntent(session.capabilities, payload.intent.command);
-        if (!decision.allowed) {
-          appendTimeline(state, payload, 'denied', decision.reason);
+        if (kind === 'system') {
+          const decision = authorizeSystemIntent(session.capabilities, payload.action.type);
+          if (!decision.allowed) {
+            appendTimeline(state, payload, kind, 'denied', decision.reason);
+            return;
+          }
+
+          const queued: SystemIntentEnvelope = {
+            id: payload.id,
+            timestamp: payload.timestamp,
+            sessionId: payload.sessionId,
+            cardId: payload.cardId,
+            type: payload.action.type,
+            payload: payload.action.payload,
+          };
+
+          state.pendingSystemIntents.push(queued);
+          if (payload.action.type.startsWith('nav.')) {
+            state.pendingNavIntents.push(queued);
+          }
+
+          appendTimeline(state, payload, kind, 'applied', null);
           return;
         }
 
-        const systemIntent: SystemIntentEnvelope = {
-          id: payload.id,
-          timestamp: payload.timestamp,
-          sessionId: payload.sessionId,
-          cardId: payload.cardId,
-          command: payload.intent.command,
-          payload: payload.intent.payload,
-        };
-
-        state.pendingSystemIntents.push(systemIntent);
-        if (payload.intent.command.startsWith('nav.')) {
-          state.pendingNavIntents.push(systemIntent);
-        }
-
-        appendTimeline(state, payload, 'applied', null);
+        appendTimeline(state, payload, kind, 'ignored', `unsupported_action_type:${payload.action.type}`);
       },
-      prepare(payload: Omit<IngestIntentPayload, 'id' | 'timestamp'> & { timestamp?: string }) {
+      prepare(payload: Omit<IngestActionPayload, 'id' | 'timestamp'> & { timestamp?: string }) {
         return {
           payload: {
             ...payload,
@@ -360,7 +359,7 @@ export const {
   dequeuePendingDomainIntent,
   dequeuePendingNavIntent,
   dequeuePendingSystemIntent,
-  ingestRuntimeIntent,
+  ingestRuntimeAction,
   registerRuntimeSession,
   removeRuntimeSession,
   setRuntimeSessionStatus,

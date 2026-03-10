@@ -84,4 +84,26 @@ describe('artifactsSlice', () => {
     expect(state.byId['artifact-2']?.injectionError).toBe('syntax error');
     expect(state.byId['artifact-2']?.updatedAt).toBe(99);
   });
+
+  it('persists pack id alongside runtime card metadata', () => {
+    const state = reduce([
+      upsertArtifact({
+        id: 'artifact-pack',
+        title: 'Artifact Pack',
+        source: 'card',
+        runtimeCardId: 'runtime-pack',
+        runtimeCardCode: 'code-pack',
+        packId: 'kanban.v1',
+        updatedAt: 10,
+      }),
+      upsertArtifact({
+        id: 'artifact-pack',
+        source: 'card',
+        updatedAt: 20,
+      }),
+    ]);
+
+    expect(state.byId['artifact-pack']?.packId).toBe('kanban.v1');
+    expect(state.byId['artifact-pack']?.runtimeCardId).toBe('runtime-pack');
+  });
 });

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useGetOSDocsQuery } from '../../api/appsApi';
-import type { OSDocResult } from '../../domain/types';
+import { useDocsIndex, useDocsSearch } from '../../domain/docsHooks';
+import { type DocObjectSummary } from '../../domain/docsObjects';
 import { useDocBrowser } from './DocBrowserContext';
 import { createDocLinkHandlers } from './docLinkInteraction';
 
@@ -8,42 +8,38 @@ interface TopicBrowserScreenProps {
   initialTopic?: string;
 }
 
-function groupByModule(results: OSDocResult[]): Array<{ moduleId: string; docs: OSDocResult[] }> {
-  const groups = new Map<string, OSDocResult[]>();
+function groupByCollection(results: DocObjectSummary[]) {
+  const groups = new Map<string, DocObjectSummary[]>();
   for (const result of results) {
-    const existing = groups.get(result.module_id) ?? [];
+    const key = `${result.kind}:${result.owner}`;
+    const existing = groups.get(key) ?? [];
     existing.push(result);
-    groups.set(result.module_id, existing);
+    groups.set(key, existing);
   }
   return [...groups.entries()]
-    .map(([moduleId, docs]) => ({ moduleId, docs }))
-    .sort((a, b) => a.moduleId.localeCompare(b.moduleId));
+    .map(([key, docs]) => ({ key, docs }))
+    .sort((a, b) => a.key.localeCompare(b.key));
 }
 
 export function TopicBrowserScreen({ initialTopic }: TopicBrowserScreenProps) {
   const [selectedTopic, setSelectedTopic] = useState<string | undefined>(initialTopic);
+  const { summaries } = useDocsIndex();
+  const { results, status } = useDocsSearch({ topics: selectedTopic ? [selectedTopic] : undefined });
   const { openDoc, openDocNewWindow, showDocLinkMenu } = useDocBrowser();
 
-  // Fetch unfiltered for topic list
-  const { data: allDocs } = useGetOSDocsQuery({});
+  const topics = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const summary of summaries) {
+      for (const topic of summary.topics ?? []) {
+        counts.set(topic, (counts.get(topic) ?? 0) + 1);
+      }
+    }
+    return Array.from(counts.entries())
+      .map(([slug, count]) => ({ slug, count }))
+      .sort((a, b) => b.count - a.count || a.slug.localeCompare(b.slug));
+  }, [summaries]);
 
-  // Fetch filtered by selected topic
-  const topicQuery = useMemo(
-    () => (selectedTopic ? { topics: [selectedTopic] } : {}),
-    [selectedTopic],
-  );
-  const { data: topicDocs, isLoading: topicLoading } = useGetOSDocsQuery(topicQuery);
-
-  const topics = useMemo(
-    () =>
-      [...(allDocs?.facets?.topics ?? [])].sort((a, b) => b.count - a.count),
-    [allDocs],
-  );
-
-  const moduleGroups = useMemo(
-    () => groupByModule(topicDocs?.results ?? []),
-    [topicDocs],
-  );
+  const groups = useMemo(() => groupByCollection(results), [results]);
 
   return (
     <div data-part="doc-topic-browser">
@@ -71,45 +67,45 @@ export function TopicBrowserScreen({ initialTopic }: TopicBrowserScreenProps) {
           <div data-part="doc-topic-placeholder">
             Select a topic to browse related documentation.
           </div>
-        ) : topicLoading ? (
+        ) : status === 'loading' ? (
           <div data-part="doc-topic-placeholder">Loading&hellip;</div>
         ) : (
           <>
             <div data-part="doc-topic-detail-header">
               {selectedTopic}
               <span data-part="doc-topic-detail-count">
-                ({topicDocs?.total ?? 0} docs)
+                ({results.length} docs)
               </span>
             </div>
 
-            {moduleGroups.length === 0 ? (
+            {groups.length === 0 ? (
               <div data-part="doc-topic-placeholder">
                 No documentation tagged with this topic.
               </div>
             ) : (
-              moduleGroups.map((group) => (
-                <div key={group.moduleId} data-part="doc-topic-module-group">
+              groups.map((group) => (
+                <div key={group.key} data-part="doc-topic-module-group">
                   <div data-part="doc-topic-module-header">
-                    {group.moduleId.toUpperCase()}
+                    {group.key.toUpperCase()}
                     <span data-part="doc-topic-module-count"> ({group.docs.length})</span>
                   </div>
                   {group.docs.map((doc) => {
                     const handlers = createDocLinkHandlers(
-                      { moduleId: doc.module_id, slug: doc.slug },
+                      { path: doc.path },
                       openDoc,
                       openDocNewWindow,
                       showDocLinkMenu,
                     );
                     return (
                       <button
-                        key={doc.slug}
+                        key={doc.path}
                         type="button"
                         data-part="doc-topic-doc-row"
                         onClick={handlers.onClick}
                         onAuxClick={handlers.onAuxClick}
                         onContextMenu={handlers.onContextMenu}
                       >
-                        <span data-part="doc-topic-doc-type">{doc.doc_type}</span>
+                        <span data-part="doc-topic-doc-type">{doc.docType ?? 'reference'}</span>
                         <span data-part="doc-topic-doc-title">{doc.title}</span>
                         <span data-part="doc-topic-doc-arrow">{'\u203A'}</span>
                       </button>

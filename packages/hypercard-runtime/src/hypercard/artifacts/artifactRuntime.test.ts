@@ -46,36 +46,6 @@ describe('artifactRuntime', () => {
     expect(payload).toBeUndefined();
   });
 
-  it('defaults artifact-open card stack to inventory when stackId is not provided', () => {
-    const payload = buildArtifactOpenWindowPayload({
-      artifactId: 'cross-stack-check',
-      runtimeCardId: 'runtimeCrossStackCheck',
-      title: 'Cross Stack Check',
-    });
-
-    expect(payload?.content.card?.stackId).toBe('inventory');
-  });
-
-  it('extracts artifact upsert from direct hypercard widget ready events', () => {
-    const widget = extractArtifactUpsertFromSem('hypercard.widget.v1', {
-      title: 'Inventory Summary Report',
-      widgetType: 'report',
-      data: {
-        artifact: {
-          id: 'inventory-summary',
-          data: { totalUnits: 59 },
-        },
-      },
-    });
-    expect(widget).toEqual({
-      id: 'inventory-summary',
-      title: 'Inventory Summary Report',
-      template: 'report',
-      data: { totalUnits: 59 },
-      source: 'widget',
-    });
-  });
-
   it('extracts artifact upsert from hypercard.card.v2 with runtime card fields', () => {
     const card = extractArtifactUpsertFromSem('hypercard.card.v2', {
       title: 'Low Stock Drilldown',
@@ -85,9 +55,12 @@ describe('artifactRuntime', () => {
           id: 'low-stock-drilldown',
           data: { threshold: 5 },
         },
+        runtime: {
+          pack: 'kanban.v1',
+        },
         card: {
           id: 'lowStockDrilldown',
-          code: '({ ui }) => ({ render() { return ui.text(\"hi\"); } })',
+          code: '({ ui }) => ({ render() { return ui.text("hi"); } })',
         },
       },
     });
@@ -97,7 +70,8 @@ describe('artifactRuntime', () => {
       data: { threshold: 5 },
       source: 'card',
       runtimeCardId: 'lowStockDrilldown',
-      runtimeCardCode: '({ ui }) => ({ render() { return ui.text(\"hi\"); } })',
+      runtimeCardCode: '({ ui }) => ({ render() { return ui.text("hi"); } })',
+      packId: 'kanban.v1',
     });
   });
 
@@ -109,34 +83,10 @@ describe('artifactRuntime', () => {
           customKind: 'hypercard.card.v2',
           result: {
             title: 'Low Stock Drilldown',
-            template: 'reportViewer',
             data: {
               artifact: {
                 id: 'low-stock-drilldown',
                 data: { threshold: 5 },
-              },
-            },
-          },
-        },
-      },
-    });
-
-    expect(projected).toBeUndefined();
-  });
-
-  it('does not extract artifact from legacy timeline.upsert entity.props tool_result shape', () => {
-    const projected = extractArtifactUpsertFromSem('timeline.upsert', {
-      entity: {
-        kind: 'tool_result',
-        props: {
-          customKind: 'hypercard.widget.v1',
-          result: {
-            title: "Today's Sales Summary",
-            widgetType: 'report',
-            data: {
-              artifact: {
-                id: '"sales-summary-2026-02-20"',
-                data: { total_value: 0 },
               },
             },
           },
@@ -159,6 +109,9 @@ describe('artifactRuntime', () => {
                 id: 'low-stock-drilldown',
                 data: { threshold: 5 },
               },
+              runtime: {
+                pack: 'ui.card.v1',
+              },
               card: {
                 id: 'runtime-low-stock',
                 code: '({ ui }) => ({ render() { return ui.text("hi"); } })',
@@ -174,61 +127,25 @@ describe('artifactRuntime', () => {
       title: 'Low Stock Drilldown',
       source: 'card',
       runtimeCardId: 'runtime-low-stock',
+      packId: 'ui.card.v1',
     });
   });
 
-  it('extracts fallback artifact upsert from remapped hypercard timeline entity props', () => {
-    const upsert = extractArtifactUpsertFromTimelineEntity('hypercard_widget', {
-      artifactId: '"sales-summary-2026-02-20"',
-      title: "Today's Sales Summary",
-      resultRaw:
-        '{"title":"Today\\u0027s Sales Summary","widgetType":"report","data":{"artifact":{"id":"sales-summary-2026-02-20","data":{"total_transactions":0}}}}',
-    });
-
-    expect(upsert).toMatchObject({
-      id: 'sales-summary-2026-02-20',
-      title: "Today's Sales Summary",
-      source: 'widget',
-      data: { total_transactions: 0 },
-    });
-  });
-
-  it('extracts runtime card fields from hypercard_card rawData props', () => {
-    const upsert = extractArtifactUpsertFromTimelineEntity('hypercard_card', {
-      title: 'Low Stock Drilldown',
-      rawData: {
-        title: 'Low Stock Drilldown',
-        data: {
-          artifact: {
-            id: 'low-stock-drilldown',
-            data: { threshold: 5 },
-          },
-          card: {
-            id: 'runtime-low-stock',
-            code: '({ ui }) => ({ render() { return ui.text("hi"); } })',
-          },
-        },
-      },
-    });
-
-    expect(upsert).toMatchObject({
-      id: 'low-stock-drilldown',
-      source: 'card',
-      data: { threshold: 5 },
-      runtimeCardId: 'runtime-low-stock',
-      runtimeCardCode: '({ ui }) => ({ render() { return ui.text("hi"); } })',
-    });
-  });
-
-  it('extracts artifact from first-class hypercard kind in timeline entity path', () => {
-    const upsert = extractArtifactUpsertFromTimelineEntity('hypercard.widget.v1', {
+  it('extracts artifact from first-class hypercard card timeline entity props', () => {
+    const upsert = extractArtifactUpsertFromTimelineEntity('hypercard.card.v2', {
       result: {
         title: 'Inventory Snapshot',
-        widgetType: 'report',
         data: {
           artifact: {
             id: 'inventory-snapshot-1',
             data: { totalSkus: 12 },
+          },
+          runtime: {
+            pack: 'ui.card.v1',
+          },
+          card: {
+            id: 'runtimeInventorySnapshot',
+            code: '({ ui }) => ({ render() { return ui.text("snapshot"); } })',
           },
         },
       },
@@ -236,8 +153,10 @@ describe('artifactRuntime', () => {
 
     expect(upsert).toMatchObject({
       id: 'inventory-snapshot-1',
-      source: 'widget',
+      source: 'card',
       data: { totalSkus: 12 },
+      runtimeCardId: 'runtimeInventorySnapshot',
+      packId: 'ui.card.v1',
     });
   });
 

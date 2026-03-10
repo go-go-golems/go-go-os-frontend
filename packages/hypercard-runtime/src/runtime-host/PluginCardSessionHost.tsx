@@ -5,6 +5,7 @@ import { showToast } from '@hypercard/engine';
 import {
   registerRuntimeSession,
   removeRuntimeSession,
+  resolveCapabilityPolicy,
   selectRuntimeCardState,
   selectProjectedRuntimeDomains,
   selectRuntimeSession,
@@ -13,12 +14,11 @@ import {
 } from '../features/pluginCardRuntime';
 import { selectFocusedWindowId, selectSessionCurrentNav, selectSessionNavDepth } from '@hypercard/engine/desktop-core';
 import { markRuntimeCardInjectionResults } from '../hypercard/artifacts/artifactsSlice';
-import type { RuntimeIntent } from '../plugin-runtime/contracts';
-import { hasRuntimeCard, injectPendingCardsWithReport, onRegistryChange } from '../plugin-runtime/runtimeCardRegistry';
+import type { LoadedStackBundle, RuntimeAction } from '../plugin-runtime/contracts';
+import { getPendingRuntimeCards, hasRuntimeCard, injectPendingCardsWithReport, onRegistryChange } from '../plugin-runtime/runtimeCardRegistry';
 import { QuickJSCardRuntimeService } from '../plugin-runtime/runtimeService';
-import type { UINode } from '../plugin-runtime/uiTypes';
-import { dispatchRuntimeIntent } from './pluginIntentRouting';
-import { PluginCardRenderer } from './PluginCardRenderer';
+import { dispatchRuntimeAction } from './pluginIntentRouting';
+import { normalizeRuntimePackId, renderRuntimeTree, validateRuntimeTree } from '../runtime-packs';
 
 type StoreState = Record<string, unknown>;
 
@@ -30,7 +30,15 @@ function getPluginConfig(stack: CardStackDefinition) {
   return null;
 }
 
-function projectGlobalState(domains: Record<string, unknown>, opts: {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+function projectRuntimeState(domains: Record<string, unknown>, opts: {
   stackId: string;
   sessionId: string;
   cardId: string;
@@ -39,7 +47,28 @@ function projectGlobalState(domains: Record<string, unknown>, opts: {
   currentNavParam?: string;
   focusedWindowId: string | null;
   runtimeStatus: string;
+  sessionState: Record<string, unknown>;
+  cardState: Record<string, unknown>;
 }) {
+  const projectedDomains = { ...domains };
+  const inventory = isRecord(projectedDomains.inventory) ? projectedDomains.inventory : null;
+  const sales = isRecord(projectedDomains.sales) ? projectedDomains.sales : null;
+
+  if (inventory) {
+    projectedDomains.inventory = {
+      ...inventory,
+      items: asArray(inventory.items),
+      selectedSku: typeof opts.currentNavParam === 'string' ? opts.currentNavParam : undefined,
+    };
+  }
+
+  if (sales) {
+    projectedDomains.sales = {
+      ...sales,
+      log: asArray(sales.log),
+    };
+  }
+
   return {
     self: {
       stackId: opts.stackId,
@@ -47,19 +76,19 @@ function projectGlobalState(domains: Record<string, unknown>, opts: {
       cardId: opts.cardId,
       windowId: opts.windowId,
     },
-    domains,
     nav: {
       current: opts.cardId,
       param: opts.currentNavParam,
       depth: opts.navDepth,
       canBack: opts.navDepth > 1,
     },
-    system: {
+    ui: {
       focusedWindowId: opts.focusedWindowId,
-      runtimeHealth: {
-        status: opts.runtimeStatus,
-      },
+      runtimeStatus: opts.runtimeStatus,
     },
+    filters: opts.sessionState,
+    draft: opts.cardState,
+    ...projectedDomains,
   };
 }
 
@@ -91,12 +120,17 @@ export function PluginCardSessionHost({
   const runtimeSession = useSelector((state: StoreState) => selectRuntimeSession(state as any, sessionId));
   const sessionState = useSelector((state: StoreState) => selectRuntimeSessionState(state as any, sessionId));
   const cardState = useSelector((state: StoreState) => selectRuntimeCardState(state as any, sessionId, currentCardId));
+  const projectedDomainAccess = useMemo(
+    () => runtimeSession?.capabilities.domain ?? resolveCapabilityPolicy(pluginConfig?.capabilities).domain,
+    [pluginConfig, runtimeSession?.capabilities.domain],
+  );
   const projectedDomains = useSelector(
-    (state: StoreState) => selectProjectedRuntimeDomains(state as any),
+    (state: StoreState) => selectProjectedRuntimeDomains(state as any, projectedDomainAccess),
     shallowEqual,
   );
 
   const runtimeServiceRef = useRef<QuickJSCardRuntimeService | null>(null);
+  const loadedBundleRef = useRef<LoadedStackBundle | null>(null);
   const isPreview = mode === 'preview';
   if (!runtimeServiceRef.current) {
     runtimeServiceRef.current = new QuickJSCardRuntimeService();
@@ -144,6 +178,7 @@ export function PluginCardSessionHost({
         if (cancelled) {
           return;
         }
+        loadedBundleRef.current = bundle;
 
         dispatch(setRuntimeSessionStatus({ sessionId, status: 'ready' }));
 
@@ -167,10 +202,9 @@ export function PluginCardSessionHost({
         }
 
         if (bundle.initialSessionState && typeof bundle.initialSessionState === 'object') {
-          dispatchRuntimeIntent(
+          dispatchRuntimeAction(
             {
-              scope: 'session',
-              actionType: 'patch',
+              type: 'filters.patch',
               payload: bundle.initialSessionState,
             },
             {
@@ -186,10 +220,9 @@ export function PluginCardSessionHost({
         if (bundle.initialCardState && typeof bundle.initialCardState === 'object') {
           for (const [cardId, value] of Object.entries(bundle.initialCardState)) {
             if (typeof value === 'object' && value !== null) {
-              dispatchRuntimeIntent(
+              dispatchRuntimeAction(
                 {
-                  scope: 'card',
-                  actionType: 'patch',
+                  type: 'draft.patch',
                   payload: value,
                 },
                 {
@@ -209,6 +242,7 @@ export function PluginCardSessionHost({
         }
 
         const message = error instanceof Error ? error.message : String(error);
+        loadedBundleRef.current = null;
         dispatch(setRuntimeSessionStatus({ sessionId, status: 'error', error: message }));
       }
     }
@@ -256,13 +290,14 @@ export function PluginCardSessionHost({
     return () => {
       const runtimeService = runtimeServiceRef.current;
       runtimeService?.disposeSession(sessionId);
+      loadedBundleRef.current = null;
       dispatch(removeRuntimeSession({ sessionId }));
     };
   }, [dispatch, pluginConfig, sessionId]);
 
-  const projectGlobal = useCallback(
+  const projectState = useCallback(
     () =>
-      projectGlobalState(projectedDomains, {
+      projectRuntimeState(projectedDomains, {
         stackId: stack.id,
         sessionId,
         cardId: currentCardId,
@@ -271,6 +306,8 @@ export function PluginCardSessionHost({
         currentNavParam: currentNav?.param,
         focusedWindowId,
         runtimeStatus: runtimeSession?.status ?? 'missing',
+        sessionState,
+        cardState,
       }),
     [
       projectedDomains,
@@ -282,26 +319,26 @@ export function PluginCardSessionHost({
       currentNav?.param,
       focusedWindowId,
       runtimeSession?.status,
+      sessionState,
+      cardState,
     ]
   );
 
-  const renderOutcome = useMemo<{ tree: UINode | null; error: string | null }>(() => {
+  const renderOutcome = useMemo<{ tree: unknown | null; error: string | null }>(() => {
     if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready') {
       return { tree: null, error: null };
     }
 
-    const projectedGlobalState = projectGlobal();
+    const projectedState = projectState();
 
     try {
       return {
-        tree:
-          runtimeServiceRef.current?.renderCard(
-            sessionId,
-            currentCardId,
-            cardState,
-            sessionState,
-            projectedGlobalState,
-          ) ?? null,
+        tree: (() => {
+          const runtimeCard = getPendingRuntimeCards().find((card) => card.cardId === currentCardId);
+          const packId = normalizeRuntimePackId(runtimeCard?.packId ?? loadedBundleRef.current?.cardPacks?.[currentCardId]);
+          const rawTree = runtimeServiceRef.current?.renderCard(sessionId, currentCardId, projectedState) ?? null;
+          return rawTree === null ? null : validateRuntimeTree(packId, rawTree);
+        })(),
         error: null,
       };
     } catch (error) {
@@ -310,7 +347,7 @@ export function PluginCardSessionHost({
         error: error instanceof Error ? error.message : String(error),
       };
     }
-  }, [cardState, currentCardId, pluginConfig, projectGlobal, runtimeSession, sessionId, sessionState]);
+  }, [currentCardId, pluginConfig, projectState, runtimeSession, sessionId]);
 
   const tree = renderOutcome.tree;
   const renderError = renderOutcome.error;
@@ -336,25 +373,23 @@ export function PluginCardSessionHost({
         return;
       }
 
-      let intents: RuntimeIntent[];
+      let actions: RuntimeAction[];
       try {
-        const projectedGlobalState = projectGlobal();
-        intents = runtimeServiceRef.current?.eventCard(
+        const projectedState = projectState();
+        actions = runtimeServiceRef.current?.eventCard(
           sessionId,
           currentCardId,
           handler,
           args,
-          cardState,
-          sessionState,
-          projectedGlobalState
+          projectedState,
         ) ?? [];
       } catch (error) {
         dispatch(showToast(error instanceof Error ? error.message : String(error)));
         return;
       }
 
-      intents.forEach((intent) => {
-        dispatchRuntimeIntent(intent, {
+      actions.forEach((runtimeAction) => {
+        dispatchRuntimeAction(runtimeAction, {
           dispatch: (action) => dispatch(action as never),
           getState: () => store.getState(),
           sessionId,
@@ -364,14 +399,12 @@ export function PluginCardSessionHost({
       });
     },
     [
-      cardState,
       currentCardId,
       dispatch,
       pluginConfig,
-      projectGlobal,
+      projectState,
       runtimeSession,
       sessionId,
-      sessionState,
       windowId,
       store,
     ]
@@ -396,5 +429,8 @@ export function PluginCardSessionHost({
     return <div style={{ padding: 12 }}>No plugin output for card: {currentCardId}</div>;
   }
 
-  return <PluginCardRenderer tree={tree} onEvent={emitRuntimeEvent} />;
+  const runtimeCard = getPendingRuntimeCards().find((card) => card.cardId === currentCardId);
+  const packId = normalizeRuntimePackId(runtimeCard?.packId ?? loadedBundleRef.current?.cardPacks?.[currentCardId]);
+
+  return <>{renderRuntimeTree(packId, tree, emitRuntimeEvent)}</>;
 }

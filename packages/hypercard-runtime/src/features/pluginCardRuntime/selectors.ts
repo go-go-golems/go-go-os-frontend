@@ -1,12 +1,13 @@
+import type { CapabilitySet } from './capabilityPolicy';
 import type {
   PluginCardRuntimeState,
   PluginCardRuntimeStateSlice,
   PluginRuntimeSession,
 } from './pluginCardRuntimeSlice';
 
-const RUNTIME_GLOBAL_EXCLUDED_SLICES = new Set(['pluginCardRuntime', 'windowing', 'notifications', 'debug']);
 const EMPTY_RUNTIME_OBJECT = Object.freeze({}) as Record<string, unknown>;
-const projectedDomainsCache = new WeakMap<object, Record<string, unknown>>();
+const projectedDomainsCache = new WeakMap<object, Map<string, Record<string, unknown>>>();
+const ALL_PROJECTED_DOMAINS_CACHE_KEY = '__all__';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -43,22 +44,36 @@ export const selectPendingNavIntents = (state: PluginCardRuntimeStateSlice) =>
   state.pluginCardRuntime.pendingNavIntents;
 
 /**
- * Returns app/domain slices that should be exposed to plugin runtime as `globalState.domains`.
+ * Returns the app slices that the runtime host currently projects into VM-facing state.
  * The result is intended to be consumed with `useSelector(..., shallowEqual)` so callers
- * rerender only when domain slice references change.
+ * rerender only when relevant slice references change.
  */
-export const selectProjectedRuntimeDomains = (state: unknown): Record<string, unknown> => {
+export const selectProjectedRuntimeDomains = (
+  state: unknown,
+  allowedSlices: CapabilitySet = [],
+): Record<string, unknown> => {
   if (!isRecord(state)) {
     return EMPTY_RUNTIME_OBJECT;
   }
 
-  const cached = projectedDomainsCache.get(state);
+  if (Array.isArray(allowedSlices) && allowedSlices.length === 0) {
+    return EMPTY_RUNTIME_OBJECT;
+  }
+
+  const cacheKey = allowedSlices === 'all' ? ALL_PROJECTED_DOMAINS_CACHE_KEY : allowedSlices.join('\u0000');
+  const cachedByState = projectedDomainsCache.get(state);
+  const cached = cachedByState?.get(cacheKey);
   if (cached) {
     return cached;
   }
+
   const projected = Object.fromEntries(
-    Object.entries(state).filter(([key]) => !RUNTIME_GLOBAL_EXCLUDED_SLICES.has(key)),
+    (allowedSlices === 'all' ? Object.keys(state) : allowedSlices)
+      .filter((key) => isRecord(state[key]))
+      .map((key) => [key, state[key]]),
   );
-  projectedDomainsCache.set(state, projected);
+  const nextCache = cachedByState ?? new Map<string, Record<string, unknown>>();
+  nextCache.set(cacheKey, projected);
+  projectedDomainsCache.set(state, nextCache);
   return projected;
 };

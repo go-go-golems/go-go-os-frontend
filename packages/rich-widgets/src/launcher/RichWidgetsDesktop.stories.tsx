@@ -25,6 +25,7 @@ import { YouTubeRetro } from '../youtube-retro/YouTubeRetro';
 import { ChatBrowser } from '../chat-browser/ChatBrowser';
 import { SystemModeler } from '../system-modeler/SystemModeler';
 import { ControlRoom } from '../control-room/ControlRoom';
+import { KANBAN_EXAMPLE_BOARDS } from '../kanban/exampleBoards';
 import {
   SeededStoreProvider,
   composeSeedStores,
@@ -49,6 +50,14 @@ const WIDGETS: WidgetDef[] = [
   { id: 'chart-view', name: 'Chart View', icon: '\uD83D\uDCC8', w: 800, h: 560, render: () => <ChartView /> },
   { id: 'mac-write', name: 'MacWrite', icon: '\u270D\uFE0F', w: 800, h: 620, render: () => <MacWrite /> },
   { id: 'kanban-board', name: 'Kanban Board', icon: '\uD83D\uDCCB', w: 960, h: 640, render: () => <KanbanBoard /> },
+  ...KANBAN_EXAMPLE_BOARDS.map((board) => ({
+    id: board.id,
+    name: board.name,
+    icon: board.icon,
+    w: 960,
+    h: 640,
+    render: () => <KanbanBoard {...board.props} />,
+  })),
   { id: 'mac-repl', name: 'MacRepl', icon: '\uD83D\uDCBB', w: 720, h: 480, render: () => <MacRepl /> },
   { id: 'node-editor', name: 'Node Editor', icon: '\uD83D\uDD17', w: 900, h: 600, render: () => <NodeEditor /> },
   { id: 'oscilloscope', name: 'Oscilloscope', icon: '\uD83D\uDCDF', w: 800, h: 560, render: () => <Oscilloscope /> },

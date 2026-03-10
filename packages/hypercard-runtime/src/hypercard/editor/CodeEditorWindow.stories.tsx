@@ -40,8 +40,8 @@ export default meta;
 type Story = StoryObj<typeof Wrapper>;
 
 const SAMPLE_CODE = `({ ui }) => ({
-  render({ globalState }) {
-    const items = globalState?.domains?.inventory?.items ?? [];
+  render({ state }) {
+    const items = state?.inventory?.items ?? [];
     return ui.panel([
       ui.text("Inventory Browser"),
       ui.table(

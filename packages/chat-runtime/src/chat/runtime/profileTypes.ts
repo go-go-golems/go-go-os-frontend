@@ -3,8 +3,14 @@ export interface ChatProfileSelection {
   registry?: string;
 }
 
+export type ChatProfilePolicy =
+  | { kind: 'none' }
+  | { kind: 'fixed'; profile: string }
+  | { kind: 'selectable'; scopeKey?: string };
+
 export interface ChatProfileListItem {
   slug: string;
+  registry?: string;
   display_name?: string;
   description?: string;
   default_prompt?: string;
@@ -23,11 +29,6 @@ export interface ChatProfileDocument {
   metadata?: Record<string, unknown>;
   extensions?: Record<string, unknown>;
   is_default: boolean;
-}
-
-export interface ChatCurrentProfilePayload {
-  slug: string;
-  profile?: string;
 }
 
 export interface ChatMiddlewareSchemaDocument {

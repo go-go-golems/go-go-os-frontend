@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { describe, expect, it } from 'vitest';
 import {
-  ingestRuntimeIntent,
+  ingestRuntimeAction,
   pluginCardRuntimeReducer,
   registerRuntimeSession,
   removeRuntimeSession,
@@ -16,7 +16,7 @@ function createStore() {
 }
 
 describe('pluginCardRuntime reducer', () => {
-  it('tracks applied/denied/ignored outcomes and queues routed intents', () => {
+  it('tracks applied/denied/ignored outcomes and queues routed actions', () => {
     const store = createStore();
 
     store.dispatch(
@@ -28,81 +28,73 @@ describe('pluginCardRuntime reducer', () => {
           domain: ['inventory'],
           system: ['nav.go'],
         },
-      })
+      }),
     );
 
     store.dispatch(
-      ingestRuntimeIntent({
+      ingestRuntimeAction({
         sessionId: 'session-1',
         cardId: 'lowStock',
-        intent: {
-          scope: 'card',
-          actionType: 'patch',
+        action: {
+          type: 'draft.patch',
           payload: { count: 2 },
         },
-      })
+      }),
     );
 
     store.dispatch(
-      ingestRuntimeIntent({
+      ingestRuntimeAction({
         sessionId: 'session-1',
         cardId: 'lowStock',
-        intent: {
-          scope: 'card',
-          actionType: 'unknown-op',
+        action: {
+          type: 'draft.unknown-op',
           payload: {},
         },
-      })
+      }),
     );
 
     store.dispatch(
-      ingestRuntimeIntent({
+      ingestRuntimeAction({
         sessionId: 'session-1',
         cardId: 'lowStock',
-        intent: {
-          scope: 'domain',
-          domain: 'billing',
-          actionType: 'charge',
+        action: {
+          type: 'billing/charge',
           payload: { id: 'ch_1' },
         },
-      })
+      }),
     );
 
     store.dispatch(
-      ingestRuntimeIntent({
+      ingestRuntimeAction({
         sessionId: 'session-1',
         cardId: 'lowStock',
-        intent: {
-          scope: 'domain',
-          domain: 'inventory',
-          actionType: 'reserve-item',
+        action: {
+          type: 'inventory/reserve-item',
           payload: { sku: 'A-1' },
         },
-      })
+      }),
     );
 
     store.dispatch(
-      ingestRuntimeIntent({
+      ingestRuntimeAction({
         sessionId: 'session-1',
         cardId: 'lowStock',
-        intent: {
-          scope: 'system',
-          command: 'notify',
+        action: {
+          type: 'notify.show',
           payload: { message: 'reserved' },
         },
-      })
+      }),
     );
 
     store.dispatch(
-      ingestRuntimeIntent({
+      ingestRuntimeAction({
         sessionId: 'session-1',
         cardId: 'lowStock',
-        intent: {
-          scope: 'system',
-          command: 'nav.go',
+        action: {
+          type: 'nav.go',
           payload: { cardId: 'detail' },
         },
-      })
+      }),
     );
 
     const state = store.getState().pluginCardRuntime;
@@ -113,26 +105,25 @@ describe('pluginCardRuntime reducer', () => {
     expect(state.pendingNavIntents).toHaveLength(1);
 
     const outcomes = state.timeline.map((entry) => ({
-      scope: entry.scope,
+      kind: entry.kind,
       actionType: entry.actionType,
-      command: entry.command,
       outcome: entry.outcome,
       reason: entry.reason,
     }));
 
     expect(outcomes).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ scope: 'card', actionType: 'patch', outcome: 'applied' }),
-        expect.objectContaining({ scope: 'card', actionType: 'unknown-op', outcome: 'ignored' }),
-        expect.objectContaining({ scope: 'domain', actionType: 'charge', outcome: 'denied' }),
-        expect.objectContaining({ scope: 'domain', actionType: 'reserve-item', outcome: 'applied' }),
-        expect.objectContaining({ scope: 'system', command: 'notify', outcome: 'denied' }),
-        expect.objectContaining({ scope: 'system', command: 'nav.go', outcome: 'applied' }),
-      ])
+        expect.objectContaining({ kind: 'draft', actionType: 'draft.patch', outcome: 'applied' }),
+        expect.objectContaining({ kind: 'draft', actionType: 'draft.unknown-op', outcome: 'ignored' }),
+        expect.objectContaining({ kind: 'domain', actionType: 'billing/charge', outcome: 'denied' }),
+        expect.objectContaining({ kind: 'domain', actionType: 'inventory/reserve-item', outcome: 'applied' }),
+        expect.objectContaining({ kind: 'system', actionType: 'notify.show', outcome: 'denied' }),
+        expect.objectContaining({ kind: 'system', actionType: 'nav.go', outcome: 'applied' }),
+      ]),
     );
   });
 
-  it('cleans up session-owned pending intents on session removal', () => {
+  it('cleans up session-owned pending actions on session removal', () => {
     const store = createStore();
 
     store.dispatch(
@@ -143,31 +134,28 @@ describe('pluginCardRuntime reducer', () => {
           domain: 'all',
           system: 'all',
         },
-      })
+      }),
     );
 
     store.dispatch(
-      ingestRuntimeIntent({
+      ingestRuntimeAction({
         sessionId: 'session-cleanup',
         cardId: 'home',
-        intent: {
-          scope: 'domain',
-          domain: 'inventory',
-          actionType: 'reserve-item',
+        action: {
+          type: 'inventory/reserve-item',
         },
-      })
+      }),
     );
 
     store.dispatch(
-      ingestRuntimeIntent({
+      ingestRuntimeAction({
         sessionId: 'session-cleanup',
         cardId: 'home',
-        intent: {
-          scope: 'system',
-          command: 'nav.go',
+        action: {
+          type: 'nav.go',
           payload: { cardId: 'detail' },
         },
-      })
+      }),
     );
 
     let state = store.getState().pluginCardRuntime;
@@ -183,7 +171,7 @@ describe('pluginCardRuntime reducer', () => {
     expect(state.pendingNavIntents.find((intent) => intent.sessionId === 'session-cleanup')).toBeUndefined();
   });
 
-  it('routes nav.* commands to nav queue while keeping all allowed system intents in system queue', () => {
+  it('routes nav.* actions to nav queue while keeping all allowed system actions in system queue', () => {
     const store = createStore();
 
     store.dispatch(
@@ -193,53 +181,48 @@ describe('pluginCardRuntime reducer', () => {
         capabilities: {
           system: ['nav.go', 'window.close'],
         },
-      })
+      }),
     );
 
     store.dispatch(
-      ingestRuntimeIntent({
+      ingestRuntimeAction({
         sessionId: 'session-nav',
         cardId: 'home',
-        intent: {
-          scope: 'system',
-          command: 'nav.go',
+        action: {
+          type: 'nav.go',
           payload: { cardId: 'detail' },
         },
-      })
+      }),
     );
 
     store.dispatch(
-      ingestRuntimeIntent({
+      ingestRuntimeAction({
         sessionId: 'session-nav',
         cardId: 'home',
-        intent: {
-          scope: 'system',
-          command: 'window.close',
+        action: {
+          type: 'window.close',
           payload: { windowId: 'w1' },
         },
-      })
+      }),
     );
 
     store.dispatch(
-      ingestRuntimeIntent({
+      ingestRuntimeAction({
         sessionId: 'session-nav',
         cardId: 'home',
-        intent: {
-          scope: 'system',
-          command: 'nav.back',
+        action: {
+          type: 'nav.back',
           payload: {},
         },
-      })
+      }),
     );
 
     const state = store.getState().pluginCardRuntime;
 
-    expect(state.pendingSystemIntents.map((intent) => intent.command)).toEqual(['nav.go', 'window.close']);
-    expect(state.pendingNavIntents.map((intent) => intent.command)).toEqual(['nav.go']);
+    expect(state.pendingSystemIntents.map((intent) => intent.type)).toEqual(['nav.go', 'window.close']);
+    expect(state.pendingNavIntents.map((intent) => intent.type)).toEqual(['nav.go']);
 
-    const deniedNavBack = state.timeline.find(
-      (entry) => entry.scope === 'system' && entry.command === 'nav.back'
-    );
+    const deniedNavBack = state.timeline.find((entry) => entry.actionType === 'nav.back');
     expect(deniedNavBack?.outcome).toBe('denied');
     expect(deniedNavBack?.reason).toContain('nav.back');
   });

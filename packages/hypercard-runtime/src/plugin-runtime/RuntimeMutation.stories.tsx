@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Btn } from '@hypercard/engine';
 import { PluginCardRenderer } from '../runtime-host/PluginCardRenderer';
-import type { RuntimeIntent } from './contracts';
+import type { RuntimeAction } from './contracts';
 import DYNAMIC_CARD from './fixtures/dynamic-card.vm.js?raw';
 import INVENTORY_STACK from './fixtures/inventory-stack.vm.js?raw';
 import PATCHED_LOW_STOCK_HANDLER from './fixtures/patched-low-stock-handler.vm.js?raw';
@@ -29,31 +29,31 @@ function RuntimeMutationDemo() {
   const [activeCardId, setActiveCardId] = useState('lowStock');
   const [lowStockLimit, setLowStockLimit] = useState(5);
   const [tree, setTree] = useState<UINode | null>(null);
-  const [lastIntents, setLastIntents] = useState<RuntimeIntent[]>([]);
+  const [lastActions, setLastActions] = useState<RuntimeAction[]>([]);
 
-  const cardStateFor = useCallback(
+  const stateFor = useCallback(
     (cardId: string) => {
-      if (cardId === 'lowStock') {
-        return { limit: lowStockLimit };
-      }
+      const draft =
+        cardId === 'lowStock'
+          ? { limit: lowStockLimit }
+          : cardId === 'onDemand'
+            ? { name: 'Add Deal' }
+            : {};
 
-      if (cardId === 'onDemand') {
-        return { name: 'Add Deal' };
-      }
-
-      return {};
+      return {
+        filters: { filter: 'all' },
+        draft,
+      };
     },
     [lowStockLimit]
   );
 
-  const sessionState = useMemo(() => ({ filter: 'all' }), []);
-
   const renderCard = useCallback(
     (cardId: string) => {
-      const nextTree = runtime.renderCard(SESSION_ID, cardId, cardStateFor(cardId), sessionState, {});
+      const nextTree = runtime.renderCard(SESSION_ID, cardId, stateFor(cardId));
       setTree(nextTree);
     },
-    [cardStateFor, runtime, sessionState]
+    [runtime, stateFor]
   );
 
   useEffect(() => {
@@ -121,24 +121,16 @@ function RuntimeMutationDemo() {
   const onEvent = useCallback(
     (handler: string, args?: unknown) => {
       run('eventCard', () => {
-        const intents = runtime.eventCard(
-          SESSION_ID,
-          activeCardId,
-          handler,
-          args,
-          cardStateFor(activeCardId),
-          sessionState,
-          {}
-        );
-        setLastIntents(intents);
+        const actions = runtime.eventCard(SESSION_ID, activeCardId, handler, args, stateFor(activeCardId));
+        setLastActions(actions);
 
-        const hasBack = intents.some((intent) => intent.scope === 'system' && intent.command === 'nav.back');
+        const hasBack = actions.some((action) => action.type === 'nav.back');
         if (hasBack) {
           setActiveCardId('lowStock');
         }
       });
     },
-    [activeCardId, cardStateFor, run, runtime, sessionState]
+    [activeCardId, run, runtime, stateFor]
   );
 
   if (status === 'loading') {
@@ -220,7 +212,7 @@ function RuntimeMutationDemo() {
         )}
 
         <div style={{ fontSize: 12, whiteSpace: 'pre-wrap' }}>
-          Last intents: {lastIntents.length === 0 ? '[]' : JSON.stringify(lastIntents, null, 2)}
+          Last actions: {lastActions.length === 0 ? '[]' : JSON.stringify(lastActions, null, 2)}
         </div>
       </div>
 

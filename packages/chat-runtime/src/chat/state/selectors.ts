@@ -257,6 +257,7 @@ export function selectCurrentProfileSelection(
         registry: scoped.registry ?? undefined,
       };
     }
+    return EMPTY_PROFILE_SELECTION;
   }
   const profile = profiles.selectedProfile ?? undefined;
   const registry = profiles.selectedRegistry ?? undefined;

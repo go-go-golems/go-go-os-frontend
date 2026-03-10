@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { chatSessionSlice, createChatError } from '../state/chatSessionSlice';
 import {
@@ -10,6 +10,7 @@ import {
 import { conversationManager } from './conversationManager';
 import { ChatHttpError } from './http';
 import { getDebugLogger } from '../debug/debugChannels';
+import type { ChatProfilePolicy } from './profileTypes';
 
 type ConversationStoreState = ChatStateSlice & Record<string, unknown>;
 
@@ -22,7 +23,7 @@ export interface UseConversationResult {
 interface ConversationEffectSnapshot {
   convId: string;
   basePrefix: string;
-  scopeKey: string;
+  profilePolicy: string;
   profile: string;
   registry: string;
 }
@@ -43,14 +44,24 @@ function normalizeBasePrefix(value: string | undefined): string {
 function buildEffectSnapshot(
   convId: string,
   basePrefix: string,
-  scopeKey: string | undefined,
+  profilePolicy: ChatProfilePolicy | undefined,
   profile: string | undefined,
   registry: string | undefined
 ): ConversationEffectSnapshot {
+  const policyKey = (() => {
+    if (!profilePolicy) return 'none';
+    if (profilePolicy.kind === 'fixed') {
+      return `fixed:${normalizeSnapshotValue(profilePolicy.profile)}`;
+    }
+    if (profilePolicy.kind === 'selectable') {
+      return `selectable:${normalizeSnapshotValue(profilePolicy.scopeKey)}`;
+    }
+    return 'none';
+  })();
   return {
     convId: normalizeSnapshotValue(convId),
     basePrefix: normalizeSnapshotValue(basePrefix),
-    scopeKey: normalizeSnapshotValue(scopeKey),
+    profilePolicy: policyKey,
     profile: normalizeSnapshotValue(profile),
     registry: normalizeSnapshotValue(registry),
   };
@@ -63,13 +74,36 @@ function diffEffectSnapshot(
   const changed: string[] = [];
   if (previous.convId !== current.convId) changed.push('convId');
   if (previous.basePrefix !== current.basePrefix) changed.push('basePrefix');
-  if (previous.scopeKey !== current.scopeKey) changed.push('scopeKey');
+  if (previous.profilePolicy !== current.profilePolicy) changed.push('profilePolicy');
   if (previous.profile !== current.profile) changed.push('profile');
   if (previous.registry !== current.registry) changed.push('registry');
   return changed;
 }
 
-export function useConversation(convId: string, basePrefix = '', scopeKey?: string): UseConversationResult {
+function resolveEffectiveProfileSelection(
+  policy: ChatProfilePolicy | undefined,
+  selected: { profile?: string; registry?: string }
+): { profile?: string; registry?: string } | undefined {
+  if (!policy || policy.kind === 'none') {
+    return undefined;
+  }
+  if (policy.kind === 'fixed') {
+    const fixed = normalizeSnapshotValue(policy.profile);
+    const registry = normalizeSnapshotValue(selected.registry) || undefined;
+    return fixed ? { profile: fixed, registry } : undefined;
+  }
+  const selectedProfile = normalizeSnapshotValue(selected.profile);
+  const selectedRegistry = normalizeSnapshotValue(selected.registry) || undefined;
+  if (!selectedProfile && !selectedRegistry) {
+    return undefined;
+  }
+  return {
+    profile: selectedProfile || undefined,
+    registry: selectedRegistry,
+  };
+}
+
+export function useConversation(convId: string, basePrefix = '', profilePolicy?: ChatProfilePolicy): UseConversationResult {
   const dispatch = useDispatch();
   const dispatchRef = useRef(dispatch);
   useEffect(() => {
@@ -78,7 +112,20 @@ export function useConversation(convId: string, basePrefix = '', scopeKey?: stri
 
   const normalizedConvId = normalizeSnapshotValue(convId);
   const normalizedBasePrefix = normalizeBasePrefix(basePrefix);
-  const normalizedScopeKey = normalizeSnapshotValue(scopeKey) || undefined;
+  const normalizedProfilePolicy = useMemo<ChatProfilePolicy | undefined>(() => {
+    if (!profilePolicy || profilePolicy.kind === 'none') {
+      return { kind: 'none' };
+    }
+    if (profilePolicy.kind === 'fixed') {
+      const profile = normalizeSnapshotValue(profilePolicy.profile);
+      return profile ? { kind: 'fixed', profile } : { kind: 'none' };
+    }
+    const scopeKey = normalizeSnapshotValue(profilePolicy.scopeKey) || undefined;
+    return { kind: 'selectable', scopeKey };
+  }, [profilePolicy?.kind, (profilePolicy as { profile?: string } | undefined)?.profile, (profilePolicy as { scopeKey?: string } | undefined)?.scopeKey]);
+  const normalizedScopeKey = normalizedProfilePolicy?.kind === 'selectable'
+    ? normalizeSnapshotValue(normalizedProfilePolicy.scopeKey) || undefined
+    : undefined;
 
   const connectionStatus = useSelector((state: ConversationStoreState) =>
     selectConnectionStatus(state, normalizedConvId)
@@ -89,8 +136,12 @@ export function useConversation(convId: string, basePrefix = '', scopeKey?: stri
   const profileSelection = useSelector((state: ConversationStoreState) =>
     selectCurrentProfileSelection(state, normalizedScopeKey)
   , shallowEqual);
-  const selectedProfile = normalizeSnapshotValue(profileSelection.profile) || undefined;
-  const selectedRegistry = normalizeSnapshotValue(profileSelection.registry) || undefined;
+  const effectiveProfileSelection = useMemo(
+    () => resolveEffectiveProfileSelection(normalizedProfilePolicy, profileSelection),
+    [normalizedProfilePolicy, profileSelection],
+  );
+  const selectedProfile = normalizeSnapshotValue(effectiveProfileSelection?.profile) || undefined;
+  const selectedRegistry = normalizeSnapshotValue(effectiveProfileSelection?.registry) || undefined;
   const lastEffectSnapshotRef = useRef<ConversationEffectSnapshot | null>(null);
   const lastEffectDispatchRef = useRef<typeof dispatch | null>(null);
   const effectRunIdRef = useRef(0);
@@ -99,9 +150,9 @@ export function useConversation(convId: string, basePrefix = '', scopeKey?: stri
     const snapshot = buildEffectSnapshot(
       normalizedConvId,
       normalizedBasePrefix,
-      normalizedScopeKey,
+      normalizedProfilePolicy,
       selectedProfile,
-      selectedRegistry
+      selectedRegistry,
     );
     const previousSnapshot = lastEffectSnapshotRef.current;
     const changedKeys = previousSnapshot ? diffEffectSnapshot(previousSnapshot, snapshot) : ['mount'];
@@ -121,10 +172,7 @@ export function useConversation(convId: string, basePrefix = '', scopeKey?: stri
       .connect({
         convId: normalizedConvId,
         basePrefix: normalizedBasePrefix,
-        profileSelection: {
-          profile: selectedProfile,
-          registry: selectedRegistry,
-        },
+        profileSelection: effectiveProfileSelection,
         dispatch: (action: unknown) => dispatchRef.current(action as never),
       })
       .then(() => {
@@ -152,16 +200,13 @@ export function useConversation(convId: string, basePrefix = '', scopeKey?: stri
       disposed = true;
       conversationManager.disconnect(normalizedConvId);
     };
-  }, [normalizedBasePrefix, normalizedConvId, normalizedScopeKey, selectedProfile, selectedRegistry]);
+  }, [effectiveProfileSelection, normalizedBasePrefix, normalizedConvId, normalizedProfilePolicy, selectedProfile, selectedRegistry]);
 
   const send = useCallback(
     async (prompt: string) => {
       sendLog('send:start conv=%s len=%d', normalizedConvId, prompt.length);
       try {
-        await conversationManager.send(prompt, normalizedConvId, normalizedBasePrefix, {
-          profile: selectedProfile,
-          registry: selectedRegistry,
-        });
+        await conversationManager.send(prompt, normalizedConvId, normalizedBasePrefix, effectiveProfileSelection);
         sendLog('send:ok conv=%s', normalizedConvId);
       } catch (error) {
         sendLog('send:error conv=%s error=%o', normalizedConvId, error);
@@ -192,7 +237,7 @@ export function useConversation(convId: string, basePrefix = '', scopeKey?: stri
         throw error;
       }
     },
-    [normalizedBasePrefix, normalizedConvId, selectedProfile, selectedRegistry]
+    [effectiveProfileSelection, normalizedBasePrefix, normalizedConvId]
   );
 
   return {

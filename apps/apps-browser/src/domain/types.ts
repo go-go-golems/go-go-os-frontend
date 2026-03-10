@@ -135,3 +135,15 @@ export interface OSDocsQuery {
   doc_type?: string[];
   module?: string[];
 }
+
+export type {
+  DocObject,
+  DocObjectKind,
+  DocObjectPath,
+  DocObjectSummary,
+  DocsMount,
+  DocsMountPath,
+  DocsResolveMatch,
+  DocsSearchQuery,
+  DocsRootPath,
+} from './docsObjects';

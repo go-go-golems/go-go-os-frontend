@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { buildDocObjectPath, buildDocsMountPath } from '../../domain/docsObjects';
 import { resolveInitialDocBrowserScreen } from './DocBrowserWindow';
 
 describe('resolveInitialDocBrowserScreen', () => {
   it('prefers explicit screen when provided', () => {
     const screen = resolveInitialDocBrowserScreen({
       screen: 'search',
-      initialModuleId: 'inventory',
-      initialSlug: 'overview',
+      initialPath: buildDocObjectPath('module', 'inventory', 'overview'),
     });
 
     expect(screen).toBe('search');
@@ -14,19 +14,18 @@ describe('resolveInitialDocBrowserScreen', () => {
 
   it('uses reader when module and slug are provided', () => {
     const screen = resolveInitialDocBrowserScreen({
-      initialModuleId: 'inventory',
-      initialSlug: 'overview',
+      initialPath: buildDocObjectPath('module', 'inventory', 'overview'),
     });
 
     expect(screen).toBe('reader');
   });
 
-  it('uses module-docs when only module is provided', () => {
+  it('uses collection when only mount path is provided', () => {
     const screen = resolveInitialDocBrowserScreen({
-      initialModuleId: 'inventory',
+      initialMountPath: buildDocsMountPath('module', 'inventory'),
     });
 
-    expect(screen).toBe('module-docs');
+    expect(screen).toBe('collection');
   });
 
   it('falls back to home when no params are provided', () => {

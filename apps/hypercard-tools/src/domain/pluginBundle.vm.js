@@ -80,13 +80,20 @@ defineStackBundle(({ ui }) => {
     }
   }
 
-  function navState(globalState) {
-    return asRecord(asRecord(globalState).nav);
+  function navState(state) {
+    return asRecord(asRecord(state).nav);
   }
 
-  function appDomainState(globalState) {
-    const domains = asRecord(asRecord(globalState).domains);
-    return asRecord(domains.app_hypercard_tools);
+  function filtersState(state) {
+    return asRecord(asRecord(state).filters);
+  }
+
+  function draftState(state) {
+    return asRecord(asRecord(state).draft);
+  }
+
+  function appDomainState(state) {
+    return asRecord(asRecord(state).app_hypercard_tools);
   }
 
   function readInputValue(args) {
@@ -95,19 +102,51 @@ defineStackBundle(({ ui }) => {
 
   function goTo(context, cardId, param) {
     const payload = param ? { cardId, param: toText(param) } : { cardId };
-    context.dispatchSystemCommand('nav.go', payload);
+    context.dispatch({ type: 'nav.go', payload });
   }
 
   function goHome(context) {
-    context.dispatchSystemCommand('nav.go', { cardId: 'home' });
+    context.dispatch({ type: 'nav.go', payload: { cardId: 'home' } });
   }
 
   function back(context) {
-    context.dispatchSystemCommand('nav.back');
+    context.dispatch({ type: 'nav.back' });
   }
 
-  function notify(context, message) {
-    context.dispatchSystemCommand('notify', { message: toText(message) });
+  function showNotice(context, message) {
+    context.dispatch({ type: 'notify.show', payload: { message: toText(message) } });
+  }
+
+  function closeRuntimeWindow(context) {
+    context.dispatch({ type: 'window.close' });
+  }
+
+  function patchFilters(context, payload) {
+    context.dispatch({ type: 'filters.patch', payload });
+  }
+
+  function setFilters(context, path, value) {
+    context.dispatch({ type: 'filters.set', payload: { path, value } });
+  }
+
+  function resetFilters(context) {
+    context.dispatch({ type: 'filters.reset' });
+  }
+
+  function patchDraft(context, payload) {
+    context.dispatch({ type: 'draft.patch', payload });
+  }
+
+  function setDraft(context, path, value) {
+    context.dispatch({ type: 'draft.set', payload: { path, value } });
+  }
+
+  function resetDraft(context) {
+    context.dispatch({ type: 'draft.reset' });
+  }
+
+  function dispatchToolsDomain(context, actionType, payload) {
+    context.dispatch({ type: 'app_hypercard_tools/' + actionType, payload });
   }
 
   function isVisibleWithFilter(card, filterText) {
@@ -210,8 +249,8 @@ defineStackBundle(({ ui }) => {
     },
     cards: {
       home: {
-        render({ sessionState }) {
-          const session = asRecord(sessionState);
+        render({ state }) {
+          const session = filtersState(state);
           const rows = catalogRows(session);
           const buttons = catalogButtons(session);
           return ui.panel([
@@ -239,21 +278,21 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          setCatalogFilter({ dispatchSessionAction }, args) {
-            dispatchSessionAction('patch', { catalogFilter: readInputValue(args) });
+          setCatalogFilter(context, args) {
+            patchFilters(context, { catalogFilter: readInputValue(args) });
           },
-          openDemo({ sessionState, dispatchSessionAction, dispatchSystemCommand }, args) {
+          openDemo(context, args) {
             const cardId = toText(asRecord(args).cardId, 'home');
-            const nextVisitCount = toNumber(asRecord(sessionState).visitCount, 0) + 1;
-            dispatchSessionAction('patch', {
+            const nextVisitCount = toNumber(filtersState(context.state).visitCount, 0) + 1;
+            patchFilters(context, {
               lastVisited: cardId,
               visitCount: nextVisitCount,
             });
-            dispatchSystemCommand('nav.go', { cardId });
+            context.dispatch({ type: 'nav.go', payload: { cardId } });
           },
-          resetSessionState({ dispatchSessionAction }) {
-            dispatchSessionAction('reset');
-            dispatchSessionAction('patch', {
+          resetSessionState(context) {
+            resetFilters(context);
+            patchFilters(context, {
               catalogFilter: '',
               lastVisited: 'home',
               visitCount: 1,
@@ -261,10 +300,10 @@ defineStackBundle(({ ui }) => {
             });
           },
           toastWelcome(context) {
-            notify(context, 'HyperCard UI DSL demo stack is ready.');
+            showNotice(context, 'HyperCard UI DSL demo stack is ready.');
           },
-          closeWindow({ dispatchSystemCommand }) {
-            dispatchSystemCommand('window.close');
+          closeWindow(context) {
+            closeRuntimeWindow(context);
           },
         },
       },
@@ -304,10 +343,10 @@ defineStackBundle(({ ui }) => {
       },
 
       textBadges: {
-        render({ cardState, sessionState }) {
-          const state = asRecord(cardState);
-          const session = asRecord(sessionState);
-          const badgeLabel = toText(state.badgeLabel, 'alpha');
+        render({ state }) {
+          const card = draftState(state);
+          const session = filtersState(state);
+          const badgeLabel = toText(card.badgeLabel, 'alpha');
           return ui.panel([
             ui.text('Text and Badges Demo'),
             ui.text('Badges are useful for compact status highlights.'),
@@ -328,12 +367,12 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          setBadgeLabel({ dispatchCardAction }, args) {
-            dispatchCardAction('patch', { badgeLabel: readInputValue(args) });
+          setBadgeLabel(context, args) {
+            patchDraft(context, { badgeLabel: readInputValue(args) });
           },
-          toastLabel({ cardState, dispatchSystemCommand }) {
-            const label = toText(asRecord(cardState).badgeLabel, 'updated');
-            dispatchSystemCommand('notify', { message: 'Badge label: ' + label });
+          toastLabel(context) {
+            const label = toText(draftState(context.state).badgeLabel, 'updated');
+            context.dispatch({ type: 'notify.show', payload: { message: 'Badge label: ' + label } });
           },
           back,
           home: goHome,
@@ -341,10 +380,10 @@ defineStackBundle(({ ui }) => {
       },
 
       buttons: {
-        render({ cardState }) {
-          const state = asRecord(cardState);
-          const clicks = toNumber(state.clicks, 0);
-          const lastAction = toText(state.lastAction, 'none');
+        render({ state }) {
+          const card = draftState(state);
+          const clicks = toNumber(card.clicks, 0);
+          const lastAction = toText(card.lastAction, 'none');
           return ui.panel([
             ui.text('Buttons and Actions Demo'),
             ui.text('Includes button variants and system notifications.'),
@@ -374,22 +413,22 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          markAction({ dispatchCardAction }, args) {
-            dispatchCardAction('patch', {
+          markAction(context, args) {
+            patchDraft(context, {
               lastAction: toText(asRecord(args).action, 'unknown'),
             });
           },
-          increment({ cardState, dispatchCardAction, dispatchSessionAction }) {
-            const clicks = toNumber(asRecord(cardState).clicks, 0) + 1;
-            dispatchCardAction('patch', { clicks, lastAction: 'increment' });
-            dispatchSessionAction('set', { path: 'visitCount', value: clicks });
+          increment(context) {
+            const clicks = toNumber(draftState(context.state).clicks, 0) + 1;
+            patchDraft(context, { clicks, lastAction: 'increment' });
+            setFilters(context, 'visitCount', clicks);
           },
           notify(context) {
-            notify(context, 'Button demo emitted a notify system intent.');
+            showNotice(context, 'Button demo emitted a notify system intent.');
           },
-          resetCard({ dispatchCardAction }) {
-            dispatchCardAction('reset');
-            dispatchCardAction('patch', { clicks: 0, lastAction: 'reset' });
+          resetCard(context) {
+            resetDraft(context);
+            patchDraft(context, { clicks: 0, lastAction: 'reset' });
           },
           go(context, args) {
             goTo(context, toText(asRecord(args).cardId, 'home'));
@@ -400,11 +439,11 @@ defineStackBundle(({ ui }) => {
       },
 
       inputs: {
-        render({ cardState }) {
-          const state = asRecord(cardState);
-          const name = toText(state.name);
-          const message = toText(state.message);
-          const search = toText(state.search);
+        render({ state }) {
+          const card = draftState(state);
+          const name = toText(card.name);
+          const message = toText(card.message);
+          const search = toText(card.search);
           return ui.panel([
             ui.text('Inputs Demo'),
             ui.text('Each input emits onChange payload { value } merged with optional args.'),
@@ -445,19 +484,16 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          setField({ dispatchCardAction }, args) {
+          setField(context, args) {
             const payload = asRecord(args);
             const field = toText(payload.field);
             if (!field) {
               return;
             }
-            dispatchCardAction('set', {
-              path: field,
-              value: toText(payload.value),
-            });
+            setDraft(context, field, toText(payload.value));
           },
-          clear({ dispatchCardAction }) {
-            dispatchCardAction('patch', { name: '', message: '', search: '' });
+          clear(context) {
+            patchDraft(context, { name: '', message: '', search: '' });
           },
           back,
           home: goHome,
@@ -465,9 +501,9 @@ defineStackBundle(({ ui }) => {
       },
 
       tables: {
-        render({ cardState }) {
-          const state = asRecord(cardState);
-          const query = toText(state.query);
+        render({ state }) {
+          const card = draftState(state);
+          const query = toText(card.query);
           const rows = filteredRows(query);
           return ui.panel([
             ui.text('Tables Demo'),
@@ -489,11 +525,11 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          setQuery({ dispatchCardAction }, args) {
-            dispatchCardAction('patch', { query: readInputValue(args) });
+          setQuery(context, args) {
+            patchDraft(context, { query: readInputValue(args) });
           },
-          clearQuery({ dispatchCardAction }) {
-            dispatchCardAction('patch', { query: '' });
+          clearQuery(context) {
+            patchDraft(context, { query: '' });
           },
           go(context, args) {
             goTo(context, toText(asRecord(args).cardId, 'home'));
@@ -504,10 +540,10 @@ defineStackBundle(({ ui }) => {
       },
 
       dropdowns: {
-        render({ cardState }) {
-          const state = asRecord(cardState);
-          const selected = dropdownSelected(FONT_OPTIONS, state.selectedFont);
-          const widthValue = toText(state.width, '180');
+        render({ state }) {
+          const card = draftState(state);
+          const selected = dropdownSelected(FONT_OPTIONS, card.selectedFont);
+          const widthValue = toText(card.width, '180');
           const width = Math.max(120, toNumber(widthValue, 180));
           return ui.panel([
             ui.text('Dropdowns Demo'),
@@ -534,16 +570,16 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          setWidth({ dispatchCardAction }, args) {
-            dispatchCardAction('patch', { width: readInputValue(args) });
+          setWidth(context, args) {
+            patchDraft(context, { width: readInputValue(args) });
           },
-          pickFont({ dispatchCardAction, dispatchDomainAction }, args) {
+          pickFont(context, args) {
             const payload = asRecord(args);
             const index = toNumber(payload.index, 0);
             const value = toText(payload.value, FONT_OPTIONS[0]);
-            dispatchCardAction('patch', { selectedFont: index });
-            dispatchDomainAction('app_hypercard_tools', 'setTheme', { theme: value });
-            dispatchDomainAction('app_hypercard_tools', 'logDemoEvent', { label: 'Dropdown selected: ' + value });
+            patchDraft(context, { selectedFont: index });
+            dispatchToolsDomain(context, 'setTheme', { theme: value });
+            dispatchToolsDomain(context, 'logDemoEvent', { label: 'Dropdown selected: ' + value });
           },
           go(context, args) {
             goTo(context, toText(asRecord(args).cardId, 'home'));
@@ -554,10 +590,10 @@ defineStackBundle(({ ui }) => {
       },
 
       selectableTable: {
-        render({ cardState }) {
-          const state = asRecord(cardState);
-          const searchText = toText(state.searchText);
-          const selectedRowKeys = asArray(state.selectedRowKeys).map((key) => toText(key));
+        render({ state }) {
+          const card = draftState(state);
+          const searchText = toText(card.searchText);
+          const selectedRowKeys = asArray(card.selectedRowKeys).map((key) => toText(key));
           const rows = selectableRows(searchText);
           return ui.panel([
             ui.text('Selectable Table Demo'),
@@ -576,7 +612,7 @@ defineStackBundle(({ ui }) => {
               onRowClick: { handler: 'setLastRow' },
             }),
             ui.badge('selected keys: ' + (selectedRowKeys.join(', ') || '(none)')),
-            ui.badge('last clicked row key: ' + toText(state.lastRowKey, '(none)')),
+            ui.badge('last clicked row key: ' + toText(card.lastRowKey, '(none)')),
             ui.row([
               ui.button('Select warnings', { onClick: { handler: 'selectWarnings' }, variant: 'primary' }),
               ui.button('Clear selection', { onClick: { handler: 'clearSelection' }, variant: 'danger' }),
@@ -589,29 +625,29 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          setSelection({ dispatchCardAction, dispatchDomainAction }, args) {
+          setSelection(context, args) {
             const selectedRowKeys = asArray(asRecord(args).selectedRowKeys).map((key) => toText(key));
-            dispatchCardAction('patch', { selectedRowKeys });
-            dispatchDomainAction('app_hypercard_tools', 'setSelectedRows', { selectedRowKeys });
+            patchDraft(context, { selectedRowKeys });
+            dispatchToolsDomain(context, 'setSelectedRows', { selectedRowKeys });
           },
-          setSearch({ dispatchCardAction, dispatchDomainAction }, args) {
+          setSearch(context, args) {
             const value = readInputValue(args);
-            dispatchCardAction('patch', { searchText: value });
-            dispatchDomainAction('app_hypercard_tools', 'setSearchText', { value });
+            patchDraft(context, { searchText: value });
+            dispatchToolsDomain(context, 'setSearchText', { value });
           },
-          setLastRow({ dispatchCardAction }, args) {
-            dispatchCardAction('patch', {
+          setLastRow(context, args) {
+            patchDraft(context, {
               lastRowKey: toText(asRecord(args).rowKey, '(none)'),
             });
           },
-          selectWarnings({ dispatchCardAction, dispatchDomainAction }) {
+          selectWarnings(context) {
             const selectedRowKeys = ['A-120', 'A-188'];
-            dispatchCardAction('patch', { selectedRowKeys });
-            dispatchDomainAction('app_hypercard_tools', 'setSelectedRows', { selectedRowKeys });
+            patchDraft(context, { selectedRowKeys });
+            dispatchToolsDomain(context, 'setSelectedRows', { selectedRowKeys });
           },
-          clearSelection({ dispatchCardAction, dispatchDomainAction }) {
-            dispatchCardAction('patch', { selectedRowKeys: [] });
-            dispatchDomainAction('app_hypercard_tools', 'setSelectedRows', { selectedRowKeys: [] });
+          clearSelection(context) {
+            patchDraft(context, { selectedRowKeys: [] });
+            dispatchToolsDomain(context, 'setSelectedRows', { selectedRowKeys: [] });
           },
           go(context, args) {
             goTo(context, toText(asRecord(args).cardId, 'home'));
@@ -622,9 +658,9 @@ defineStackBundle(({ ui }) => {
       },
 
       gridBoard: {
-        render({ cardState }) {
-          const state = asRecord(cardState);
-          const selectedIndex = toNumber(state.selectedIndex, 0);
+        render({ state }) {
+          const card = draftState(state);
+          const selectedIndex = toNumber(card.selectedIndex, 0);
           return ui.panel([
             ui.text('Grid Board Demo'),
             ui.text('ui.gridBoard supports positional selection callbacks and cell metadata.'),
@@ -637,7 +673,7 @@ defineStackBundle(({ ui }) => {
               onSelect: { handler: 'pickCell' },
             }),
             ui.badge('selected index: ' + String(selectedIndex)),
-            ui.badge('selection: ' + toText(state.lastSelection, '(none)')),
+            ui.badge('selection: ' + toText(card.lastSelection, '(none)')),
             ui.row([
               ui.button('Clear selection', { onClick: { handler: 'clearSelection' }, variant: 'danger' }),
               ui.button('Back', { onClick: { handler: 'back' } }),
@@ -650,21 +686,21 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          pickCell({ dispatchCardAction, dispatchDomainAction }, args) {
+          pickCell(context, args) {
             const payload = asRecord(args);
             const selectedIndex = toNumber(payload.cellIndex, 0);
-            dispatchCardAction('patch', {
+            patchDraft(context, {
               selectedIndex,
               lastSelection: gridSelectionText(payload),
             });
-            dispatchDomainAction('app_hypercard_tools', 'setSelectedCellIndex', { selectedIndex });
+            dispatchToolsDomain(context, 'setSelectedCellIndex', { selectedIndex });
           },
-          clearSelection({ dispatchCardAction, dispatchDomainAction }) {
-            dispatchCardAction('patch', {
+          clearSelection(context) {
+            patchDraft(context, {
               selectedIndex: null,
               lastSelection: '(none)',
             });
-            dispatchDomainAction('app_hypercard_tools', 'setSelectedCellIndex', { selectedIndex: null });
+            dispatchToolsDomain(context, 'setSelectedCellIndex', { selectedIndex: null });
           },
           go(context, args) {
             goTo(context, toText(asRecord(args).cardId, 'home'));
@@ -675,14 +711,14 @@ defineStackBundle(({ ui }) => {
       },
 
       eventPayloads: {
-        render({ cardState }) {
-          const state = asRecord(cardState);
+        render({ state }) {
+          const card = draftState(state);
           return ui.panel([
             ui.text('Event Payload Merge Demo'),
             ui.text('Input onChange payload merges with static args before handler invocation.'),
             ui.row([
               ui.text('Query:'),
-              ui.input(toText(state.query), {
+              ui.input(toText(card.query), {
                 placeholder: 'Type to inspect merged payload',
                 onChange: {
                   handler: 'captureMergedPayload',
@@ -696,14 +732,14 @@ defineStackBundle(({ ui }) => {
             ]),
             ui.table(
               [
-                ['field', toText(asRecord(state.lastPayload).field, '(none)')],
-                ['source', toText(asRecord(state.lastPayload).source, '(none)')],
-                ['tag', toText(asRecord(state.lastPayload).tag, '(none)')],
-                ['value', toText(asRecord(state.lastPayload).value, '')],
+                ['field', toText(asRecord(card.lastPayload).field, '(none)')],
+                ['source', toText(asRecord(card.lastPayload).source, '(none)')],
+                ['tag', toText(asRecord(card.lastPayload).tag, '(none)')],
+                ['value', toText(asRecord(card.lastPayload).value, '')],
               ],
               { headers: ['Key', 'Merged Value'] }
             ),
-            ui.text('Payload JSON: ' + toText(state.lastPayloadJson, '{}')),
+            ui.text('Payload JSON: ' + toText(card.lastPayloadJson, '{}')),
             ui.row([
               ui.button('Back', { onClick: { handler: 'back' } }),
               ui.button('Home', { onClick: { handler: 'home' } }),
@@ -715,16 +751,16 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          captureMergedPayload({ dispatchCardAction, dispatchDomainAction }, args) {
+          captureMergedPayload(context, args) {
             const payload = asRecord(args);
             const query = toText(payload.value);
-            dispatchCardAction('patch', {
+            patchDraft(context, {
               query,
               lastPayload: payload,
               lastPayloadJson: toJson(payload),
             });
-            dispatchDomainAction('app_hypercard_tools', 'setMergedPayload', payload);
-            dispatchDomainAction('app_hypercard_tools', 'logDemoEvent', { label: 'Merged payload captured' });
+            dispatchToolsDomain(context, 'setMergedPayload', payload);
+            dispatchToolsDomain(context, 'logDemoEvent', { label: 'Merged payload captured' });
           },
           go(context, args) {
             goTo(context, toText(asRecord(args).cardId, 'home'));
@@ -735,8 +771,8 @@ defineStackBundle(({ ui }) => {
       },
 
       domainIntents: {
-        render({ globalState }) {
-          const domain = appDomainState(globalState);
+        render({ state }) {
+          const domain = appDomainState(state);
           const selectedTheme = dropdownSelected(THEME_OPTIONS, THEME_OPTIONS.indexOf(toText(domain.selectedTheme, 'Geneva')));
           const events = asArray(domain.demoEvents)
             .slice(0, 5)
@@ -778,24 +814,24 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          setTheme({ dispatchDomainAction }, args) {
+          setTheme(context, args) {
             const value = toText(asRecord(args).value, THEME_OPTIONS[0]);
-            dispatchDomainAction('app_hypercard_tools', 'setTheme', { theme: value });
-            dispatchDomainAction('app_hypercard_tools', 'logDemoEvent', { label: 'Theme set: ' + value });
+            dispatchToolsDomain(context, 'setTheme', { theme: value });
+            dispatchToolsDomain(context, 'logDemoEvent', { label: 'Theme set: ' + value });
           },
-          setRows({ dispatchDomainAction }) {
-            dispatchDomainAction('app_hypercard_tools', 'setSelectedRows', {
+          setRows(context) {
+            dispatchToolsDomain(context, 'setSelectedRows', {
               selectedRowKeys: ['A-120', 'A-188'],
             });
           },
-          setSearch({ dispatchDomainAction }) {
-            dispatchDomainAction('app_hypercard_tools', 'setSearchText', { value: 'sensor' });
+          setSearch(context) {
+            dispatchToolsDomain(context, 'setSearchText', { value: 'sensor' });
           },
-          setCell({ dispatchDomainAction }) {
-            dispatchDomainAction('app_hypercard_tools', 'setSelectedCellIndex', { selectedIndex: 7 });
+          setCell(context) {
+            dispatchToolsDomain(context, 'setSelectedCellIndex', { selectedIndex: 7 });
           },
-          logEvent({ dispatchDomainAction }) {
-            dispatchDomainAction('app_hypercard_tools', 'logDemoEvent', {
+          logEvent(context) {
+            dispatchToolsDomain(context, 'logDemoEvent', {
               label: 'Manual domain-intent log event',
             });
           },
@@ -808,11 +844,11 @@ defineStackBundle(({ ui }) => {
       },
 
       stateNav: {
-        render({ cardState, sessionState, globalState }) {
-          const card = asRecord(cardState);
-          const session = asRecord(sessionState);
+        render({ state }) {
+          const card = draftState(state);
+          const session = filtersState(state);
           const scratch = asRecord(card.scratch);
-          const nav = navState(globalState);
+          const nav = navState(state);
           return ui.panel([
             ui.text('State and Navigation Demo'),
             ui.text('This card demonstrates patch/set/reset and nav params.'),
@@ -846,26 +882,20 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          setTitlePath({ dispatchCardAction }) {
-            dispatchCardAction('set', {
-              path: 'scratch.title',
-              value: 'updated-via-set-path',
-            });
+          setTitlePath(context) {
+            setDraft(context, 'scratch.title', 'updated-via-set-path');
           },
-          togglePriority({ cardState, dispatchCardAction }) {
-            const current = toText(asRecord(asRecord(cardState).scratch).priority, 'low');
-            dispatchCardAction('set', {
-              path: 'scratch.priority',
-              value: current === 'low' ? 'high' : 'low',
-            });
+          togglePriority(context) {
+            const current = toText(asRecord(draftState(context.state).scratch).priority, 'low');
+            setDraft(context, 'scratch.priority', current === 'low' ? 'high' : 'low');
           },
-          incrementVisitCount({ sessionState, dispatchSessionAction }) {
-            const next = toNumber(asRecord(sessionState).visitCount, 1) + 1;
-            dispatchSessionAction('set', { path: 'visitCount', value: next });
+          incrementVisitCount(context) {
+            const next = toNumber(filtersState(context.state).visitCount, 1) + 1;
+            setFilters(context, 'visitCount', next);
           },
-          resetCardState({ dispatchCardAction }) {
-            dispatchCardAction('reset');
-            dispatchCardAction('patch', { scratch: { title: 'untitled', priority: 'low' } });
+          resetCardState(context) {
+            resetDraft(context);
+            patchDraft(context, { scratch: { title: 'untitled', priority: 'low' } });
           },
           go(context, args) {
             const payload = asRecord(args);
@@ -877,10 +907,10 @@ defineStackBundle(({ ui }) => {
       },
 
       playground: {
-        render({ cardState, sessionState, globalState }) {
-          const card = asRecord(cardState);
-          const session = asRecord(sessionState);
-          const nav = navState(globalState);
+        render({ state }) {
+          const card = draftState(state);
+          const session = filtersState(state);
+          const nav = navState(state);
           const draftName = toText(card.draftName, 'sample-widget');
           const draftState = toText(card.draftState, 'ready');
           const rows = playgroundRows(card);
@@ -941,39 +971,36 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          setDraftField({ dispatchCardAction }, args) {
+          setDraftField(context, args) {
             const payload = asRecord(args);
             const field = toText(payload.field);
             if (!field) {
               return;
             }
             const nextValue = field === 'selectedFont' ? toNumber(payload.index, 0) : toText(payload.value);
-            dispatchCardAction('set', {
-              path: field,
-              value: nextValue,
-            });
+            setDraft(context, field, nextValue);
           },
-          addRow({ cardState, dispatchCardAction }) {
-            const card = asRecord(cardState);
+          addRow(context) {
+            const card = draftState(context.state);
             const rows = playgroundRows(card);
             const nextRows = rows.concat([[toText(card.draftName, 'new-widget'), toText(card.draftState, 'draft')]]);
-            dispatchCardAction('patch', { rows: nextRows });
+            patchDraft(context, { rows: nextRows });
           },
-          clearRows({ dispatchCardAction }) {
-            dispatchCardAction('patch', { rows: [] });
+          clearRows(context) {
+            patchDraft(context, { rows: [] });
           },
-          setSelection({ dispatchCardAction }, args) {
-            dispatchCardAction('patch', {
+          setSelection(context, args) {
+            patchDraft(context, {
               selectedRowKeys: asArray(asRecord(args).selectedRowKeys).map((key) => toText(key)),
             });
           },
-          setGridSelection({ dispatchCardAction }, args) {
-            dispatchCardAction('patch', {
+          setGridSelection(context, args) {
+            patchDraft(context, {
               selectedCellIndex: toNumber(asRecord(args).cellIndex, 0),
             });
           },
           notify(context) {
-            notify(context, 'Playground card emitted a notify intent.');
+            showNotice(context, 'Playground card emitted a notify intent.');
           },
           back,
           home: goHome,

@@ -17,10 +17,10 @@ defineStackBundle(({ ui }) => {
     },
     cards: {
       chat: {
-        render({ cardState }) {
-          const state = asRecord(cardState);
-          const messages = Array.isArray(state.messages) ? state.messages : [];
-          const draft = String(state.draft || '');
+        render({ state }) {
+          const draftState = asRecord(state?.draft);
+          const messages = Array.isArray(draftState.messages) ? draftState.messages : [];
+          const draft = String(draftState.draft || '');
 
           return ui.panel([
             ui.text('Assistant'),
@@ -33,21 +33,24 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          changeDraft({ dispatchCardAction }, args) {
-            dispatchCardAction('set', { path: 'draft', value: asRecord(args).value });
+          changeDraft({ dispatch }, args) {
+            dispatch({ type: 'draft.set', payload: { path: 'draft', value: asRecord(args).value } });
           },
-          send({ cardState, dispatchCardAction }) {
-            const state = asRecord(cardState);
-            const draft = String(state.draft || '').trim();
+          send({ state, dispatch }) {
+            const draftState = asRecord(state?.draft);
+            const draft = String(draftState.draft || '').trim();
             if (!draft) return;
-            const messages = Array.isArray(state.messages) ? state.messages : [];
-            dispatchCardAction('patch', {
-              draft: '',
-              messages: messages.concat(['You: ' + draft, 'Assistant: Thanks, received.']).slice(-10),
+            const messages = Array.isArray(draftState.messages) ? draftState.messages : [];
+            dispatch({
+              type: 'draft.patch',
+              payload: {
+                draft: '',
+                messages: messages.concat(['You: ' + draft, 'Assistant: Thanks, received.']).slice(-10),
+              },
             });
           },
-          clear({ dispatchCardAction }) {
-            dispatchCardAction('patch', { draft: '', messages: [] });
+          clear({ dispatch }) {
+            dispatch({ type: 'draft.patch', payload: { draft: '', messages: [] } });
           },
         },
       },

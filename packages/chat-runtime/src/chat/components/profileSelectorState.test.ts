@@ -6,34 +6,35 @@ import {
 
 describe('profileSelectorState', () => {
   const profiles = [
-    { slug: 'default', is_default: true },
-    { slug: 'inventory', is_default: false },
-    { slug: 'planner', is_default: false },
+    { slug: 'default', registry: 'default', is_default: true },
+    { slug: 'inventory', registry: 'default', is_default: false },
+    { slug: 'planner', registry: 'ops', is_default: false },
   ];
 
   it('supports switching inventory -> default -> inventory', () => {
-    let selected = resolveProfileSelectorValue(profiles, 'inventory');
-    expect(selected).toBe('inventory');
+    let selected = resolveProfileSelectorValue(profiles, { profile: 'inventory', registry: 'default' });
+    expect(resolveProfileSelectionChange(selected, profiles)).toEqual({ profile: 'inventory', registry: 'default' });
 
-    selected = resolveProfileSelectionChange('default', 'default') ?? '';
-    expect(selected).toBe('default');
-    expect(resolveProfileSelectorValue(profiles, selected)).toBe('default');
+    selected = JSON.stringify({ profile: 'default', registry: 'default' });
+    expect(resolveProfileSelectionChange(selected, profiles)).toEqual({ profile: 'default', registry: 'default' });
+    expect(resolveProfileSelectionChange(resolveProfileSelectorValue(profiles, { profile: 'default', registry: 'default' }), profiles)).toEqual({ profile: 'default', registry: 'default' });
 
-    selected = resolveProfileSelectionChange('inventory', 'default') ?? '';
-    expect(selected).toBe('inventory');
-    expect(resolveProfileSelectorValue(profiles, selected)).toBe('inventory');
+    selected = JSON.stringify({ profile: 'inventory', registry: 'default' });
+    expect(resolveProfileSelectionChange(selected, profiles)).toEqual({ profile: 'inventory', registry: 'default' });
+    expect(resolveProfileSelectionChange(resolveProfileSelectorValue(profiles, { profile: 'inventory', registry: 'default' }), profiles)).toEqual({ profile: 'inventory', registry: 'default' });
   });
 
   it('allows selecting a profile before first message send', () => {
-    const initial = resolveProfileSelectorValue(profiles, null);
-    expect(initial).toBe('default');
+    const initial = resolveProfileSelectorValue(profiles, {});
+    expect(resolveProfileSelectionChange(initial, profiles)).toEqual({ profile: 'default', registry: 'default' });
 
-    const selectedBeforeSend = resolveProfileSelectionChange('planner', 'default');
-    expect(selectedBeforeSend).toBe('planner');
-    expect(resolveProfileSelectorValue(profiles, selectedBeforeSend)).toBe('planner');
+    const selectedBeforeSend = resolveProfileSelectionChange(JSON.stringify({ profile: 'planner', registry: 'ops' }), profiles);
+    expect(selectedBeforeSend).toEqual({ profile: 'planner', registry: 'ops' });
+    expect(resolveProfileSelectionChange(resolveProfileSelectorValue(profiles, selectedBeforeSend ?? {}), profiles)).toEqual({ profile: 'planner', registry: 'ops' });
   });
 
   it('falls back to default when current profile is stale', () => {
-    expect(resolveProfileSelectorValue(profiles, 'unknown-old-profile')).toBe('default');
+    const selected = resolveProfileSelectorValue(profiles, { profile: 'unknown-old-profile', registry: 'default' });
+    expect(resolveProfileSelectionChange(selected, profiles)).toEqual({ profile: 'default', registry: 'default' });
   });
 });

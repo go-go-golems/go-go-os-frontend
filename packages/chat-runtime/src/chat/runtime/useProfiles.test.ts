@@ -2,29 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { resolveSelectionAfterProfileRefresh } from './useProfiles';
 
 describe('resolveSelectionAfterProfileRefresh', () => {
-  it('prefers persisted server profile when redux selection is empty', () => {
-    const next = resolveSelectionAfterProfileRefresh(
-      [
-        { slug: 'inventory', is_default: true },
-        { slug: 'analyst' },
-      ],
-      {},
-      'default',
-      'analyst'
-    );
-
-    expect(next).toEqual({ profile: 'analyst', registry: 'default' });
-  });
-
   it('selects default profile when no profile is currently selected', () => {
     const next = resolveSelectionAfterProfileRefresh(
       [
-        { slug: 'inventory', is_default: true },
-        { slug: 'analyst' },
+        { slug: 'inventory', registry: 'default', is_default: true },
+        { slug: 'analyst', registry: 'default' },
       ],
-      {},
-      'default',
-      undefined
+      {}
     );
 
     expect(next).toEqual({ profile: 'inventory', registry: 'default' });
@@ -33,12 +17,10 @@ describe('resolveSelectionAfterProfileRefresh', () => {
   it('keeps current selection when it still exists after refresh', () => {
     const next = resolveSelectionAfterProfileRefresh(
       [
-        { slug: 'inventory', is_default: true },
-        { slug: 'analyst' },
+        { slug: 'inventory', registry: 'default', is_default: true },
+        { slug: 'analyst', registry: 'default' },
       ],
-      { profile: 'analyst', registry: 'default' },
-      'default',
-      undefined
+      { profile: 'analyst', registry: 'default' }
     );
 
     expect(next).toBeNull();
@@ -47,23 +29,19 @@ describe('resolveSelectionAfterProfileRefresh', () => {
   it('falls back to new default when selected profile was removed by CRUD', () => {
     const next = resolveSelectionAfterProfileRefresh(
       [
-        { slug: 'inventory', is_default: false },
-        { slug: 'planner', is_default: true },
+        { slug: 'inventory', registry: 'default', is_default: false },
+        { slug: 'planner', registry: 'ops', is_default: true },
       ],
-      { profile: 'analyst', registry: 'default' },
-      'default',
-      undefined
+      { profile: 'analyst', registry: 'ops' }
     );
 
-    expect(next).toEqual({ profile: 'planner', registry: 'default' });
+    expect(next).toEqual({ profile: 'planner', registry: 'ops' });
   });
 
-  it('clears selected profile when registry is empty', () => {
+  it('clears selected profile when no profiles remain', () => {
     const next = resolveSelectionAfterProfileRefresh(
       [],
-      { profile: 'analyst', registry: 'default' },
-      'default',
-      undefined
+      { profile: 'analyst', registry: 'default' }
     );
     expect(next).toEqual({ profile: null, registry: 'default' });
   });

@@ -1,88 +1,87 @@
 import { useDispatch } from 'react-redux';
-import type { RenderContext, RenderEntity, SemContext, SemEvent, TimelineEntity } from '@hypercard/chat-runtime';
-import { registerSem, stringField, timelineSlice } from '@hypercard/chat-runtime';
+import type { RenderContext, RenderEntity } from '@hypercard/chat-runtime';
+import { SyntaxHighlight, recordField, stringField } from '@hypercard/chat-runtime';
 import { openWindow } from '@hypercard/engine/desktop-core';
-import {
-  buildArtifactOpenWindowPayload,
-  extractArtifactUpsertFromSem,
-  normalizeArtifactId,
-} from '../artifacts/artifactRuntime';
-import { buildCodeEditorWindowPayload } from '../editor/editorLaunch';
+import { buildArtifactOpenWindowPayload, normalizeArtifactId } from '../artifacts/artifactRuntime';
+import { openCodeEditor } from '../editor/editorLaunch';
 
-function asDataRecord(ev: SemEvent): Record<string, unknown> {
-  if (typeof ev.data === 'object' && ev.data !== null && !Array.isArray(ev.data)) {
-    return ev.data as Record<string, unknown>;
+function cardPayload(props: Record<string, unknown>): Record<string, unknown> | undefined {
+  return recordField(props, 'result') ?? props;
+}
+
+function cardData(props: Record<string, unknown>): Record<string, unknown> | undefined {
+  return recordField(cardPayload(props) ?? {}, 'data');
+}
+
+function cardArtifactId(props: Record<string, unknown>): string {
+  const payload = cardPayload(props);
+  const payloadData = cardData(props);
+  const artifact =
+    recordField(payload ?? {}, 'artifact') ??
+    recordField(payloadData ?? {}, 'artifact');
+  return stringField(props, 'artifactId') ?? stringField(artifact ?? {}, 'id') ?? '';
+}
+
+function runtimeCardId(props: Record<string, unknown>): string {
+  const payload = cardPayload(props);
+  const payloadData = cardData(props);
+  const card =
+    recordField(payload ?? {}, 'card') ??
+    recordField(payloadData ?? {}, 'card');
+  return stringField(props, 'runtimeCardId') ?? stringField(card ?? {}, 'id') ?? '';
+}
+
+function runtimeCardCode(props: Record<string, unknown>): string {
+  const payload = cardPayload(props);
+  const payloadData = cardData(props);
+  const card =
+    recordField(payload ?? {}, 'card') ??
+    recordField(payloadData ?? {}, 'card');
+  return stringField(props, 'runtimeCardCode') ?? stringField(card ?? {}, 'code') ?? '';
+}
+
+function titleFromCard(props: Record<string, unknown>): string {
+  const payload = cardPayload(props);
+  return (
+    stringField(props, 'title') ??
+    stringField(props, 'name') ??
+    stringField(payload ?? {}, 'title') ??
+    stringField(payload ?? {}, 'name') ??
+    'Card'
+  );
+}
+
+function detailFromCard(props: Record<string, unknown>): { status: string; detail: string } {
+  const payload = cardPayload(props);
+  const error = stringField(props, 'error') ?? stringField(payload ?? {}, 'error') ?? '';
+  if (error) {
+    return { status: 'error', detail: error };
   }
-  return {};
-}
-
-function cardEntityId(data: Record<string, unknown>, fallbackId: string): string {
-  const itemId = stringField(data, 'itemId') ?? fallbackId;
-  return `card:${itemId}`;
-}
-
-function upsertCardEntity(ctx: SemContext, ev: SemEvent, status: 'running' | 'success' | 'error', detail: string) {
-  const data = asDataRecord(ev);
-  const entityId = cardEntityId(data, ev.id);
-  const itemId = stringField(data, 'itemId') ?? ev.id;
-  const title = stringField(data, 'name') ?? stringField(data, 'title') ?? 'Card';
-
-  const artifactUpdate = extractArtifactUpsertFromSem(ev.type, data);
-
-  const entity: TimelineEntity = {
-    id: entityId,
-    kind: 'hypercard_card',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    props: {
-      title,
-      status,
-      detail,
-      itemId,
-      artifactId: artifactUpdate?.id,
-      runtimeCardId: artifactUpdate?.runtimeCardId,
-      rawData: data,
-    },
+  return {
+    status: stringField(props, 'status') ?? 'success',
+    detail: stringField(props, 'detail') ?? 'ready',
   };
-
-  ctx.dispatch(timelineSlice.actions.upsertEntity({ convId: ctx.convId, entity }));
-}
-
-export function registerHypercardCardSemHandlers() {
-  registerSem('hypercard.card.start', (ev, ctx) => {
-    upsertCardEntity(ctx, ev, 'running', 'started');
-  });
-
-  registerSem('hypercard.card.update', (ev, ctx) => {
-    upsertCardEntity(ctx, ev, 'running', 'updating');
-  });
-
-  registerSem('hypercard.card.v2', (ev, ctx) => {
-    upsertCardEntity(ctx, ev, 'success', 'ready');
-  });
-
-  registerSem('hypercard.card.error', (ev, ctx) => {
-    const data = asDataRecord(ev);
-    const errorDetail = stringField(data, 'error') ?? 'unknown error';
-    upsertCardEntity(ctx, ev, 'error', errorDetail);
-  });
 }
 
 export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: RenderContext }) {
   const dispatch = useDispatch();
-  const title = String(e.props.title ?? 'Card');
-  const status = String(e.props.status ?? 'running');
-  const detail = String(e.props.detail ?? '');
-  const artifactId = e.props.artifactId ? String(e.props.artifactId) : '';
-  const runtimeCardId = e.props.runtimeCardId ? String(e.props.runtimeCardId) : '';
-  const stackId = e.props.stackId ? String(e.props.stackId) : undefined;
-  const hasRuntimeCard = runtimeCardId.trim().length > 0;
+  const props = e.props;
+  const title = titleFromCard(props);
+  const { status, detail } = detailFromCard(props);
+  const artifactId = cardArtifactId(props);
+  const cardId = runtimeCardId(props);
+  const cardCode = runtimeCardCode(props);
+  const stackId = props.stackId ? String(props.stackId) : undefined;
+  const hasRuntimeCard = cardId.trim().length > 0;
+  const hasCardCode = cardCode.trim().length > 0;
+  const canOpenArtifact = Boolean(normalizeArtifactId(artifactId) && hasRuntimeCard && status !== 'streaming' && status !== 'pending');
+  const canEditCode = hasRuntimeCard && hasCardCode && status !== 'streaming' && status !== 'pending';
 
   const openArtifact = () => {
     const payload = buildArtifactOpenWindowPayload({
       artifactId,
       title,
-      runtimeCardId,
+      runtimeCardId: cardId,
       stackId,
     });
     if (!payload) {
@@ -92,19 +91,30 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
   };
 
   const editArtifact = () => {
-    if (!hasRuntimeCard) {
+    if (!hasRuntimeCard || !hasCardCode) {
       return;
     }
-    dispatch(openWindow(buildCodeEditorWindowPayload({ ownerAppId: 'inventory', cardId: runtimeCardId })));
+    openCodeEditor(dispatch, { ownerAppId: 'inventory', cardId }, cardCode);
   };
 
   return (
     <div data-part="chat-message" data-role="system">
       <div data-part="chat-role">Card:</div>
       <div style={{ fontSize: 11, whiteSpace: 'pre-wrap' }}>
-        <strong>{title}</strong> ({status}){runtimeCardId ? ` · runtime=${runtimeCardId}` : ''}
+        <strong>{title}</strong>{cardId ? ` · runtime=${cardId}` : ''}
         {detail ? ` — ${detail}` : ''}
       </div>
+      <div style={{ fontSize: 11, whiteSpace: 'pre-wrap', opacity: 0.8 }}>
+        status: {status}
+      </div>
+      {hasCardCode && (
+        <SyntaxHighlight
+          code={cardCode}
+          language="javascript"
+          maxLines={18}
+          style={{ marginTop: 6 }}
+        />
+      )}
       {ctx?.mode === 'debug' && (
         <pre
           style={{
@@ -117,14 +127,18 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
           {JSON.stringify(e.props, null, 2)}
         </pre>
       )}
-      {normalizeArtifactId(artifactId) && hasRuntimeCard && (
+      {(canOpenArtifact || canEditCode) && (
         <div style={{ marginTop: 4, display: 'flex', gap: 6 }}>
-          <button type="button" data-part="btn" onClick={openArtifact}>
-            Open
-          </button>
-          <button type="button" data-part="btn" onClick={editArtifact}>
-            Edit
-          </button>
+          {canOpenArtifact && (
+            <button type="button" data-part="btn" onClick={openArtifact}>
+              Open
+            </button>
+          )}
+          {canEditCode && (
+            <button type="button" data-part="btn" onClick={editArtifact}>
+              Edit
+            </button>
+          )}
         </div>
       )}
     </div>

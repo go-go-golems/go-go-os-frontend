@@ -1,3 +1,3 @@
-({ dispatchSystemCommand }) => {
-  dispatchSystemCommand('notify', { level: 'info', message: 'patched-handler' });
+({ dispatch }) => {
+  dispatch({ type: 'notify.show', payload: { level: 'info', message: 'patched-handler' } });
 }

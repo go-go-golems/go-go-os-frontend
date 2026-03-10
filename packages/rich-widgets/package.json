@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./theme": "./src/theme/index.ts",
-    "./launcher": "./src/launcher/modules.tsx"
+    "./launcher": "./src/launcher/modules.tsx",
+    "./kanban-runtime": "./src/kanban/runtime.ts"
   },
   "main": "src/index.ts",
   "types": "src/index.ts",

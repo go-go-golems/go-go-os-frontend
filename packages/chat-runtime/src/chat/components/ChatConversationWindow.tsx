@@ -11,6 +11,7 @@ import {
   subscribeTimelineRenderers,
 } from '../renderers/rendererRegistry';
 import type { RenderEntity, RenderMode } from '../renderers/types';
+import type { ChatWidgetRenderers } from '../renderers/types';
 import {
   type ChatStateSlice,
   selectCurrentTurnStats,
@@ -25,24 +26,18 @@ import {
 } from '../state/selectors';
 import {
   ASSISTANT_SUGGESTIONS_ENTITY_ID,
-  DEFAULT_CHAT_SUGGESTIONS,
   readSuggestionsEntityProps,
   STARTER_SUGGESTIONS_ENTITY_ID,
+  normalizeSuggestionList,
 } from '../state/suggestions';
 import { chatWindowSlice } from '../state/chatWindowSlice';
 import { timelineSlice } from '../state/timelineSlice';
 import { isRecord } from '../utils/guards';
 import { useConversation } from '../runtime/useConversation';
-import { useCurrentProfile } from '../runtime/useCurrentProfile';
-import { useProfiles } from '../runtime/useProfiles';
-import { useSetProfile } from '../runtime/useSetProfile';
 import { useRegisterConversationContextActions } from '../runtime/contextActions';
-import {
-  resolveProfileSelectionChange,
-  resolveProfileSelectorValue,
-} from './profileSelectorState';
 import { ChatWindow } from './ChatWindow';
 import { StatsFooter } from './StatsFooter';
+import type { ChatProfilePolicy } from '../runtime/profileTypes';
 
 export interface ChatConversationWindowProps {
   convId: string;
@@ -50,11 +45,11 @@ export interface ChatConversationWindowProps {
   title?: string;
   placeholder?: string;
   headerActions?: ReactNode;
-  enableProfileSelector?: boolean;
-  profileRegistry?: string;
-  profileScopeKey?: string;
+  profilePolicy?: ChatProfilePolicy;
+  starterSuggestions?: string[];
   windowId?: string;
   renderMode?: RenderMode;
+  timelineRenderers?: Partial<ChatWidgetRenderers>;
   conversationContextActions?: DesktopActionEntry[];
 }
 
@@ -88,25 +83,22 @@ export function ChatConversationWindow({
   title = 'Chat',
   placeholder,
   headerActions,
-  enableProfileSelector = false,
-  profileRegistry,
-  profileScopeKey,
+  profilePolicy,
+  starterSuggestions,
   windowId,
   renderMode = 'normal',
+  timelineRenderers,
   conversationContextActions,
 }: ChatConversationWindowProps) {
   const dispatch = useDispatch();
   const resolvedWindowId = useMemo(() => resolveWindowStateKey(windowId, convId), [convId, windowId]);
-  const { send, connectionStatus, isStreaming } = useConversation(convId, basePrefix, profileScopeKey);
-  const { profiles, loading: profilesLoading, error: profileError } = useProfiles(
-    basePrefix,
-    profileRegistry,
-    { enabled: enableProfileSelector, scopeKey: profileScopeKey }
-  );
-  const currentProfile = useCurrentProfile(profileScopeKey);
-  const setProfile = useSetProfile(basePrefix, { scopeKey: profileScopeKey });
+  const { send, connectionStatus, isStreaming } = useConversation(convId, basePrefix, profilePolicy);
   const runtimeWindowId = useDesktopWindowId();
   const openContextMenu = useOpenDesktopContextMenu();
+  const normalizedStarterSuggestions = useMemo(
+    () => normalizeSuggestionList(starterSuggestions ?? []),
+    [starterSuggestions],
+  );
 
   const entities = useSelector((state: ChatStateSlice & Record<string, unknown>) =>
     selectRenderableTimelineEntities(state, convId)
@@ -144,16 +136,19 @@ export function ChatConversationWindow({
     if (readSuggestionsEntityProps(starterSuggestionsEntity)) {
       return;
     }
+    if (normalizedStarterSuggestions.length === 0) {
+      return;
+    }
     dispatch(
       timelineSlice.actions.upsertSuggestions({
         convId,
         entityId: STARTER_SUGGESTIONS_ENTITY_ID,
         source: 'starter',
-        suggestions: DEFAULT_CHAT_SUGGESTIONS,
+        suggestions: normalizedStarterSuggestions,
         replace: true,
       })
     );
-  }, [convId, dispatch, entities.length, starterSuggestionsEntity]);
+  }, [convId, dispatch, entities.length, normalizedStarterSuggestions, starterSuggestionsEntity]);
 
   useEffect(() => {
     dispatch(
@@ -180,21 +175,23 @@ export function ChatConversationWindow({
           baselineIndex: entities.length,
         })
       );
-      dispatch(
-        timelineSlice.actions.upsertSuggestions({
-          convId,
-          entityId: STARTER_SUGGESTIONS_ENTITY_ID,
-          source: 'starter',
-          suggestions: DEFAULT_CHAT_SUGGESTIONS,
-          replace: true,
-        })
-      );
-      dispatch(
-        timelineSlice.actions.consumeSuggestions({
-          convId,
-          entityId: STARTER_SUGGESTIONS_ENTITY_ID,
-        })
-      );
+      if (normalizedStarterSuggestions.length > 0) {
+        dispatch(
+          timelineSlice.actions.upsertSuggestions({
+            convId,
+            entityId: STARTER_SUGGESTIONS_ENTITY_ID,
+            source: 'starter',
+            suggestions: normalizedStarterSuggestions,
+            replace: true,
+          })
+        );
+        dispatch(
+          timelineSlice.actions.consumeSuggestions({
+            convId,
+            entityId: STARTER_SUGGESTIONS_ENTITY_ID,
+          })
+        );
+      }
       dispatch(
         timelineSlice.actions.consumeSuggestions({
           convId,
@@ -212,7 +209,7 @@ export function ChatConversationWindow({
         throw error;
       }
     },
-    [convId, dispatch, entities.length, resolvedWindowId, send]
+    [convId, dispatch, entities.length, normalizedStarterSuggestions, resolvedWindowId, send]
   );
 
   const rendererRegistryVersion = useSyncExternalStore(
@@ -221,8 +218,8 @@ export function ChatConversationWindow({
     getTimelineRendererRegistryVersion
   );
   const renderers = useMemo(
-    () => resolveTimelineRenderers(),
-    [rendererRegistryVersion]
+    () => resolveTimelineRenderers(timelineRenderers),
+    [rendererRegistryVersion, timelineRenderers]
   );
 
   const timelineContent = useMemo(
@@ -241,50 +238,6 @@ export function ChatConversationWindow({
       : connectionStatus === 'connecting'
         ? 'connecting…'
         : connectionStatus;
-  const defaultProfileSlug = profiles.find((profile) => profile.is_default)?.slug ?? '';
-  const selectedProfileValue = resolveProfileSelectorValue(
-    profiles,
-    currentProfile.profile
-  );
-
-  const profileSelector = enableProfileSelector ? (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-      <label htmlFor={`chat-profile-${convId}`} style={{ fontSize: 11, opacity: 0.8 }}>
-        Profile
-      </label>
-      <select
-        id={`chat-profile-${convId}`}
-        value={selectedProfileValue}
-        onChange={(event) => {
-          const nextProfile = resolveProfileSelectionChange(
-            event.target.value,
-            defaultProfileSlug
-          );
-          const resolvedRegistry = profileRegistry ?? currentProfile.registry ?? null;
-          if (nextProfile) {
-            void setProfile(nextProfile, resolvedRegistry);
-            return;
-          }
-          void setProfile(null, resolvedRegistry);
-        }}
-        disabled={profilesLoading}
-        style={{ fontSize: 11, padding: '1px 4px', maxWidth: 180 }}
-      >
-        {profilesLoading ? <option value="">Loading…</option> : null}
-        {!profilesLoading && profiles.length === 0 ? <option value="">No profiles</option> : null}
-        {profiles.map((profile) => (
-          <option key={profile.slug} value={profile.slug}>
-            {(profile.display_name?.trim() || profile.slug) + (profile.is_default ? ' (default)' : '')}
-          </option>
-        ))}
-      </select>
-      {profileError ? (
-        <span style={{ fontSize: 10, color: '#b45309' }} title={profileError}>
-          profile error
-        </span>
-      ) : null}
-    </div>
-  ) : null;
 
   const handleTimelineContextMenu = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
@@ -311,16 +264,6 @@ export function ChatConversationWindow({
     [convId, conversationContextActions, openContextMenu, runtimeWindowId],
   );
 
-  const composedHeaderActions =
-    profileSelector || headerActions
-      ? (
-          <>
-            {profileSelector}
-            {headerActions}
-          </>
-        )
-      : undefined;
-
   return (
     <ChatWindow
       timelineContent={timelineContent}
@@ -334,7 +277,7 @@ export function ChatConversationWindow({
       title={title}
       subtitle={subtitle}
       placeholder={placeholder}
-      headerActions={composedHeaderActions}
+      headerActions={headerActions}
       onTimelineContextMenu={handleTimelineContextMenu}
       footer={
         <StatsFooter

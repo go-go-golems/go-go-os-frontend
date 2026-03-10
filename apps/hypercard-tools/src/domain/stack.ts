@@ -45,7 +45,7 @@ export const STACK: CardStackDefinition = {
     bundleCode: HYPERCARD_TOOLS_DEMO_PLUGIN_BUNDLE,
     capabilities: {
       domain: ['app_hypercard_tools'],
-      system: ['nav.go', 'nav.back', 'notify', 'window.close'],
+      system: ['nav.go', 'nav.back', 'notify.show', 'window.close'],
     },
   },
   cards: Object.fromEntries(DEMO_CARDS.map((card) => [card.id, toPluginCard(card)])),

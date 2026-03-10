@@ -11,6 +11,7 @@ export interface ArtifactRecord {
   updatedAt: number;
   runtimeCardId?: string;
   runtimeCardCode?: string;
+  packId?: string;
   injectionStatus?: 'pending' | 'injected' | 'failed';
   injectionError?: string;
 }
@@ -53,6 +54,7 @@ const artifactsSlice = createSlice({
         updatedAt?: number;
         runtimeCardId?: string;
         runtimeCardCode?: string;
+        packId?: string;
       }>,
     ) {
       const id = cleanString(action.payload.id);
@@ -70,6 +72,7 @@ const artifactsSlice = createSlice({
       const updatedAt = action.payload.updatedAt ?? Date.now();
       const runtimeCardId = cleanString(action.payload.runtimeCardId) ?? existing?.runtimeCardId;
       const runtimeCardCode = cleanString(action.payload.runtimeCardCode) ?? existing?.runtimeCardCode;
+      const packId = cleanString(action.payload.packId) ?? existing?.packId;
       state.byId[id] = {
         id,
         title,
@@ -79,6 +82,7 @@ const artifactsSlice = createSlice({
         updatedAt,
         runtimeCardId,
         runtimeCardCode,
+        packId,
         injectionStatus: runtimeCardCode ? (existing?.injectionStatus ?? 'pending') : existing?.injectionStatus,
         injectionError: existing?.injectionError,
       };

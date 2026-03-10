@@ -81,8 +81,41 @@ const __ui = {
   },
 };
 
+const __widgets = {
+  kanban: {
+    page(...children) {
+      const flatChildren = children.flat().filter(Boolean);
+      return { kind: 'kanban.page', children: flatChildren };
+    },
+    taxonomy(props = {}) {
+      const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
+      return { kind: 'kanban.taxonomy', props: safeProps };
+    },
+    header(props = {}) {
+      const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
+      return { kind: 'kanban.header', props: safeProps };
+    },
+    filters(props = {}) {
+      const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
+      return { kind: 'kanban.filters', props: safeProps };
+    },
+    highlights(props = {}) {
+      const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
+      return { kind: 'kanban.highlights', props: safeProps };
+    },
+    board(props = {}) {
+      const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
+      return { kind: 'kanban.board', props: safeProps };
+    },
+    status(props = {}) {
+      const safeProps = props && typeof props === 'object' && !Array.isArray(props) ? props : {};
+      return { kind: 'kanban.status', props: safeProps };
+    },
+  },
+};
+
 let __stackBundle = null;
-let __runtimeIntents = [];
+let __runtimeActions = [];
 
 function defineStackBundle(factory) {
   if (typeof factory !== 'function') {
@@ -106,10 +139,33 @@ function assertCardsMap() {
   return __stackBundle.cards;
 }
 
-function normalizeCardDefinition(cardId, definitionOrFactory) {
+function normalizePackId(packId) {
+  if (typeof packId !== 'string' || packId.trim().length === 0) {
+    return 'ui.card.v1';
+  }
+
+  return packId.trim();
+}
+
+function createPackHelpers(packId) {
+  const normalizedPackId = normalizePackId(packId);
+
+  if (normalizedPackId === 'ui.card.v1') {
+    return { ui: __ui };
+  }
+
+  if (normalizedPackId === 'kanban.v1') {
+    return { widgets: __widgets };
+  }
+
+  throw new Error('Unknown runtime pack: ' + String(normalizedPackId));
+}
+
+function normalizeCardDefinition(cardId, definitionOrFactory, packId) {
+  const normalizedPackId = normalizePackId(packId);
   const definition =
     typeof definitionOrFactory === 'function'
-      ? definitionOrFactory({ ui: __ui })
+      ? definitionOrFactory(createPackHelpers(normalizedPackId))
       : definitionOrFactory;
 
   if (!definition || typeof definition !== 'object') {
@@ -128,6 +184,7 @@ function normalizeCardDefinition(cardId, definitionOrFactory) {
     definition.handlers = {};
   }
 
+  definition.packId = normalizedPackId;
   return definition;
 }
 
@@ -145,10 +202,10 @@ function ensureCardRecord(cardId) {
   return cards[key];
 }
 
-function defineCard(cardId, definitionOrFactory) {
+function defineCard(cardId, definitionOrFactory, packId) {
   const cards = assertCardsMap();
   const key = String(cardId);
-  cards[key] = normalizeCardDefinition(key, definitionOrFactory);
+  cards[key] = normalizeCardDefinition(key, definitionOrFactory, packId);
 }
 
 function defineCardRender(cardId, renderFn) {
@@ -192,19 +249,25 @@ globalThis.__stackHost = {
       initialSessionState: __stackBundle.initialSessionState,
       initialCardState: __stackBundle.initialCardState,
       cards: Object.keys(__stackBundle.cards),
+      cardPacks: Object.fromEntries(
+        Object.entries(__stackBundle.cards).map(([key, card]) => [
+          key,
+          typeof card?.packId === 'string' && card.packId.length > 0 ? card.packId : 'ui.card.v1',
+        ]),
+      ),
     };
   },
 
-  render(cardId, cardState, sessionState, globalState) {
+  render(cardId, state) {
     const card = __stackBundle?.cards?.[cardId];
     if (!card || typeof card.render !== 'function') {
       throw new Error('Card not found or render() is missing: ' + String(cardId));
     }
 
-    return card.render({ cardState, sessionState, globalState });
+    return card.render({ state });
   },
 
-  event(cardId, handlerName, args, cardState, sessionState, globalState) {
+  event(cardId, handlerName, args, state) {
     const card = __stackBundle?.cards?.[cardId];
     if (!card) {
       throw new Error('Card not found: ' + String(cardId));
@@ -215,59 +278,25 @@ globalThis.__stackHost = {
       throw new Error('Handler not found: ' + String(handlerName));
     }
 
-    __runtimeIntents = [];
+    __runtimeActions = [];
 
-    const dispatchCardAction = (actionType, payload) => {
-      __runtimeIntents.push({
-        scope: 'card',
-        actionType: String(actionType),
-        payload,
-      });
-    };
-
-    const dispatchSessionAction = (actionType, payload) => {
-      __runtimeIntents.push({
-        scope: 'session',
-        actionType: String(actionType),
-        payload,
-      });
-    };
-
-    const dispatchDomainAction = (domain, actionType, payload) => {
-      __runtimeIntents.push({
-        scope: 'domain',
-        domain: String(domain),
-        actionType: String(actionType),
-        payload,
-      });
-    };
-
-    const dispatchSystemCommand = (command, payload) => {
-      __runtimeIntents.push({
-        scope: 'system',
-        command: String(command),
-        payload,
-      });
+    const dispatch = (action) => {
+      __runtimeActions.push(action);
     };
 
     handler(
       {
-        cardState,
-        sessionState,
-        globalState,
-        dispatchCardAction,
-        dispatchSessionAction,
-        dispatchDomainAction,
-        dispatchSystemCommand,
+        state,
+        dispatch,
       },
       args
     );
 
-    return __runtimeIntents.slice();
+    return __runtimeActions.slice();
   },
 
-  defineCard(cardId, definitionOrFactory) {
-    defineCard(cardId, definitionOrFactory);
+  defineCard(cardId, definitionOrFactory, packId) {
+    defineCard(cardId, definitionOrFactory, packId);
     return this.getMeta();
   },
 

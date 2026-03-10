@@ -1,17 +1,16 @@
 import SINGLEFILE_RELEASE_SYNC from '@jitl/quickjs-singlefile-mjs-release-sync';
 import { newQuickJSWASMModule } from 'quickjs-emscripten';
 import type { QuickJSContext, QuickJSRuntime, QuickJSWASMModule } from 'quickjs-emscripten-core';
-import { validateRuntimeIntents } from './intentSchema';
+import { validateRuntimeActions } from './intentSchema';
 import type {
   CardId,
   LoadedStackBundle,
   RuntimeErrorPayload,
-  RuntimeIntent,
+  RuntimeAction,
   SessionId,
   StackId,
 } from './contracts';
 import stackBootstrapSource from './stack-bootstrap.vm.js?raw';
-import { validateUINode } from './uiSchema';
 
 interface SessionVm {
   stackId: StackId;
@@ -125,6 +124,18 @@ function validateLoadedStackBundleMeta(stackId: StackId, sessionId: SessionId, v
     throw new Error('Stack bundle metadata initialCardState must be an object when provided');
   }
 
+  const cardPacks = value.cardPacks;
+  if (cardPacks !== undefined) {
+    if (!isRecord(cardPacks)) {
+      throw new Error('Stack bundle metadata cardPacks must be an object when provided');
+    }
+    for (const [cardId, packId] of Object.entries(cardPacks)) {
+      if (typeof cardId !== 'string' || typeof packId !== 'string') {
+        throw new Error('Stack bundle metadata cardPacks must be Record<string, string>');
+      }
+    }
+  }
+
   return {
     stackId,
     sessionId,
@@ -134,6 +145,9 @@ function validateLoadedStackBundleMeta(stackId: StackId, sessionId: SessionId, v
     initialSessionState: value.initialSessionState,
     initialCardState,
     cards,
+    cardPacks: isRecord(cardPacks) ? Object.fromEntries(
+      Object.entries(cardPacks).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+    ) : undefined,
   };
 }
 
@@ -217,11 +231,11 @@ export class QuickJSCardRuntimeService {
     }
   }
 
-  defineCard(sessionId: SessionId, cardId: CardId, code: string): LoadedStackBundle {
+  defineCard(sessionId: SessionId, cardId: CardId, code: string, packId?: string): LoadedStackBundle {
     const vm = this.getVmOrThrow(sessionId);
     evalCodeOrThrow(
       vm,
-      `globalThis.__stackHost.defineCard(${toJsLiteral(cardId)}, (${code}))`,
+      `globalThis.__stackHost.defineCard(${toJsLiteral(cardId)}, (${code}), ${toJsLiteral(packId)})`,
       `${sessionId}.define-card.js`,
       this.options.loadTimeoutMs
     );
@@ -253,21 +267,15 @@ export class QuickJSCardRuntimeService {
   renderCard(
     sessionId: SessionId,
     cardId: CardId,
-    cardState: unknown,
-    sessionState: unknown,
-    globalState: unknown
-  ) {
+    state: unknown
+  ): unknown {
     const vm = this.getVmOrThrow(sessionId);
-    const tree = evalToNative<unknown>(
+    return evalToNative<unknown>(
       vm,
-      `globalThis.__stackHost.render(${toJsLiteral(cardId)}, ${toJsLiteral(cardState)}, ${toJsLiteral(
-        sessionState
-      )}, ${toJsLiteral(globalState)})`,
+      `globalThis.__stackHost.render(${toJsLiteral(cardId)}, ${toJsLiteral(state)})`,
       `${sessionId}.render.js`,
       this.options.renderTimeoutMs
     );
-
-    return validateUINode(tree);
   }
 
   eventCard(
@@ -275,21 +283,19 @@ export class QuickJSCardRuntimeService {
     cardId: CardId,
     handler: string,
     args: unknown,
-    cardState: unknown,
-    sessionState: unknown,
-    globalState: unknown
-  ): RuntimeIntent[] {
+    state: unknown
+  ): RuntimeAction[] {
     const vm = this.getVmOrThrow(sessionId);
-    const intents = evalToNative<unknown>(
+    const actions = evalToNative<unknown>(
       vm,
       `globalThis.__stackHost.event(${toJsLiteral(cardId)}, ${toJsLiteral(handler)}, ${toJsLiteral(
         args
-      )}, ${toJsLiteral(cardState)}, ${toJsLiteral(sessionState)}, ${toJsLiteral(globalState)})`,
+      )}, ${toJsLiteral(state)})`,
       `${sessionId}.event.js`,
       this.options.eventTimeoutMs
     );
 
-    return validateRuntimeIntents(intents);
+    return validateRuntimeActions(actions);
   }
 
   disposeSession(sessionId: SessionId): boolean {

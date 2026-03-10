@@ -3,7 +3,7 @@
  * into plugin sessions after bundle loading.
  *
  * Flow:
- * 1. Chat receives card.v2 event → calls registerRuntimeCard(cardId, code)
+ * 1. Chat receives card.v2 event → calls registerRuntimeCard(cardId, code, packId)
  * 2. PluginCardSessionHost finishes loadStackBundle → calls injectPendingCards(service, sessionId)
  * 3. injectPendingCards iterates the registry, calls service.defineCard() for each
  */
@@ -11,6 +11,7 @@
 export interface RuntimeCardDefinition {
   cardId: string;
   code: string;
+  packId?: string;
   registeredAt: number;
 }
 
@@ -28,8 +29,13 @@ const registry = new Map<string, RuntimeCardDefinition>();
 const listeners = new Set<() => void>();
 
 /** Register a runtime card definition for injection into future sessions. */
-export function registerRuntimeCard(cardId: string, code: string): void {
-  registry.set(cardId, { cardId, code, registeredAt: Date.now() });
+export function registerRuntimeCard(cardId: string, code: string, packId?: string): void {
+  registry.set(cardId, {
+    cardId,
+    code,
+    packId: typeof packId === 'string' && packId.trim().length > 0 ? packId.trim() : undefined,
+    registeredAt: Date.now(),
+  });
   listeners.forEach((fn) => fn());
 }
 
@@ -66,21 +72,21 @@ export function clearRuntimeCardRegistry(): void {
  * Returns the list of card IDs that were successfully injected.
  */
 export function injectPendingCards(
-  service: { defineCard(sessionId: string, cardId: string, code: string): unknown },
+  service: { defineCard(sessionId: string, cardId: string, code: string, packId?: string): unknown },
   sessionId: string,
 ): string[] {
   return injectPendingCardsWithReport(service, sessionId).injected;
 }
 
 export function injectPendingCardsWithReport(
-  service: { defineCard(sessionId: string, cardId: string, code: string): unknown },
+  service: { defineCard(sessionId: string, cardId: string, code: string, packId?: string): unknown },
   sessionId: string,
 ): RuntimeCardInjectionResult {
   const injected: string[] = [];
   const failed: RuntimeCardInjectionFailure[] = [];
   for (const def of registry.values()) {
     try {
-      service.defineCard(sessionId, def.cardId, def.code);
+      service.defineCard(sessionId, def.cardId, def.code, def.packId);
       injected.push(def.cardId);
     } catch (err) {
       console.error(`[runtimeCardRegistry] Failed to inject card ${def.cardId} into ${sessionId}:`, err);

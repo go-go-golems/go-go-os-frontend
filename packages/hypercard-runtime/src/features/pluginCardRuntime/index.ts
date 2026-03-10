@@ -11,7 +11,7 @@ export {
   dequeuePendingDomainIntent,
   dequeuePendingNavIntent,
   dequeuePendingSystemIntent,
-  ingestRuntimeIntent,
+  ingestRuntimeAction,
   pluginCardRuntimeReducer,
   registerRuntimeSession,
   removeRuntimeSession,

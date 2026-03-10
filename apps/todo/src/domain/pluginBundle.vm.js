@@ -14,16 +14,20 @@ defineStackBundle(({ ui }) => {
     return String(value);
   }
 
-  function domains(globalState) {
-    return asRecord(asRecord(globalState).domains);
+  function draftState(state) {
+    return asRecord(asRecord(state).draft);
   }
 
-  function selectTasks(globalState) {
-    return asArray(asRecord(domains(globalState).tasks).tasks);
+  function filtersState(state) {
+    return asRecord(asRecord(state).filters);
   }
 
-  function navParam(globalState) {
-    const param = asRecord(asRecord(globalState).nav).param;
+  function selectTasks(state) {
+    return asArray(asRecord(asRecord(state).tasks).tasks);
+  }
+
+  function navParam(state) {
+    const param = asRecord(asRecord(state).nav).param;
     return typeof param === 'string' ? param : '';
   }
 
@@ -54,18 +58,43 @@ defineStackBundle(({ ui }) => {
     });
   }
 
-  function findTask(globalState, id) {
+  function findTask(state, id) {
     const target = toText(id).toLowerCase();
-    return selectTasks(globalState).find((task) => toText(asRecord(task).id).toLowerCase() === target) || null;
+    return selectTasks(state).find((task) => toText(asRecord(task).id).toLowerCase() === target) || null;
   }
 
-  function withCardState(cardState) {
-    const state = asRecord(cardState);
+  function withDraftState(state) {
+    const draft = draftState(state);
     return {
-      edits: asRecord(state.edits),
-      form: asRecord(state.form),
-      submitResult: toText(state.submitResult),
+      edits: asRecord(draft.edits),
+      form: asRecord(draft.form),
+      submitResult: toText(draft.submitResult),
     };
+  }
+
+  function dispatchDomain(context, actionType, payload) {
+    context.dispatch({ type: 'tasks/' + actionType, payload });
+  }
+
+  function patchDraft(context, payload) {
+    context.dispatch({ type: 'draft.patch', payload });
+  }
+
+  function setDraft(context, path, value) {
+    context.dispatch({ type: 'draft.set', payload: { path, value } });
+  }
+
+  function navigate(context, cardId, param) {
+    const payload = param ? { cardId, param: toText(param) } : { cardId };
+    context.dispatch({ type: 'nav.go', payload });
+  }
+
+  function goBack(context) {
+    context.dispatch({ type: 'nav.back' });
+  }
+
+  function notify(context, message) {
+    context.dispatch({ type: 'notify.show', payload: { message: toText(message) } });
   }
 
   function renderTaskList(title, items, emptyMessage) {
@@ -110,69 +139,60 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            dispatchSystemCommand('nav.go', { cardId: toText(asRecord(args).cardId, 'home') });
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
         },
       },
 
       browse: {
-        render({ globalState }) {
-          return renderTaskList('All Tasks', selectTasks(globalState), 'No tasks yet.');
+        render({ state }) {
+          return renderTaskList('All Tasks', selectTasks(state), 'No tasks yet.');
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            dispatchSystemCommand('nav.go', { cardId: toText(asRecord(args).cardId, 'home') });
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
-          openTask({ dispatchSystemCommand }, args) {
-            dispatchSystemCommand('nav.go', {
-              cardId: 'taskDetail',
-              param: toText(asRecord(args).id),
-            });
+          openTask(context, args) {
+            navigate(context, 'taskDetail', toText(asRecord(args).id));
           },
         },
       },
 
       inProgress: {
-        render({ globalState }) {
-          const tasks = selectTasks(globalState).filter((task) => toText(asRecord(task).status) === 'doing');
+        render({ state }) {
+          const tasks = selectTasks(state).filter((task) => toText(asRecord(task).status) === 'doing');
           return renderTaskList('In Progress', tasks, 'Nothing in progress — pick something up! 💪');
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            dispatchSystemCommand('nav.go', { cardId: toText(asRecord(args).cardId, 'home') });
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
-          openTask({ dispatchSystemCommand }, args) {
-            dispatchSystemCommand('nav.go', {
-              cardId: 'taskDetail',
-              param: toText(asRecord(args).id),
-            });
+          openTask(context, args) {
+            navigate(context, 'taskDetail', toText(asRecord(args).id));
           },
         },
       },
 
       completed: {
-        render({ globalState }) {
-          const tasks = selectTasks(globalState).filter((task) => toText(asRecord(task).status) === 'done');
+        render({ state }) {
+          const tasks = selectTasks(state).filter((task) => toText(asRecord(task).status) === 'done');
           return renderTaskList('Completed', tasks, 'No completed tasks yet. Get to work! 🚀');
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            dispatchSystemCommand('nav.go', { cardId: toText(asRecord(args).cardId, 'home') });
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
-          openTask({ dispatchSystemCommand }, args) {
-            dispatchSystemCommand('nav.go', {
-              cardId: 'taskDetail',
-              param: toText(asRecord(args).id),
-            });
+          openTask(context, args) {
+            navigate(context, 'taskDetail', toText(asRecord(args).id));
           },
         },
       },
 
       taskDetail: {
-        render({ cardState, globalState }) {
-          const id = navParam(globalState);
-          const task = findTask(globalState, id);
+        render({ state }) {
+          const id = navParam(state);
+          const task = findTask(state, id);
           if (!task) {
             return ui.panel([
               ui.text('Task not found: ' + toText(id, '(none)')),
@@ -180,8 +200,8 @@ defineStackBundle(({ ui }) => {
             ]);
           }
 
-          const state = withCardState(cardState);
-          const current = { ...asRecord(task), ...state.edits };
+          const draft = withDraftState(state);
+          const current = { ...asRecord(task), ...draft.edits };
 
           return ui.panel([
             ui.text('Task Detail: ' + toText(current.id)),
@@ -213,53 +233,50 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          back({ dispatchSystemCommand }) {
-            dispatchSystemCommand('nav.back');
+          back(context) {
+            goBack(context);
           },
-          change({ dispatchCardAction }, args) {
+          change(context, args) {
             const field = toText(asRecord(args).field);
             if (!field) return;
-            dispatchCardAction('set', {
-              path: 'edits.' + field,
-              value: asRecord(args).value,
-            });
+            setDraft(context, 'edits.' + field, asRecord(args).value);
           },
-          setStatus({ dispatchDomainAction, globalState }, args) {
-            const id = navParam(globalState);
+          setStatus(context, args) {
+            const id = navParam(context.state);
             if (!id) return;
-            dispatchDomainAction('tasks', 'setStatus', {
+            dispatchDomain(context, 'setStatus', {
               id,
               status: toText(asRecord(args).status, 'todo'),
             });
           },
-          save({ dispatchCardAction, dispatchDomainAction, dispatchSystemCommand, cardState, globalState }) {
-            const id = navParam(globalState);
+          save(context) {
+            const id = navParam(context.state);
             if (!id) return;
-            dispatchDomainAction('tasks', 'saveTask', {
+            dispatchDomain(context, 'saveTask', {
               id,
-              edits: asRecord(asRecord(cardState).edits),
+              edits: asRecord(draftState(context.state).edits),
             });
-            dispatchCardAction('patch', { edits: {} });
-            dispatchSystemCommand('notify', { message: 'Saved task ' + id });
+            patchDraft(context, { edits: {} });
+            notify(context, 'Saved task ' + id);
           },
-          remove({ dispatchDomainAction, dispatchSystemCommand, globalState }) {
-            const id = navParam(globalState);
+          remove(context) {
+            const id = navParam(context.state);
             if (!id) return;
-            dispatchDomainAction('tasks', 'deleteTask', { id });
-            dispatchSystemCommand('notify', { message: 'Deleted task ' + id });
-            dispatchSystemCommand('nav.back');
+            dispatchDomain(context, 'deleteTask', { id });
+            notify(context, 'Deleted task ' + id);
+            goBack(context);
           },
         },
       },
 
       newTask: {
-        render({ cardState, sessionState }) {
-          const state = withCardState(cardState);
-          const defaultPriority = toText(asRecord(sessionState).defaultPriority, 'medium');
+        render({ state }) {
+          const draft = withDraftState(state);
+          const defaultPriority = toText(filtersState(state).defaultPriority, 'medium');
           const form = {
-            title: toText(state.form.title),
-            priority: toText(state.form.priority, defaultPriority),
-            due: toText(state.form.due),
+            title: toText(draft.form.title),
+            priority: toText(draft.form.priority, defaultPriority),
+            due: toText(draft.form.due),
           };
 
           return ui.panel([
@@ -276,7 +293,7 @@ defineStackBundle(({ ui }) => {
               ui.text('Due:'),
               ui.input(form.due, { onChange: { handler: 'change', args: { field: 'due' } } }),
             ]),
-            state.submitResult ? ui.badge(state.submitResult) : ui.text(''),
+            draft.submitResult ? ui.badge(draft.submitResult) : ui.text(''),
             ui.row([
               ui.button('➕ Create Task', { onClick: { handler: 'submit' } }),
               ui.button('🏠 Home', { onClick: { handler: 'goHome' } }),
@@ -284,40 +301,34 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          change({ dispatchCardAction }, args) {
+          change(context, args) {
             const field = toText(asRecord(args).field);
             if (!field) return;
-            dispatchCardAction('set', {
-              path: 'form.' + field,
-              value: toText(asRecord(args).value),
-            });
+            setDraft(context, 'form.' + field, toText(asRecord(args).value));
           },
-          submit({ dispatchCardAction, dispatchDomainAction, dispatchSystemCommand, cardState, sessionState }) {
-            const form = asRecord(asRecord(cardState).form);
+          submit(context) {
+            const form = asRecord(draftState(context.state).form);
             const title = toText(form.title).trim();
             if (!title) {
-              dispatchCardAction('set', {
-                path: 'submitResult',
-                value: '❌ Title is required',
-              });
+              setDraft(context, 'submitResult', '❌ Title is required');
               return;
             }
 
-            const defaultPriority = toText(asRecord(sessionState).defaultPriority, 'medium');
-            dispatchDomainAction('tasks', 'createTask', {
+            const defaultPriority = toText(filtersState(context.state).defaultPriority, 'medium');
+            dispatchDomain(context, 'createTask', {
               title,
               priority: toText(form.priority, defaultPriority),
               due: toText(form.due).trim() || undefined,
             });
 
-            dispatchCardAction('patch', {
+            patchDraft(context, {
               form: { title: '', priority: defaultPriority, due: '' },
               submitResult: '✅ Task created',
             });
-            dispatchSystemCommand('notify', { message: 'Task created' });
+            notify(context, 'Task created');
           },
-          goHome({ dispatchSystemCommand }) {
-            dispatchSystemCommand('nav.go', { cardId: 'home' });
+          goHome(context) {
+            navigate(context, 'home');
           },
         },
       },

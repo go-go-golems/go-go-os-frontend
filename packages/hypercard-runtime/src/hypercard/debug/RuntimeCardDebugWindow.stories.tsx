@@ -6,6 +6,7 @@ import type { CardStackDefinition } from '@hypercard/engine';
 import { RuntimeCardDebugWindow } from './RuntimeCardDebugWindow';
 import { upsertArtifact } from '../artifacts/artifactsSlice';
 import { clearRuntimeCardRegistry, registerRuntimeCard } from '../../plugin-runtime';
+import { clearRegisteredRuntimeDebugStacks, registerRuntimeDebugStacks } from './runtimeDebugRegistry';
 
 const STORY_STACK: CardStackDefinition = {
   id: 'inventory',
@@ -31,6 +32,23 @@ const STORY_STACK: CardStackDefinition = {
   },
 };
 
+const SECOND_STACK: CardStackDefinition = {
+  id: 'os-launcher',
+  name: 'go-go-os Launcher',
+  icon: '🖥️',
+  homeCard: 'home',
+  plugin: { bundleCode: '' },
+  cards: {
+    home: {
+      id: 'home',
+      type: 'report',
+      title: 'Launcher Home',
+      icon: '🏠',
+      ui: {},
+    },
+  },
+};
+
 function RuntimeCardDebugStory() {
   const { createStore } = createAppStore({});
   const storeRef = useRef<ReturnType<typeof createStore> | null>(null);
@@ -40,6 +58,8 @@ function RuntimeCardDebugStory() {
 
   useEffect(() => {
     clearRuntimeCardRegistry();
+    clearRegisteredRuntimeDebugStacks();
+    registerRuntimeDebugStacks([STORY_STACK, SECOND_STACK]);
 
     registerRuntimeCard(
       'lowStockDrilldown',
@@ -67,7 +87,7 @@ function RuntimeCardDebugStory() {
   return (
     <Provider store={storeRef.current}>
       <div style={{ width: 980, height: 620, background: '#f4f4f6' }}>
-        <RuntimeCardDebugWindow stacks={[STORY_STACK]} />
+        <RuntimeCardDebugWindow ownerAppId="hypercard-runtime-debug" />
       </div>
     </Provider>
   );

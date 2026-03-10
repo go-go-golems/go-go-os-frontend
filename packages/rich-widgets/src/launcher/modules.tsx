@@ -1,17 +1,23 @@
 import { combineReducers } from '@reduxjs/toolkit';
-import type { LaunchableAppModule } from '@hypercard/desktop-os';
-import type { OpenWindowPayload } from '@hypercard/engine/desktop-core';
-import type { ReactNode } from 'react';
+import {
+  formatAppKey,
+  type LaunchableAppModule,
+  type LaunchableAppRenderParams,
+} from '@hypercard/desktop-os';
+import { openWindow, type OpenWindowPayload } from '@hypercard/engine/desktop-core';
+import { DesktopIconLayer, type DesktopIconDef } from '@hypercard/engine/desktop-react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { RICH_PARTS } from '../parts';
 import {
   richWidgetsLauncherActions,
   richWidgetsLauncherReducer,
 } from './richWidgetsLauncherState';
+
+import { LogViewer } from '../log-viewer/LogViewer';
 import {
   LOG_VIEWER_STATE_KEY,
   logViewerReducer,
 } from '../log-viewer/logViewerState';
-
-import { LogViewer } from '../log-viewer/LogViewer';
 import { ChartView } from '../chart-view/ChartView';
 import {
   CHART_VIEW_STATE_KEY,
@@ -27,6 +33,7 @@ import {
   KANBAN_STATE_KEY,
   kanbanReducer,
 } from '../kanban/kanbanState';
+import { KANBAN_EXAMPLE_BOARDS } from '../kanban/exampleBoards';
 import { MacRepl } from '../repl/MacRepl';
 import {
   MAC_REPL_STATE_KEY,
@@ -124,38 +131,96 @@ import {
 } from '../mac-browser/macBrowserState';
 
 type LaunchReason = 'icon' | 'menu' | 'command' | 'startup';
+type RichWidgetsInstanceId = 'folder' | `widget~${string}`;
+type RichWidgetsFolderId = 'root' | 'kanban';
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+interface RichWidgetDef {
+  id: string;
+  name: string;
+  icon: string;
+  order: number;
+  w: number;
+  h: number;
+  render: () => ReactNode;
+}
 
-function buildWindow(
-  appId: string,
-  title: string,
-  icon: string,
-  w: number,
-  h: number,
-  reason: LaunchReason,
-): OpenWindowPayload {
+export const RICH_WIDGETS: readonly RichWidgetDef[] = [
+  { id: 'log-viewer', name: 'Log Viewer', icon: '\uD83D\uDCCB', order: 100, w: 900, h: 600, render: () => <LogViewer /> },
+  { id: 'chart-view', name: 'Chart View', icon: '\uD83D\uDCC8', order: 101, w: 800, h: 560, render: () => <ChartView /> },
+  { id: 'mac-write', name: 'MacWrite', icon: '\u270D\uFE0F', order: 102, w: 800, h: 620, render: () => <MacWrite /> },
+  { id: 'kanban-board', name: 'Kanban Board', icon: '\uD83D\uDCCB', order: 103, w: 960, h: 640, render: () => <KanbanBoard /> },
+  ...KANBAN_EXAMPLE_BOARDS.map((board, index) => ({
+    id: board.id,
+    name: board.name,
+    icon: board.icon,
+    order: 103.1 + (index / 10),
+    w: 960,
+    h: 640,
+    render: () => <KanbanBoard {...board.props} />,
+  })),
+  { id: 'mac-repl', name: 'MacRepl', icon: '\uD83D\uDCBB', order: 104, w: 720, h: 480, render: () => <MacRepl /> },
+  { id: 'node-editor', name: 'Node Editor', icon: '\uD83D\uDD17', order: 105, w: 900, h: 600, render: () => <NodeEditor /> },
+  { id: 'oscilloscope', name: 'Oscilloscope', icon: '\uD83D\uDCDF', order: 106, w: 800, h: 560, render: () => <Oscilloscope /> },
+  { id: 'logic-analyzer', name: 'Logic Analyzer', icon: '\uD83D\uDD0C', order: 107, w: 900, h: 560, render: () => <LogicAnalyzer /> },
+  { id: 'mac-calendar', name: 'Calendar', icon: '\uD83D\uDCC5', order: 108, w: 840, h: 600, render: () => <MacCalendar /> },
+  { id: 'graph-navigator', name: 'Graph Navigator', icon: '\uD83C\uDF10', order: 109, w: 900, h: 640, render: () => <GraphNavigator /> },
+  { id: 'mac-calc', name: 'MacCalc', icon: '\uD83E\uDDEE', order: 110, w: 880, h: 600, render: () => <MacCalc /> },
+  { id: 'deep-research', name: 'Deep Research', icon: '\uD83D\uDD0D', order: 111, w: 860, h: 620, render: () => <DeepResearch /> },
+  { id: 'game-finder', name: 'Game Finder', icon: '\uD83C\uDFAE', order: 112, w: 900, h: 640, render: () => <GameFinder /> },
+  { id: 'retro-music-player', name: 'Music Player', icon: '\uD83C\uDFB5', order: 113, w: 880, h: 600, render: () => <RetroMusicPlayer /> },
+  { id: 'stream-launcher', name: 'Streams', icon: '\uD83D\uDCFA', order: 114, w: 900, h: 640, render: () => <StreamLauncher /> },
+  { id: 'steam-launcher', name: 'Game Library', icon: '\uD83D\uDD79\uFE0F', order: 115, w: 960, h: 680, render: () => <SteamLauncher /> },
+  { id: 'youtube-retro', name: 'RetroTube', icon: '\uD83C\uDFAC', order: 116, w: 960, h: 680, render: () => <YouTubeRetro /> },
+  { id: 'chat-browser', name: 'Chat Browser', icon: '\uD83D\uDDC4\uFE0F', order: 117, w: 900, h: 600, render: () => <ChatBrowser /> },
+  { id: 'system-modeler', name: 'SystemModeler', icon: '\uD83D\uDDA5\uFE0F', order: 118, w: 960, h: 640, render: () => <SystemModeler /> },
+  { id: 'control-room', name: 'Control Room', icon: '\uD83C\uDFDB\uFE0F', order: 119, w: 960, h: 700, render: () => <ControlRoom /> },
+  { id: 'mac-slides', name: 'MacSlides', icon: '\uD83D\uDDBC\uFE0F', order: 120, w: 980, h: 680, render: () => <MacSlides fileName="Launcher Deck" /> },
+  { id: 'mermaid-editor', name: 'MermaidEditor', icon: '\uD83E\uDDED', order: 121, w: 980, h: 680, render: () => <MermaidEditor /> },
+  { id: 'mac-browser', name: 'MacBrowser', icon: '\uD83C\uDF10', order: 122, w: 920, h: 680, render: () => <MacBrowser /> },
+];
+
+const RICH_WIDGETS_BY_ID = new Map(RICH_WIDGETS.map((widget) => [widget.id, widget]));
+const KANBAN_FOLDER_ICON_ID = 'folder.kanban';
+const KANBAN_WIDGET_IDS = new Set<string>([
+  'kanban-board',
+  ...KANBAN_EXAMPLE_BOARDS.map((board) => board.id),
+]);
+
+function buildWidgetWindow(widget: RichWidgetDef, reason: LaunchReason): OpenWindowPayload {
   return {
-    id: `window:${appId}:${Date.now()}`,
-    title,
-    icon,
-    bounds: { x: 100 + Math.floor(Math.random() * 80), y: 60 + Math.floor(Math.random() * 40), w, h },
-    content: { kind: 'app' as const, appKey: appId },
-    dedupeKey: reason === 'startup' ? `${appId}:startup` : appId,
+    id: `window:rich-widgets:${widget.id}`,
+    title: widget.name,
+    icon: widget.icon,
+    bounds: {
+      x: 100 + Math.floor(Math.random() * 80),
+      y: 60 + Math.floor(Math.random() * 40),
+      w: widget.w,
+      h: widget.h,
+    },
+    content: {
+      kind: 'app',
+      appKey: formatAppKey('rich-widgets', `widget~${widget.id}`),
+    },
+    dedupeKey: reason === 'startup' ? `rich-widgets:${widget.id}:startup` : `rich-widgets:${widget.id}`,
   };
 }
 
-function widget(
-  id: string,
-  name: string,
-  icon: string,
-  order: number,
-  w: number,
-  h: number,
-  render: () => ReactNode,
-): LaunchableAppModule {
+function buildFolderWindow(reason: LaunchReason): OpenWindowPayload {
+  return {
+    id: 'window:rich-widgets:folder',
+    title: 'Rich Widgets',
+    icon: '\uD83D\uDDC2\uFE0F',
+    bounds: { x: 150, y: 48, w: 980, h: 640 },
+    content: {
+      kind: 'app',
+      appKey: formatAppKey('rich-widgets', 'folder'),
+    },
+    dedupeKey: reason === 'startup' ? 'rich-widgets:folder:startup' : 'rich-widgets:folder',
+  };
+}
+
+function widget(widgetDef: RichWidgetDef): LaunchableAppModule {
+  const { id, name, icon, order, render } = widgetDef;
   return {
     manifest: { id, name, icon, launch: { mode: 'window' }, desktop: { order } },
     buildLaunchWindow: (
@@ -163,21 +228,148 @@ function widget(
       reason: LaunchReason,
     ) => {
       ctx.dispatch(richWidgetsLauncherActions.markLaunched({ appId: id, reason }));
-      return buildWindow(id, name, icon, w, h, reason);
+      return buildWidgetWindow(widgetDef, reason);
     },
     renderWindow: () => render(),
   };
 }
 
-// ---------------------------------------------------------------------------
-// Widget launcher modules
-// ---------------------------------------------------------------------------
+function RichWidgetsFolderWindow({
+  dispatchWindowAction,
+}: {
+  dispatchWindowAction: (action: unknown) => unknown;
+}) {
+  const [selectedIconId, setSelectedIconId] = useState<string | null>(null);
+  const [currentFolder, setCurrentFolder] = useState<RichWidgetsFolderId>('root');
+  const icons = useMemo<DesktopIconDef[]>(
+    () => {
+      if (currentFolder === 'kanban') {
+        return RICH_WIDGETS
+          .filter((widgetDef) => KANBAN_WIDGET_IDS.has(widgetDef.id))
+          .map((widgetDef) => ({
+            id: widgetDef.id,
+            label: widgetDef.name,
+            icon: widgetDef.icon,
+            kind: 'app',
+            appId: 'rich-widgets',
+          }));
+      }
+
+      const rootIcons = RICH_WIDGETS
+        .filter((widgetDef) => !KANBAN_WIDGET_IDS.has(widgetDef.id))
+        .map((widgetDef) => ({
+          id: widgetDef.id,
+          label: widgetDef.name,
+          icon: widgetDef.icon,
+          kind: 'app',
+          appId: 'rich-widgets',
+        }));
+
+      rootIcons.splice(3, 0, {
+        id: KANBAN_FOLDER_ICON_ID,
+        label: 'Kanban',
+        icon: '\uD83D\uDCC1',
+        kind: 'folder',
+        appId: 'rich-widgets',
+      });
+
+      return rootIcons;
+    },
+    [currentFolder],
+  );
+
+  return (
+    <section data-part={RICH_PARTS.rwLauncher}>
+      <header data-part={RICH_PARTS.rwLauncherHeader}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {currentFolder !== 'root' ? (
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentFolder('root');
+                setSelectedIconId(null);
+              }}
+              style={{ fontSize: 11 }}
+            >
+              Back
+            </button>
+          ) : null}
+          <strong>{currentFolder === 'root' ? 'Rich Widgets' : 'Rich Widgets / Kanban'}</strong>
+        </div>
+        <span data-part={RICH_PARTS.rwLauncherHint}>
+          {currentFolder === 'root'
+            ? 'Double-click an icon to open the widget in its own launcher window.'
+            : 'Open a concrete Kanban board preset or the base Kanban board.'}
+        </span>
+      </header>
+      <DesktopIconLayer
+        icons={icons}
+        selectedIconId={selectedIconId}
+        onSelectIcon={setSelectedIconId}
+        onOpenIcon={(iconId: string) => {
+          if (iconId === KANBAN_FOLDER_ICON_ID) {
+            setCurrentFolder('kanban');
+            setSelectedIconId(null);
+            return;
+          }
+          const widgetDef = RICH_WIDGETS_BY_ID.get(iconId);
+          if (!widgetDef) {
+            return;
+          }
+          setSelectedIconId(iconId);
+          dispatchWindowAction(openWindow(buildWidgetWindow(widgetDef, 'icon')));
+        }}
+      />
+    </section>
+  );
+}
+
+function renderRichWidgetsWindow(
+  instanceId: RichWidgetsInstanceId,
+  dispatchWindowAction: (action: unknown) => unknown,
+): ReactNode {
+  if (instanceId === 'folder') {
+    return <RichWidgetsFolderWindow dispatchWindowAction={dispatchWindowAction} />;
+  }
+
+  const widgetId = instanceId.replace(/^widget~/, '').trim();
+  const widgetDef = RICH_WIDGETS_BY_ID.get(widgetId);
+  if (!widgetDef) {
+    return (
+      <section style={{ padding: 12, display: 'grid', gap: 8 }}>
+        <strong>Unknown rich widget window</strong>
+        <span>Unable to resolve widget instance: {instanceId}</span>
+      </section>
+    );
+  }
+
+  return <>{widgetDef.render()}</>;
+}
+
+export const richWidgetsLauncherModule: LaunchableAppModule = {
+  manifest: {
+    id: 'rich-widgets',
+    name: 'Rich Widgets',
+    icon: '\uD83D\uDDC2\uFE0F',
+    launch: { mode: 'window' },
+    desktop: {
+      order: 999,
+    },
+  },
+  buildLaunchWindow: (
+    _ctx: { dispatch: (action: unknown) => unknown },
+    reason: LaunchReason,
+  ) => buildFolderWindow(reason),
+  renderWindow: ({ instanceId, ctx }: LaunchableAppRenderParams) =>
+    renderRichWidgetsWindow(instanceId as RichWidgetsInstanceId, ctx.dispatch),
+};
+
+function widgetModule(widgetDef: RichWidgetDef): LaunchableAppModule {
+  return widget(widgetDef);
+}
 
 export const logViewerModule: LaunchableAppModule = {
-  ...widget(
-    'log-viewer', 'Log Viewer', '\uD83D\uDCCB', 100, 900, 600,
-    () => <LogViewer />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('log-viewer')!),
   state: {
     stateKey: LOG_VIEWER_STATE_KEY,
     reducer: combineReducers({
@@ -188,10 +380,7 @@ export const logViewerModule: LaunchableAppModule = {
 };
 
 export const chartViewModule: LaunchableAppModule = {
-  ...widget(
-    'chart-view', 'Chart View', '\uD83D\uDCC8', 101, 800, 560,
-    () => <ChartView />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('chart-view')!),
   state: {
     stateKey: CHART_VIEW_STATE_KEY,
     reducer: chartViewReducer,
@@ -199,10 +388,7 @@ export const chartViewModule: LaunchableAppModule = {
 };
 
 export const macWriteModule: LaunchableAppModule = {
-  ...widget(
-    'mac-write', 'MacWrite', '\u270D\uFE0F', 102, 800, 620,
-    () => <MacWrite />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('mac-write')!),
   state: {
     stateKey: MAC_WRITE_STATE_KEY,
     reducer: macWriteReducer,
@@ -210,10 +396,7 @@ export const macWriteModule: LaunchableAppModule = {
 };
 
 export const kanbanBoardModule: LaunchableAppModule = {
-  ...widget(
-    'kanban-board', 'Kanban Board', '\uD83D\uDCCB', 103, 960, 640,
-    () => <KanbanBoard />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('kanban-board')!),
   state: {
     stateKey: KANBAN_STATE_KEY,
     reducer: kanbanReducer,
@@ -221,10 +404,7 @@ export const kanbanBoardModule: LaunchableAppModule = {
 };
 
 export const macReplModule: LaunchableAppModule = {
-  ...widget(
-    'mac-repl', 'MacRepl', '\uD83D\uDCBB', 104, 720, 480,
-    () => <MacRepl />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('mac-repl')!),
   state: {
     stateKey: MAC_REPL_STATE_KEY,
     reducer: macReplReducer,
@@ -232,10 +412,7 @@ export const macReplModule: LaunchableAppModule = {
 };
 
 export const nodeEditorModule: LaunchableAppModule = {
-  ...widget(
-    'node-editor', 'Node Editor', '\uD83D\uDD17', 105, 900, 600,
-    () => <NodeEditor />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('node-editor')!),
   state: {
     stateKey: NODE_EDITOR_STATE_KEY,
     reducer: nodeEditorReducer,
@@ -243,10 +420,7 @@ export const nodeEditorModule: LaunchableAppModule = {
 };
 
 export const oscilloscopeModule: LaunchableAppModule = {
-  ...widget(
-    'oscilloscope', 'Oscilloscope', '\uD83D\uDCDF', 106, 800, 560,
-    () => <Oscilloscope />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('oscilloscope')!),
   state: {
     stateKey: OSCILLOSCOPE_STATE_KEY,
     reducer: oscilloscopeReducer,
@@ -254,10 +428,7 @@ export const oscilloscopeModule: LaunchableAppModule = {
 };
 
 export const logicAnalyzerModule: LaunchableAppModule = {
-  ...widget(
-    'logic-analyzer', 'Logic Analyzer', '\uD83D\uDD0C', 107, 900, 560,
-    () => <LogicAnalyzer />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('logic-analyzer')!),
   state: {
     stateKey: LOGIC_ANALYZER_STATE_KEY,
     reducer: logicAnalyzerReducer,
@@ -265,10 +436,7 @@ export const logicAnalyzerModule: LaunchableAppModule = {
 };
 
 export const macCalendarModule: LaunchableAppModule = {
-  ...widget(
-    'mac-calendar', 'Calendar', '\uD83D\uDCC5', 108, 840, 600,
-    () => <MacCalendar />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('mac-calendar')!),
   state: {
     stateKey: MAC_CALENDAR_STATE_KEY,
     reducer: macCalendarReducer,
@@ -276,10 +444,7 @@ export const macCalendarModule: LaunchableAppModule = {
 };
 
 export const macSlidesModule: LaunchableAppModule = {
-  ...widget(
-    'mac-slides', 'MacSlides', '\uD83D\uDDBC\uFE0F', 120, 980, 680,
-    () => <MacSlides fileName="Launcher Deck" />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('mac-slides')!),
   state: {
     stateKey: MAC_SLIDES_STATE_KEY,
     reducer: macSlidesReducer,
@@ -287,10 +452,7 @@ export const macSlidesModule: LaunchableAppModule = {
 };
 
 export const graphNavigatorModule: LaunchableAppModule = {
-  ...widget(
-    'graph-navigator', 'Graph Navigator', '\uD83C\uDF10', 109, 900, 640,
-    () => <GraphNavigator />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('graph-navigator')!),
   state: {
     stateKey: GRAPH_NAVIGATOR_STATE_KEY,
     reducer: graphNavigatorReducer,
@@ -298,10 +460,7 @@ export const graphNavigatorModule: LaunchableAppModule = {
 };
 
 export const macCalcModule: LaunchableAppModule = {
-  ...widget(
-    'mac-calc', 'MacCalc', '\uD83E\uDDEE', 110, 880, 600,
-    () => <MacCalc />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('mac-calc')!),
   state: {
     stateKey: MAC_CALC_STATE_KEY,
     reducer: macCalcReducer,
@@ -309,10 +468,7 @@ export const macCalcModule: LaunchableAppModule = {
 };
 
 export const deepResearchModule: LaunchableAppModule = {
-  ...widget(
-    'deep-research', 'Deep Research', '\uD83D\uDD0D', 111, 860, 620,
-    () => <DeepResearch />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('deep-research')!),
   state: {
     stateKey: DEEP_RESEARCH_STATE_KEY,
     reducer: deepResearchReducer,
@@ -320,10 +476,7 @@ export const deepResearchModule: LaunchableAppModule = {
 };
 
 export const gameFinderModule: LaunchableAppModule = {
-  ...widget(
-    'game-finder', 'Game Finder', '\uD83C\uDFAE', 112, 900, 640,
-    () => <GameFinder />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('game-finder')!),
   state: {
     stateKey: GAME_FINDER_STATE_KEY,
     reducer: gameFinderReducer,
@@ -331,10 +484,7 @@ export const gameFinderModule: LaunchableAppModule = {
 };
 
 export const retroMusicPlayerModule: LaunchableAppModule = {
-  ...widget(
-    'retro-music-player', 'Music Player', '\uD83C\uDFB5', 113, 880, 600,
-    () => <RetroMusicPlayer />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('retro-music-player')!),
   state: {
     stateKey: MUSIC_PLAYER_STATE_KEY,
     reducer: musicPlayerReducer,
@@ -342,10 +492,7 @@ export const retroMusicPlayerModule: LaunchableAppModule = {
 };
 
 export const streamLauncherModule: LaunchableAppModule = {
-  ...widget(
-    'stream-launcher', 'Streams', '\uD83D\uDCFA', 114, 900, 640,
-    () => <StreamLauncher />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('stream-launcher')!),
   state: {
     stateKey: STREAM_LAUNCHER_STATE_KEY,
     reducer: streamLauncherReducer,
@@ -353,10 +500,7 @@ export const streamLauncherModule: LaunchableAppModule = {
 };
 
 export const steamLauncherModule: LaunchableAppModule = {
-  ...widget(
-    'steam-launcher', 'Game Library', '\uD83D\uDD79\uFE0F', 115, 960, 680,
-    () => <SteamLauncher />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('steam-launcher')!),
   state: {
     stateKey: STEAM_LAUNCHER_STATE_KEY,
     reducer: steamLauncherReducer,
@@ -364,10 +508,7 @@ export const steamLauncherModule: LaunchableAppModule = {
 };
 
 export const youtubeRetroModule: LaunchableAppModule = {
-  ...widget(
-    'youtube-retro', 'RetroTube', '\uD83C\uDFAC', 116, 960, 680,
-    () => <YouTubeRetro />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('youtube-retro')!),
   state: {
     stateKey: YOUTUBE_RETRO_STATE_KEY,
     reducer: youTubeRetroReducer,
@@ -375,10 +516,7 @@ export const youtubeRetroModule: LaunchableAppModule = {
 };
 
 export const chatBrowserModule: LaunchableAppModule = {
-  ...widget(
-    'chat-browser', 'Chat Browser', '\uD83D\uDDC4\uFE0F', 117, 900, 600,
-    () => <ChatBrowser />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('chat-browser')!),
   state: {
     stateKey: CHAT_BROWSER_STATE_KEY,
     reducer: chatBrowserReducer,
@@ -386,10 +524,7 @@ export const chatBrowserModule: LaunchableAppModule = {
 };
 
 export const systemModelerModule: LaunchableAppModule = {
-  ...widget(
-    'system-modeler', 'SystemModeler', '\uD83D\uDDA5\uFE0F', 118, 960, 640,
-    () => <SystemModeler />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('system-modeler')!),
   state: {
     stateKey: SYSTEM_MODELER_STATE_KEY,
     reducer: systemModelerReducer,
@@ -397,10 +532,7 @@ export const systemModelerModule: LaunchableAppModule = {
 };
 
 export const controlRoomModule: LaunchableAppModule = {
-  ...widget(
-    'control-room', 'Control Room', '\uD83C\uDFDB\uFE0F', 119, 960, 700,
-    () => <ControlRoom />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('control-room')!),
   state: {
     stateKey: CONTROL_ROOM_STATE_KEY,
     reducer: controlRoomReducer,
@@ -408,10 +540,7 @@ export const controlRoomModule: LaunchableAppModule = {
 };
 
 export const mermaidEditorModule: LaunchableAppModule = {
-  ...widget(
-    'mermaid-editor', 'MermaidEditor', '🧭', 121, 980, 680,
-    () => <MermaidEditor />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('mermaid-editor')!),
   state: {
     stateKey: MERMAID_EDITOR_STATE_KEY,
     reducer: mermaidEditorReducer,
@@ -419,21 +548,15 @@ export const mermaidEditorModule: LaunchableAppModule = {
 };
 
 export const macBrowserModule: LaunchableAppModule = {
-  ...widget(
-    'mac-browser', 'MacBrowser', '🌐', 122, 920, 680,
-    () => <MacBrowser />,
-  ),
+  ...widgetModule(RICH_WIDGETS_BY_ID.get('mac-browser')!),
   state: {
     stateKey: MAC_BROWSER_STATE_KEY,
     reducer: macBrowserReducer,
   },
 };
 
-// ---------------------------------------------------------------------------
-// All modules as a single array for convenience
-// ---------------------------------------------------------------------------
-
 export const RICH_WIDGET_MODULES: readonly LaunchableAppModule[] = [
+  richWidgetsLauncherModule,
   logViewerModule,
   chartViewModule,
   macWriteModule,

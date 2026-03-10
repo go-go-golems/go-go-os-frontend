@@ -19,43 +19,38 @@ interface PluginUiFactory {
   gridBoard(props?: Record<string, unknown>): PluginUiNode;
 }
 
-interface PluginGlobalState {
-  domains?: Record<string, unknown>;
+interface HypercardToolsRuntimeState {
+  self?: Record<string, unknown>;
   nav?: {
     current?: string;
     param?: unknown;
     depth?: number;
     canBack?: boolean;
+    [key: string]: unknown;
   };
-  self?: {
-    stackId?: string;
-    sessionId?: string;
-    cardId?: string;
-    windowId?: string;
-  };
-  system?: {
+  ui?: {
     focusedWindowId?: string | null;
-    runtimeHealth?: {
-      status?: string;
-    };
+    runtimeStatus?: string;
+    [key: string]: unknown;
   };
+  filters?: Record<string, unknown>;
+  draft?: Record<string, unknown>;
+  app_hypercard_tools?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
-type PluginCardState = Record<string, unknown>;
-type PluginSessionState = Record<string, unknown>;
+interface RuntimeAction {
+  type: string;
+  payload?: unknown;
+  meta?: Record<string, unknown>;
+}
 
 interface PluginRenderContext {
-  cardState: PluginCardState;
-  sessionState: PluginSessionState;
-  globalState: PluginGlobalState;
+  state: HypercardToolsRuntimeState;
 }
 
 interface PluginHandlerContext extends PluginRenderContext {
-  dispatchCardAction(actionType: string, payload?: unknown): void;
-  dispatchSessionAction(actionType: string, payload?: unknown): void;
-  dispatchDomainAction(domain: string, actionType: string, payload?: unknown): void;
-  dispatchSystemCommand(command: string, payload?: unknown): void;
+  dispatch(action: RuntimeAction): void;
 }
 
 interface PluginCardDef {
@@ -67,8 +62,8 @@ interface PluginBundle {
   id: string;
   title: string;
   description?: string;
-  initialSessionState?: PluginSessionState;
-  initialCardState?: Record<string, PluginCardState>;
+  initialSessionState?: Record<string, unknown>;
+  initialCardState?: Record<string, Record<string, unknown>>;
   cards: Record<string, PluginCardDef>;
 }
 

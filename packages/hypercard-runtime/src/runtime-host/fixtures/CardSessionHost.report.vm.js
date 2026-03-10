@@ -22,8 +22,8 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          notify({ dispatchSystemCommand }) {
-            dispatchSystemCommand('notify', { message: 'Export not available in demo' });
+          notify({ dispatch }) {
+            dispatch({ type: 'notify.show', payload: { message: 'Export not available in demo' } });
           },
         },
       },

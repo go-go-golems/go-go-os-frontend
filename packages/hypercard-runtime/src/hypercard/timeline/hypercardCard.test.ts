@@ -4,14 +4,11 @@ import {
   ASSISTANT_SUGGESTIONS_ENTITY_ID,
   chatSessionSlice,
   clearSemHandlers,
+  ensureChatModulesRegistered,
   handleSem,
   resetChatModulesRegistrationForTest,
   timelineSlice,
 } from '@hypercard/chat-runtime';
-import {
-  ensureHypercardChatModulesRegistered,
-  registerHypercardTimelineChatModule,
-} from './registerHypercardChatModules';
 import { clearRuntimeCardRegistry, hasRuntimeCard } from '../../plugin-runtime/runtimeCardRegistry';
 import { createArtifactProjectionMiddleware } from '../artifacts/artifactProjectionMiddleware';
 import { hypercardArtifactsReducer } from '../artifacts/artifactsSlice';
@@ -33,11 +30,10 @@ describe('hypercard card timeline projection', () => {
     clearRuntimeCardRegistry();
     clearSemHandlers();
     resetChatModulesRegistrationForTest();
-    registerHypercardTimelineChatModule();
-    ensureHypercardChatModulesRegistered();
+    ensureChatModulesRegistered();
   });
 
-  it('maps timeline.upsert hypercard.card.v2 and registers runtime card', async () => {
+  it('keeps hypercard.card.v2 as the stored timeline kind and registers runtime card', async () => {
     const store = createStore();
 
     handleSem(
@@ -73,23 +69,21 @@ describe('hypercard card timeline projection', () => {
           },
         },
       },
-      { convId: 'conv-card', dispatch: store.dispatch }
+      { convId: 'conv-card', dispatch: store.dispatch },
     );
     await Promise.resolve();
 
     const state = store.getState();
-    const entity = state.timeline.byConvId['conv-card'].byId['card:card-123'];
+    const entity = state.timeline.byConvId['conv-card'].byId['evt-card:result'];
     const artifact = state.hypercardArtifacts.byId['artifact-card-1'];
 
     expect(entity).toBeDefined();
-    expect(entity.kind).toBe('hypercard_card');
+    expect(entity.kind).toBe('hypercard.card.v2');
     expect(entity.props).toEqual(
       expect.objectContaining({
         title: 'Low Stock Card',
-        status: 'success',
         itemId: 'card-123',
-        artifactId: 'artifact-card-1',
-      })
+      }),
     );
 
     expect(artifact).toBeDefined();
@@ -122,7 +116,7 @@ describe('hypercard card timeline projection', () => {
           },
         },
       },
-      { convId: 'conv-card', dispatch: store.dispatch }
+      { convId: 'conv-card', dispatch: store.dispatch },
     );
 
     handleSem(
@@ -148,7 +142,7 @@ describe('hypercard card timeline projection', () => {
           },
         },
       },
-      { convId: 'conv-card', dispatch: store.dispatch }
+      { convId: 'conv-card', dispatch: store.dispatch },
     );
 
     const suggestionsEntity = store.getState().timeline.byConvId['conv-card']?.byId[ASSISTANT_SUGGESTIONS_ENTITY_ID];

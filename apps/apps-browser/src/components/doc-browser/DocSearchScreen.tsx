@@ -1,18 +1,17 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useGetOSDocsQuery } from '../../api/appsApi';
-import type { OSDocResult, OSDocsQuery } from '../../domain/types';
+import { useDocsIndex, useDocsSearch } from '../../domain/docsHooks';
+import type { DocsSearchQuery } from '../../domain/docsObjects';
 import { useDocBrowser } from './DocBrowserContext';
 import { createDocLinkHandlers } from './docLinkInteraction';
 
 interface DocSearchScreenProps {
-  initialQuery?: string;
+  initialFilter?: DocsSearchQuery;
 }
-
-const HELP_MODULE_ID = 'wesen-os';
 
 interface FilterState {
   query: string;
-  modules: Set<string>;
+  kinds: Set<string>;
+  owners: Set<string>;
   docTypes: Set<string>;
   topics: Set<string>;
 }
@@ -27,22 +26,14 @@ function toggleSet(set: Set<string>, value: string): Set<string> {
   return next;
 }
 
-function buildQuery(filter: FilterState, allModules: string[], allDocTypes: string[], allTopics: string[]): OSDocsQuery {
-  const query: OSDocsQuery = {};
-  if (filter.query.trim()) {
-    query.query = filter.query.trim();
-  }
-  // Only add filter if not all are selected (i.e., user has unchecked some)
-  if (filter.modules.size > 0 && filter.modules.size < allModules.length) {
-    query.module = [...filter.modules];
-  }
-  if (filter.docTypes.size > 0 && filter.docTypes.size < allDocTypes.length) {
-    query.doc_type = [...filter.docTypes];
-  }
-  if (filter.topics.size > 0 && filter.topics.size < allTopics.length) {
-    query.topics = [...filter.topics];
-  }
-  return query;
+function createFilterState(initialFilter?: DocsSearchQuery): FilterState {
+  return {
+    query: initialFilter?.query ?? '',
+    kinds: new Set(initialFilter?.kinds ?? []),
+    owners: new Set(initialFilter?.owners ?? []),
+    docTypes: new Set(initialFilter?.docTypes ?? []),
+    topics: new Set(initialFilter?.topics ?? []),
+  };
 }
 
 function FilterSection({
@@ -65,11 +56,7 @@ function FilterSection({
         const checked = selected.size === 0 || selected.has(item.slug);
         return (
           <label key={item.slug} data-part="doc-filter-item">
-            <input
-              type="checkbox"
-              checked={checked}
-              onChange={() => onToggle(item.slug)}
-            />
+            <input type="checkbox" checked={checked} onChange={() => onToggle(item.slug)} />
             <span data-part="doc-filter-item-label">{item.slug}</span>
             <span data-part="doc-filter-item-count">{item.count}</span>
           </label>
@@ -79,14 +66,9 @@ function FilterSection({
   );
 }
 
-function ResultCard({ result }: { result: OSDocResult }) {
+function ResultCard({ result }: { result: ReturnType<typeof useDocsSearch>['results'][number] }) {
   const { openDoc, openDocNewWindow, showDocLinkMenu } = useDocBrowser();
-  const handlers = createDocLinkHandlers(
-    { moduleId: result.module_id, slug: result.slug },
-    openDoc,
-    openDocNewWindow,
-    showDocLinkMenu,
-  );
+  const handlers = createDocLinkHandlers({ path: result.path }, openDoc, openDocNewWindow, showDocLinkMenu);
 
   return (
     <button
@@ -97,101 +79,90 @@ function ResultCard({ result }: { result: OSDocResult }) {
       onContextMenu={handlers.onContextMenu}
     >
       <div data-part="doc-result-card-badges">
-        <span data-part="doc-badge" data-variant="doc-type">{result.doc_type}</span>
-        <span data-part="doc-badge" data-variant="module">{result.module_id}</span>
+        <span data-part="doc-badge" data-variant="doc-type">
+          {result.docType ?? 'reference'}
+        </span>
+        <span data-part="doc-badge" data-variant="module">
+          {result.kind}:{result.owner}
+        </span>
       </div>
       <div data-part="doc-result-card-title">{result.title}</div>
-      {result.summary && (
-        <div data-part="doc-result-card-summary">{result.summary}</div>
-      )}
+      {result.summary && <div data-part="doc-result-card-summary">{result.summary}</div>}
     </button>
   );
 }
 
-export function DocSearchScreen({ initialQuery = '' }: DocSearchScreenProps) {
-  const { mode } = useDocBrowser();
-  const isHelpMode = mode === 'help';
+export function DocSearchScreen({ initialFilter }: DocSearchScreenProps) {
+  const { summaries } = useDocsIndex();
+  const [filter, setFilter] = useState<FilterState>(() => createFilterState(initialFilter));
 
-  // First, fetch unfiltered to get the full facet lists
-  const unfilteredQuery = useMemo<OSDocsQuery>(() => (
-    isHelpMode ? { module: [HELP_MODULE_ID] } : {}
-  ), [isHelpMode]);
-  const { data: unfilteredDocs } = useGetOSDocsQuery(unfilteredQuery);
+  const kindFacets = useMemo(() => facetCounts(summaries, (summary) => summary.kind), [summaries]);
+  const ownerFacets = useMemo(() => facetCounts(summaries, (summary) => summary.owner), [summaries]);
+  const docTypeFacets = useMemo(() => facetCounts(summaries, (summary) => summary.docType ?? 'reference'), [summaries]);
+  const topicFacets = useMemo(() => facetCountsMany(summaries, (summary) => summary.topics ?? []), [summaries]);
 
-  const allModules = useMemo(
-    () => (unfilteredDocs?.facets?.modules ?? []).map((m) => m.id),
-    [unfilteredDocs],
-  );
-  const allDocTypes = useMemo(
-    () => (unfilteredDocs?.facets?.doc_types ?? []).map((d) => d.slug),
-    [unfilteredDocs],
-  );
-  const allTopics = useMemo(
-    () => (unfilteredDocs?.facets?.topics ?? []).map((t) => t.slug),
-    [unfilteredDocs],
+  const query = useMemo<DocsSearchQuery>(
+    () => ({
+      query: filter.query.trim() || undefined,
+      kinds: filter.kinds.size > 0 ? [...filter.kinds] : undefined,
+      owners: filter.owners.size > 0 ? [...filter.owners] : undefined,
+      docTypes: filter.docTypes.size > 0 ? [...filter.docTypes] : undefined,
+      topics: filter.topics.size > 0 ? [...filter.topics] : undefined,
+    }),
+    [filter],
   );
 
-  const [filter, setFilter] = useState<FilterState>({
-    query: initialQuery,
-    modules: new Set<string>(),
-    docTypes: new Set<string>(),
-    topics: new Set<string>(),
-  });
+  const { results, status } = useDocsSearch(query);
 
-  const apiQuery = useMemo(
-    () => {
-      const query = buildQuery(filter, allModules, allDocTypes, allTopics);
-      if (isHelpMode) {
-        query.module = [HELP_MODULE_ID];
-      }
-      return query;
+  const toggleKind = useCallback(
+    (slug: string) => {
+      setFilter((prev) => ({
+        ...prev,
+        kinds: toggleSet(prev.kinds.size === 0 ? new Set(kindFacets.map((item) => item.slug)) : prev.kinds, slug),
+      }));
     },
-    [filter, allModules, allDocTypes, allTopics, isHelpMode],
+    [kindFacets],
   );
-
-  const { data: filteredDocs, isLoading } = useGetOSDocsQuery(apiQuery);
-
-  const toggleModule = useCallback((slug: string) => {
-    setFilter((prev) => {
-      const current = prev.modules.size === 0 ? new Set(allModules) : prev.modules;
-      return { ...prev, modules: toggleSet(current, slug) };
-    });
-  }, [allModules]);
-
-  const toggleDocType = useCallback((slug: string) => {
-    setFilter((prev) => {
-      const current = prev.docTypes.size === 0 ? new Set(allDocTypes) : prev.docTypes;
-      return { ...prev, docTypes: toggleSet(current, slug) };
-    });
-  }, [allDocTypes]);
-
-  const toggleTopic = useCallback((slug: string) => {
-    setFilter((prev) => {
-      const current = prev.topics.size === 0 ? new Set(allTopics) : prev.topics;
-      return { ...prev, topics: toggleSet(current, slug) };
-    });
-  }, [allTopics]);
+  const toggleOwner = useCallback(
+    (slug: string) => {
+      setFilter((prev) => ({
+        ...prev,
+        owners: toggleSet(prev.owners.size === 0 ? new Set(ownerFacets.map((item) => item.slug)) : prev.owners, slug),
+      }));
+    },
+    [ownerFacets],
+  );
+  const toggleDocType = useCallback(
+    (slug: string) => {
+      setFilter((prev) => ({
+        ...prev,
+        docTypes: toggleSet(
+          prev.docTypes.size === 0 ? new Set(docTypeFacets.map((item) => item.slug)) : prev.docTypes,
+          slug,
+        ),
+      }));
+    },
+    [docTypeFacets],
+  );
+  const toggleTopic = useCallback(
+    (slug: string) => {
+      setFilter((prev) => ({
+        ...prev,
+        topics: toggleSet(prev.topics.size === 0 ? new Set(topicFacets.map((item) => item.slug)) : prev.topics, slug),
+      }));
+    },
+    [topicFacets],
+  );
 
   const clearAll = useCallback(() => {
     setFilter({
       query: '',
-      modules: new Set<string>(),
+      kinds: new Set<string>(),
+      owners: new Set<string>(),
       docTypes: new Set<string>(),
       topics: new Set<string>(),
     });
   }, []);
-
-  const results = filteredDocs?.results ?? [];
-  const total = unfilteredDocs?.total ?? 0;
-
-  // Use the unfiltered facets for the sidebar to show global counts
-  const moduleFacets = useMemo(
-    () =>
-      (unfilteredDocs?.facets?.modules ?? []).map((m) => ({ slug: m.id, count: m.count })),
-    [unfilteredDocs],
-  );
-  const docTypeFacets = unfilteredDocs?.facets?.doc_types ?? [];
-  const topicFacets = unfilteredDocs?.facets?.topics ?? [];
 
   return (
     <div data-part="doc-search-screen">
@@ -208,7 +179,7 @@ export function DocSearchScreen({ initialQuery = '' }: DocSearchScreenProps) {
             data-part="doc-search-input"
             name="query"
             type="text"
-            placeholder="Search documentation..."
+            placeholder="Search mounted documentation..."
             autoComplete="off"
             value={filter.query}
             onChange={(e) => setFilter((prev) => ({ ...prev, query: e.target.value }))}
@@ -221,24 +192,10 @@ export function DocSearchScreen({ initialQuery = '' }: DocSearchScreenProps) {
 
       <div data-part="doc-search-layout">
         <div data-part="doc-filter-sidebar">
-          <FilterSection
-            title="Modules"
-            items={moduleFacets}
-            selected={filter.modules}
-            onToggle={toggleModule}
-          />
-          <FilterSection
-            title="Doc Types"
-            items={docTypeFacets}
-            selected={filter.docTypes}
-            onToggle={toggleDocType}
-          />
-          <FilterSection
-            title="Topics"
-            items={topicFacets}
-            selected={filter.topics}
-            onToggle={toggleTopic}
-          />
+          <FilterSection title="Kinds" items={kindFacets} selected={filter.kinds} onToggle={toggleKind} />
+          <FilterSection title="Owners" items={ownerFacets} selected={filter.owners} onToggle={toggleOwner} />
+          <FilterSection title="Doc Types" items={docTypeFacets} selected={filter.docTypes} onToggle={toggleDocType} />
+          <FilterSection title="Topics" items={topicFacets} selected={filter.topics} onToggle={toggleTopic} />
           <div data-part="doc-filter-section">
             <button type="button" data-part="doc-filter-clear" onClick={clearAll}>
               Clear All
@@ -249,25 +206,43 @@ export function DocSearchScreen({ initialQuery = '' }: DocSearchScreenProps) {
         <div data-part="doc-results">
           <div data-part="doc-results-header">
             <span data-part="doc-results-count">
-              {isLoading
-                ? 'Searching\u2026'
-                : results.length === total
-                  ? `${results.length} results`
-                  : `${results.length} of ${total} results`}
+              {status === 'loading' ? 'Searching…' : `${results.length} results`}
             </span>
           </div>
 
-          {!isLoading && results.length === 0 && (
-            <div data-part="doc-center-message">
-              No docs match your search. Try different keywords or clear filters.
-            </div>
+          {status !== 'loading' && results.length === 0 && (
+            <div data-part="doc-center-message">No mounted docs match your search.</div>
           )}
 
           {results.map((result) => (
-            <ResultCard key={`${result.module_id}:${result.slug}`} result={result} />
+            <ResultCard key={result.path} result={result} />
           ))}
         </div>
       </div>
     </div>
   );
+}
+
+function facetCounts<T>(items: T[], toKey: (item: T) => string) {
+  const counts = new Map<string, number>();
+  for (const item of items) {
+    const key = toKey(item);
+    if (!key) continue;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .map(([slug, count]) => ({ slug, count }))
+    .sort((a, b) => b.count - a.count || a.slug.localeCompare(b.slug));
+}
+
+function facetCountsMany<T>(items: T[], toKeys: (item: T) => string[]) {
+  const counts = new Map<string, number>();
+  for (const item of items) {
+    for (const key of toKeys(item)) {
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
+  return Array.from(counts.entries())
+    .map(([slug, count]) => ({ slug, count }))
+    .sort((a, b) => b.count - a.count || a.slug.localeCompare(b.slug));
 }

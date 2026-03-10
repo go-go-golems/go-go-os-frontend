@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
-import { getCurrentProfile, listProfiles } from './profileApi';
+import { listProfiles } from './profileApi';
 import type { ChatProfileListItem } from './profileTypes';
 import {
   selectAvailableProfiles,
@@ -29,45 +29,47 @@ function normalize(value: string | null | undefined): string {
   return String(value ?? '').trim();
 }
 
+function matchesSelection(profile: ChatProfileListItem, selectedProfile: string, selectedRegistry: string): boolean {
+  if (normalize(profile.slug) !== selectedProfile) {
+    return false;
+  }
+  if (!selectedRegistry) {
+    return true;
+  }
+  return normalize(profile.registry) === selectedRegistry;
+}
+
 export function resolveSelectionAfterProfileRefresh(
   profiles: ChatProfileListItem[],
-  selected: { profile?: string; registry?: string },
-  registryHint?: string,
-  persistedProfileHint?: string
-): { profile: string | null; registry: string | null } | null {
+  selected: { profile?: string; registry?: string }
+): { profile: string | null; registry?: string | null } | null {
   const selectedProfile = normalize(selected.profile);
-  const selectedRegistry = normalize(selected.registry);
-  const resolvedRegistry = normalize(registryHint) || selectedRegistry;
-  const persistedProfile = normalize(persistedProfileHint);
+  const selectedRegistry = normalize(selected.registry) || null;
 
   if (selectedProfile) {
-    const hasSelected = profiles.some((item) => normalize(item.slug) === selectedProfile);
+    const hasSelected = profiles.some((item) => matchesSelection(item, selectedProfile, selectedRegistry ?? ''));
     if (hasSelected) {
-      const nextRegistry = resolvedRegistry || null;
-      if (nextRegistry === (selectedRegistry || null)) {
-        return null;
-      }
-      return { profile: selectedProfile, registry: nextRegistry };
+      return null;
     }
   }
 
-  if (persistedProfile) {
-    const hasPersisted = profiles.some((item) => normalize(item.slug) === persistedProfile);
-    if (hasPersisted) {
-      return { profile: persistedProfile, registry: resolvedRegistry || null };
-    }
-  }
-
-  const fallback = profiles.find((item) => item.is_default) ?? profiles[0];
+  const fallback = (selectedRegistry
+    ? profiles.find((item) => normalize(item.registry) === selectedRegistry && item.is_default)
+      ?? profiles.find((item) => normalize(item.registry) === selectedRegistry)
+    : undefined)
+    ?? profiles.find((item) => item.is_default)
+    ?? profiles[0];
   if (!fallback?.slug) {
-    return { profile: null, registry: resolvedRegistry || null };
+    return { profile: null, registry: selectedRegistry };
   }
-  return { profile: normalize(fallback.slug), registry: resolvedRegistry || null };
+  return {
+    profile: normalize(fallback.slug),
+    registry: normalize(fallback.registry) || selectedRegistry,
+  };
 }
 
 export function useProfiles(
   basePrefix = '',
-  registry?: string,
   options: UseProfilesOptions = {}
 ): UseProfilesResult {
   const enabled = options.enabled ?? true;
@@ -88,25 +90,10 @@ export function useProfiles(
     dispatch(chatProfilesSlice.actions.setProfileLoading(true));
     dispatch(chatProfilesSlice.actions.setProfileError(null));
     try {
-      const resolvedRegistry = String(registry ?? selected.registry ?? '').trim();
-      const nextProfiles = await listProfiles(resolvedRegistry || undefined, { basePrefix });
+      const nextProfiles = await listProfiles(undefined, { basePrefix });
       dispatch(chatProfilesSlice.actions.setAvailableProfiles(nextProfiles));
       dispatch(chatProfilesSlice.actions.setProfileLoading(false));
-      let persistedProfile: string | undefined;
-      if (!normalize(selected.profile)) {
-        try {
-          const payload = await getCurrentProfile({ basePrefix });
-          persistedProfile = normalize(payload.slug || payload.profile);
-        } catch {
-          persistedProfile = undefined;
-        }
-      }
-      const nextSelection = resolveSelectionAfterProfileRefresh(
-        nextProfiles,
-        selected,
-        resolvedRegistry,
-        persistedProfile
-      );
+      const nextSelection = resolveSelectionAfterProfileRefresh(nextProfiles, selected);
       if (nextSelection) {
         dispatch(chatProfilesSlice.actions.setSelectedProfile({ ...nextSelection, scopeKey }));
       }
@@ -116,7 +103,7 @@ export function useProfiles(
         chatProfilesSlice.actions.setProfileError(err instanceof Error ? err.message : String(err))
       );
     }
-  }, [basePrefix, dispatch, enabled, registry, scopeKey, selected.profile, selected.registry]);
+  }, [basePrefix, dispatch, enabled, scopeKey, selected.profile]);
 
   useEffect(() => {
     if (!enabled) {

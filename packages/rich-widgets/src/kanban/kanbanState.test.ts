@@ -14,30 +14,31 @@ describe('kanbanState', () => {
           col: 'todo',
           title: 'Test task',
           desc: '',
+          type: 'task',
           priority: 'medium',
-          tags: ['docs'],
+          labels: ['docs'],
         },
       ],
       editingTask: { col: 'todo', title: 'Draft' },
-      filterTag: 'docs',
+      filterType: 'task',
       searchQuery: 'draft',
       collapsedCols: { done: true },
     });
 
     expect(state).toMatchObject({
       initialized: true,
-      filterTag: 'docs',
+      filterType: 'task',
       searchQuery: 'draft',
       collapsedCols: { done: true },
       editingTask: { col: 'todo', title: 'Draft' },
     });
-    expect(state.tasks[0]?.tags).toEqual(['docs']);
+    expect(state.tasks[0]?.labels).toEqual(['docs']);
   });
 
   it('upserts tasks and clears filters', () => {
     const seeded = createKanbanStateSeed({
       filterPriority: 'high',
-      filterTag: 'bug',
+      filterType: 'bug',
       searchQuery: 'fix',
     });
 
@@ -48,8 +49,9 @@ describe('kanbanState', () => {
         col: 'progress',
         title: 'Investigate queue spike',
         desc: 'Look at worker pool saturation',
+        type: 'bug',
         priority: 'high',
-        tags: ['bug', 'urgent'],
+        labels: ['urgent'],
       }),
     );
 
@@ -60,7 +62,7 @@ describe('kanbanState', () => {
       priority: 'high',
     });
     expect(cleared).toMatchObject({
-      filterTag: null,
+      filterType: null,
       filterPriority: null,
       searchQuery: '',
     });

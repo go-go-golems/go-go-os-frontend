@@ -1,19 +1,26 @@
 import { SyntaxHighlight, toYaml } from '@hypercard/chat-runtime';
 import { useLazyGetSchemaDocumentQuery } from '../api/appsApi';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { compareDocSummaries, groupDocsByMount, useDocsIndex } from '../domain/docsHooks';
+import { type DocObjectPath } from '../domain/docsObjects';
 import { isReflectionUnsupported } from '../domain/selectors';
 import type { AppManifestDocument, ReflectionAPI, ReflectionResult, ReflectionSchemaRef } from '../domain/types';
-import { isNewWindowClick, parseModuleDocUrl } from './doc-browser/docLinkInteraction';
+import { isNewWindowClick, moduleDocUrlToObjectPath } from './doc-browser/docLinkInteraction';
 
 interface ModuleDetailProps {
   app: AppManifestDocument;
   reflection?: ReflectionResult;
-  onOpenDoc?: (moduleId: string, slug: string, newWindow?: boolean) => void;
+  onOpenDoc?: (path: DocObjectPath, newWindow?: boolean) => void;
 }
 
 function ModuleDetail({ app, reflection, onOpenDoc }: ModuleDetailProps) {
   const unsupported = isReflectionUnsupported(reflection);
   const doc = reflection && !reflection._unsupported ? reflection : undefined;
+  const docsIndex = useDocsIndex();
+  const mountedDocs = useMemo(
+    () => groupDocsByMount(docsIndex.summaries.filter((entry) => entry.owner === app.app_id)),
+    [app.app_id, docsIndex.summaries],
+  );
   const reflectionLabel = unsupported
     ? 'not implemented (501)'
     : app.reflection?.available
@@ -47,7 +54,7 @@ function ModuleDetail({ app, reflection, onOpenDoc }: ModuleDetailProps) {
           <div data-part="browser-detail-api-schemas">
             <div data-part="browser-detail-section-title">Documentation</div>
             {doc.docs.map((entry) => {
-              const parsed = entry.url ? parseModuleDocUrl(entry.url) : undefined;
+              const parsed = entry.url ? moduleDocUrlToObjectPath(entry.url) : undefined;
               const canOpen = onOpenDoc && parsed;
               return (
                 <div key={entry.id} data-part="browser-detail-api-schema">
@@ -56,11 +63,11 @@ function ModuleDetail({ app, reflection, onOpenDoc }: ModuleDetailProps) {
                       <button
                         type="button"
                         data-part="browser-detail-doc-link"
-                        onClick={(e) => onOpenDoc(parsed.moduleId, parsed.slug, isNewWindowClick(e.nativeEvent))}
+                        onClick={(e) => onOpenDoc(parsed, isNewWindowClick(e.nativeEvent))}
                         onAuxClick={(e) => {
                           if (e.button === 1) {
                             e.preventDefault();
-                            onOpenDoc(parsed.moduleId, parsed.slug, true);
+                            onOpenDoc(parsed, true);
                           }
                         }}
                       >
@@ -84,6 +91,43 @@ function ModuleDetail({ app, reflection, onOpenDoc }: ModuleDetailProps) {
                 </div>
               );
             })}
+          </div>
+        )}
+        {mountedDocs.length > 0 && (
+          <div data-part="browser-detail-api-schemas">
+            <div data-part="browser-detail-section-title">Mounted Docs</div>
+            {mountedDocs.map((group) => (
+              <div key={group.mountPath} data-part="browser-detail-mounted-group">
+                <div data-part="browser-detail-mounted-group-title">
+                  {group.label} · {group.kind}
+                </div>
+                {group.summaries.slice().sort(compareDocSummaries).map((entry) => (
+                  <div key={entry.path} data-part="browser-detail-api-schema">
+                    <div data-part="browser-detail-api-schema-header">
+                      {onOpenDoc ? (
+                        <button
+                          type="button"
+                          data-part="browser-detail-doc-link"
+                          onClick={(e) => onOpenDoc(entry.path, isNewWindowClick(e.nativeEvent))}
+                          onAuxClick={(e) => {
+                            if (e.button === 1) {
+                              e.preventDefault();
+                              onOpenDoc(entry.path, true);
+                            }
+                          }}
+                        >
+                          {entry.title}
+                        </button>
+                      ) : (
+                        <span data-part="browser-detail-api-schema-label">{entry.title}</span>
+                      )}
+                      <span data-part="browser-detail-api-schema-id">{entry.docType ?? 'reference'}</span>
+                    </div>
+                    {entry.summary && <div>{entry.summary}</div>}
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -316,7 +360,7 @@ export interface BrowserDetailPanelProps {
   selectedSchema?: ReflectionSchemaRef;
   reflection?: ReflectionResult;
   reflectionLoading?: boolean;
-  onOpenDoc?: (moduleId: string, slug: string, newWindow?: boolean) => void;
+  onOpenDoc?: (path: DocObjectPath, newWindow?: boolean) => void;
 }
 
 export function BrowserDetailPanel({

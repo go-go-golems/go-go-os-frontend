@@ -61,6 +61,7 @@ const config: StorybookConfig = {
       '@hypercard/confirm-runtime': resolve(__dirname, '../packages/confirm-runtime/src'),
       '@hypercard/apps-browser': resolve(__dirname, '../apps/apps-browser/src'),
       '@hypercard/arc-agi-player': resolve(__dirname, '../apps/arc-agi-player/src'),
+      '@hypercard/rich-widgets/kanban-runtime': resolve(__dirname, '../packages/rich-widgets/src/kanban/runtime.ts'),
       '@hypercard/rich-widgets': resolve(__dirname, '../packages/rich-widgets/src'),
     };
     return config_;

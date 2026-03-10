@@ -1,60 +1,46 @@
 import { useMemo } from 'react';
-import { useGetAppsQuery, useGetHelpDocsQuery, useGetOSDocsQuery } from '../../api/appsApi';
-import type { AppManifestDocument, ModuleDocDocument, OSDocResult, OSDocsResponse } from '../../domain/types';
+import { useGetAppsQuery } from '../../api/appsApi';
+import { groupDocsByMount, useDocsIndex } from '../../domain/docsHooks';
+import type { DocObjectSummary, DocsMountPath } from '../../domain/docsObjects';
 import { useDocBrowser } from './DocBrowserContext';
 import { createDocLinkHandlers } from './docLinkInteraction';
 
-interface ModuleCardData {
-  app: AppManifestDocument;
-  docs: OSDocResult[];
+interface CollectionCardData {
+  mountPath: DocsMountPath;
+  kind: string;
+  owner: string;
+  label: string;
+  count: number;
+  summaries: DocObjectSummary[];
 }
 
-function buildModuleCards(apps: AppManifestDocument[], docsResponse: OSDocsResponse | undefined): ModuleCardData[] {
-  const resultsByModule = new Map<string, OSDocResult[]>();
-  for (const result of docsResponse?.results ?? []) {
-    const existing = resultsByModule.get(result.module_id) ?? [];
-    existing.push(result);
-    resultsByModule.set(result.module_id, existing);
+function displayCollectionLabel(card: CollectionCardData, appNames: Map<string, string>) {
+  if (card.kind === 'module') {
+    return appNames.get(card.owner) ?? card.owner;
   }
-
-  return apps
-    .filter((app) => app.docs?.available)
-    .map((app) => ({
-      app,
-      docs: resultsByModule.get(app.app_id) ?? [],
-    }))
-    .filter((card) => card.docs.length > 0);
+  if (card.kind === 'help') {
+    return 'Help';
+  }
+  return card.label;
 }
 
-function ModuleCard({ card }: { card: ModuleCardData }) {
-  const { openModuleDocs, openDoc, openDocNewWindow, showDocLinkMenu } = useDocBrowser();
+function CollectionCard({ card, appNames }: { card: CollectionCardData; appNames: Map<string, string> }) {
+  const { openCollection, openDoc, openDocNewWindow, showDocLinkMenu } = useDocBrowser();
+  const displayLabel = displayCollectionLabel(card, appNames);
 
   return (
     <div data-part="doc-module-card">
-      <div
-        data-part="doc-module-card-header"
-        onClick={() => openModuleDocs(card.app.app_id)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') openModuleDocs(card.app.app_id);
-        }}
-        role="button"
-        tabIndex={0}
-      >
-        <span data-part="doc-module-card-name">{card.app.name}</span>
-      </div>
+      <button type="button" data-part="doc-module-card-header" onClick={() => openCollection(card.mountPath)}>
+        <span data-part="doc-module-card-name">{displayLabel}</span>
+      </button>
       <div data-part="doc-module-card-meta">
-        {card.docs.length} page{card.docs.length !== 1 ? 's' : ''}
+        {card.count} page{card.count !== 1 ? 's' : ''} · {card.kind}
       </div>
       <ul data-part="doc-module-card-list">
-        {card.docs.map((doc) => {
-          const handlers = createDocLinkHandlers(
-            { moduleId: card.app.app_id, slug: doc.slug },
-            openDoc,
-            openDocNewWindow,
-            showDocLinkMenu,
-          );
+        {card.summaries.slice(0, 5).map((doc) => {
+          const handlers = createDocLinkHandlers({ path: doc.path }, openDoc, openDocNewWindow, showDocLinkMenu);
           return (
-            <li key={doc.slug}>
+            <li key={doc.path}>
               <button
                 type="button"
                 data-part="doc-module-card-link"
@@ -62,7 +48,7 @@ function ModuleCard({ card }: { card: ModuleCardData }) {
                 onAuxClick={handlers.onAuxClick}
                 onContextMenu={handlers.onContextMenu}
               >
-                <span data-part="doc-module-card-link-type">{doc.doc_type}</span>
+                <span data-part="doc-module-card-link-type">{doc.docType ?? doc.kind}</span>
                 <span data-part="doc-module-card-link-title">{doc.title}</span>
                 <span data-part="doc-module-card-link-arrow">{'\u203A'}</span>
               </button>
@@ -74,24 +60,27 @@ function ModuleCard({ card }: { card: ModuleCardData }) {
   );
 }
 
-function TopicChips({ topics }: { topics: Array<{ slug: string; count: number }> }) {
-  const { openSearch } = useDocBrowser();
-
-  if (topics.length === 0) return null;
+function ChipRow({
+  title,
+  items,
+  onClick,
+}: {
+  title: string;
+  items: Array<{ slug: string; count: number }>;
+  onClick: (slug: string) => void;
+}) {
+  if (items.length === 0) {
+    return null;
+  }
 
   return (
     <div>
-      <div data-part="doc-center-section">Browse by Topic</div>
+      <div data-part="doc-center-section">{title}</div>
       <div data-part="doc-chip-row">
-        {topics.map((topic) => (
-          <button
-            key={topic.slug}
-            type="button"
-            data-part="doc-chip"
-            onClick={() => openSearch()}
-          >
-            {topic.slug}
-            <span data-part="doc-chip-count">{topic.count}</span>
+        {items.map((item) => (
+          <button key={item.slug} type="button" data-part="doc-chip" onClick={() => onClick(item.slug)}>
+            {item.slug}
+            <span data-part="doc-chip-count">{item.count}</span>
           </button>
         ))}
       </div>
@@ -99,129 +88,49 @@ function TopicChips({ topics }: { topics: Array<{ slug: string; count: number }>
   );
 }
 
-function DocTypeChips({ docTypes }: { docTypes: Array<{ slug: string; count: number }> }) {
-  const { openSearch } = useDocBrowser();
+export function DocCenterHome() {
+  const { data: apps } = useGetAppsQuery();
+  const { status, summaries } = useDocsIndex();
+  const { openSearch, openTopicBrowser } = useDocBrowser();
 
-  if (docTypes.length === 0) return null;
+  const appNames = useMemo(() => new Map((apps ?? []).map((app) => [app.app_id, app.name])), [apps]);
 
-  return (
-    <div>
-      <div data-part="doc-center-section">Browse by Type</div>
-      <div data-part="doc-chip-row">
-        {docTypes.map((dt) => (
-          <button
-            key={dt.slug}
-            type="button"
-            data-part="doc-chip"
-            onClick={() => openSearch()}
-          >
-            {dt.slug}
-            <span data-part="doc-chip-count">{dt.count}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function HelpDocCard({ doc }: { doc: ModuleDocDocument }) {
-  const { openDoc, openDocNewWindow, showDocLinkMenu } = useDocBrowser();
-  const handlers = createDocLinkHandlers(
-    { moduleId: 'wesen-os', slug: doc.slug },
-    openDoc,
-    openDocNewWindow,
-    showDocLinkMenu,
-  );
-
-  return (
-    <button
-      type="button"
-      data-part="doc-entry-card"
-      onClick={handlers.onClick}
-      onAuxClick={handlers.onAuxClick}
-      onContextMenu={handlers.onContextMenu}
-    >
-      <div data-part="doc-entry-card-header">
-        <span data-part="doc-entry-card-title">{doc.title}</span>
-        <span data-part="doc-entry-card-arrow">{'\u203A'}</span>
-      </div>
-      {doc.summary && (
-        <div data-part="doc-entry-card-summary">{doc.summary}</div>
-      )}
-    </button>
-  );
-}
-
-function HelpCenterHome() {
-  const { data: helpResponse, isLoading } = useGetHelpDocsQuery();
-  const { openSearch } = useDocBrowser();
-
-  const docs = helpResponse?.docs ?? [];
-
-  if (isLoading) {
-    return (
-      <div data-part="doc-center-home">
-        <div data-part="doc-center-message">Loading help pages&hellip;</div>
-      </div>
-    );
-  }
-
-  if (docs.length === 0) {
-    return (
-      <div data-part="doc-center-home">
-        <DocSearchBar onSearch={openSearch} placeholder="Search help..." />
-        <div data-part="doc-center-message">
-          No help pages available yet.
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div data-part="doc-center-home">
-      <DocSearchBar onSearch={openSearch} placeholder="Search help..." />
-
-      <div>
-        <div data-part="doc-center-section">Help Pages</div>
-        <div data-part="doc-type-group">
-          {docs.map((doc) => (
-            <HelpDocCard key={doc.slug} doc={doc} />
-          ))}
-        </div>
-      </div>
-
-      <div data-part="doc-center-footer">
-        {docs.length} help page{docs.length !== 1 ? 's' : ''}
-      </div>
-    </div>
-  );
-}
-
-function AppsCenterHome() {
-  const { data: apps, isLoading: appsLoading } = useGetAppsQuery();
-  const { data: docsResponse, isLoading: docsLoading } = useGetOSDocsQuery({});
-  const { openSearch } = useDocBrowser();
-
-  const moduleCards = useMemo(
-    () => buildModuleCards(apps ?? [], docsResponse),
-    [apps, docsResponse],
-  );
-
-  const topics = useMemo(
+  const collections = useMemo(
     () =>
-      [...(docsResponse?.facets?.topics ?? [])].sort((a, b) => b.count - a.count),
-    [docsResponse],
+      groupDocsByMount(summaries).map((group) => ({
+        mountPath: group.mountPath,
+        kind: group.kind,
+        owner: group.owner,
+        label: group.label,
+        count: group.count,
+        summaries: group.summaries,
+      })),
+    [summaries],
   );
 
-  const docTypes = useMemo(
-    () =>
-      [...(docsResponse?.facets?.doc_types ?? [])].sort((a, b) => b.count - a.count),
-    [docsResponse],
-  );
+  const topics = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const summary of summaries) {
+      for (const topic of summary.topics ?? []) {
+        counts.set(topic, (counts.get(topic) ?? 0) + 1);
+      }
+    }
+    return Array.from(counts.entries())
+      .map(([slug, count]) => ({ slug, count }))
+      .sort((a, b) => b.count - a.count || a.slug.localeCompare(b.slug));
+  }, [summaries]);
 
-  const isLoading = appsLoading || docsLoading;
+  const kinds = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const summary of summaries) {
+      counts.set(summary.kind, (counts.get(summary.kind) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([slug, count]) => ({ slug, count }))
+      .sort((a, b) => b.count - a.count || a.slug.localeCompare(b.slug));
+  }, [summaries]);
 
-  if (isLoading) {
+  if (status === 'loading' || status === 'idle') {
     return (
       <div data-part="doc-center-home">
         <div data-part="doc-center-message">Loading documentation&hellip;</div>
@@ -229,66 +138,31 @@ function AppsCenterHome() {
     );
   }
 
-  if (moduleCards.length === 0) {
+  if (collections.length === 0) {
     return (
       <div data-part="doc-center-home">
-        <DocSearchBar onSearch={openSearch} />
-        <div data-part="doc-center-message">
-          No documentation available yet. Modules can add docs by embedding markdown files with YAML frontmatter.
-        </div>
+        <div data-part="doc-center-message">No documentation collections are mounted yet.</div>
       </div>
     );
   }
 
   return (
     <div data-part="doc-center-home">
-      <DocSearchBar onSearch={openSearch} />
-
       <div>
-        <div data-part="doc-center-section">Modules with Documentation</div>
+        <div data-part="doc-center-section">Mounted Documentation Collections</div>
         <div data-part="doc-module-grid">
-          {moduleCards.map((card) => (
-            <ModuleCard key={card.app.app_id} card={card} />
+          {collections.map((card) => (
+            <CollectionCard key={card.mountPath} card={card} appNames={appNames} />
           ))}
         </div>
       </div>
 
-      <TopicChips topics={topics} />
-      <DocTypeChips docTypes={docTypes} />
+      <ChipRow title="Browse by Topic" items={topics} onClick={openTopicBrowser} />
+      <ChipRow title="Browse by Kind" items={kinds} onClick={(kind) => openSearch({ kinds: [kind] })} />
 
       <div data-part="doc-center-footer">
-        {docsResponse?.total ?? 0} docs across {docsResponse?.facets?.modules?.length ?? 0} modules
+        {summaries.length} docs across {collections.length} mounted collections
       </div>
     </div>
-  );
-}
-
-export function DocCenterHome() {
-  const { mode } = useDocBrowser();
-  return mode === 'help' ? <HelpCenterHome /> : <AppsCenterHome />;
-}
-
-function DocSearchBar({ onSearch, placeholder }: { onSearch: (query?: string) => void; placeholder?: string }) {
-  return (
-    <form
-      data-part="doc-search-bar"
-      onSubmit={(e) => {
-        e.preventDefault();
-        const form = e.currentTarget;
-        const input = form.elements.namedItem('query') as HTMLInputElement;
-        onSearch(input.value || undefined);
-      }}
-    >
-      <input
-        data-part="doc-search-input"
-        name="query"
-        type="text"
-        placeholder={placeholder ?? "Search documentation..."}
-        autoComplete="off"
-      />
-      <button type="submit" data-part="doc-browser-nav-btn">
-        Search
-      </button>
-    </form>
   );
 }

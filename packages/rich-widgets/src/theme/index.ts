@@ -1,4 +1,5 @@
 import './primitives.css';
+import './rich-widgets-launcher.css';
 import './sparkline.css';
 import './log-viewer.css';
 import './chart-view.css';

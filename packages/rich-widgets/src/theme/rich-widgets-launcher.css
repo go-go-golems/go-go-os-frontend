@@ -1,0 +1,27 @@
+[data-part='rw-launcher'] {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+  height: 100%;
+  padding: 12px;
+  background: var(--hc-color-bg, #fff);
+  color: var(--hc-color-fg, #000);
+  font-family: var(--hc-font-family);
+}
+
+[data-part='rw-launcher-header'] {
+  display: grid;
+  gap: 4px;
+  padding: 2px 2px 0;
+}
+
+[data-part='rw-launcher-hint'] {
+  color: var(--hc-color-muted, #666);
+  font-size: 10px;
+}
+
+[data-part='rw-launcher'] [data-part='windowing-icon-layer'] {
+  align-content: start;
+  overflow: auto;
+  padding: 4px;
+}

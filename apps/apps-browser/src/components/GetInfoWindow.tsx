@@ -1,4 +1,5 @@
 import { useGetModuleDocsQuery, useGetReflectionQuery } from '../api/appsApi';
+import { buildDocObjectPath, type DocObjectPath } from '../domain/docsObjects';
 import { isReflectionUnsupported } from '../domain/selectors';
 import type { AppManifestDocument, ReflectionResult } from '../domain/types';
 import { AppIcon } from './AppIcon';
@@ -7,7 +8,7 @@ import './GetInfoWindow.css';
 export interface GetInfoWindowProps {
   app: AppManifestDocument;
   onOpenInBrowser?: () => void;
-  onOpenDoc?: (moduleId: string, slug: string) => void;
+  onOpenDoc?: (path: DocObjectPath) => void;
 }
 
 function formatDocsFetchError(error: unknown): string {
@@ -36,7 +37,7 @@ function buildDocURL(appId: string, slug: string): string {
   return `/api/apps/${appId}/docs/${encodeURIComponent(slug)}`;
 }
 
-function DocumentationSection({ app, onOpenDoc }: { app: AppManifestDocument; onOpenDoc?: (moduleId: string, slug: string) => void }) {
+function DocumentationSection({ app, onOpenDoc }: { app: AppManifestDocument; onOpenDoc?: (path: DocObjectPath) => void }) {
   if (app.docs?.available !== true) {
     return (
       <>
@@ -52,7 +53,7 @@ function DocumentationSection({ app, onOpenDoc }: { app: AppManifestDocument; on
   return <DocumentationDataSection app={app} onOpenDoc={onOpenDoc} />;
 }
 
-function DocumentationDataSection({ app, onOpenDoc }: { app: AppManifestDocument; onOpenDoc?: (moduleId: string, slug: string) => void }) {
+function DocumentationDataSection({ app, onOpenDoc }: { app: AppManifestDocument; onOpenDoc?: (path: DocObjectPath) => void }) {
   const { data: toc, isLoading, isError, error } = useGetModuleDocsQuery(app.app_id);
 
   if (isLoading) {
@@ -120,7 +121,7 @@ function DocumentationDataSection({ app, onOpenDoc }: { app: AppManifestDocument
                   <button
                     type="button"
                     data-part="get-info-doc-link"
-                    onClick={() => onOpenDoc(effectiveModuleID, entry.slug)}
+                    onClick={() => onOpenDoc(buildDocObjectPath('module', effectiveModuleID, entry.slug))}
                   >
                     {entry.title}
                   </button>

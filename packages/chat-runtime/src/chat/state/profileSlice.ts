@@ -51,14 +51,12 @@ export const chatProfilesSlice = createSlice({
       if (scopeKey) {
         state.selectedByScope[scopeKey] = {
           profile: action.payload.profile,
-          registry: action.payload.registry ?? state.selectedRegistry,
+          registry: action.payload.registry ?? null,
         };
         return;
       }
       state.selectedProfile = action.payload.profile;
-      if (action.payload.registry !== undefined) {
-        state.selectedRegistry = action.payload.registry;
-      }
+      state.selectedRegistry = action.payload.registry ?? null;
     },
     clearSelectedProfile(state) {
       state.selectedProfile = null;

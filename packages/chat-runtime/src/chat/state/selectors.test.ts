@@ -179,7 +179,7 @@ describe('selectors', () => {
         selectedByScope: {
           'conv:abc': {
             profile: 'scoped-profile',
-            registry: 'default',
+            registry: 'ops',
           },
         },
         loading: false,
@@ -189,11 +189,11 @@ describe('selectors', () => {
 
     expect(selectCurrentProfileSelection(state, 'conv:abc')).toEqual({
       profile: 'scoped-profile',
-      registry: 'default',
+      registry: 'ops',
     });
     expect(selectCurrentProfileSelection(state, 'conv:missing')).toEqual({
-      profile: 'global-profile',
-      registry: 'default',
+      profile: undefined,
+      registry: undefined,
     });
   });
 

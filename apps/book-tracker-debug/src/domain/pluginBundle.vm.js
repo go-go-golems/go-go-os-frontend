@@ -19,23 +19,23 @@ defineStackBundle(({ ui }) => {
     return Number.isFinite(parsed) ? parsed : fallback;
   }
 
-  function domains(globalState) {
-    return asRecord(asRecord(globalState).domains);
+  function draftState(state) {
+    return asRecord(asRecord(state).draft);
   }
 
-  function selectBooks(globalState) {
-    return asArray(asRecord(domains(globalState).books).items);
+  function selectBooks(state) {
+    return asArray(asRecord(asRecord(state).books).items);
   }
 
-  function navParam(globalState) {
-    const param = asRecord(asRecord(globalState).nav).param;
+  function navParam(state) {
+    const param = asRecord(asRecord(state).nav).param;
     return typeof param === 'string' ? param : '';
   }
 
-  function findBook(globalState, id) {
+  function findBook(state, id) {
     const target = toText(id).toLowerCase();
     if (!target) return null;
-    return selectBooks(globalState).find((book) => toText(asRecord(book).id).toLowerCase() === target) || null;
+    return selectBooks(state).find((book) => toText(asRecord(book).id).toLowerCase() === target) || null;
   }
 
   function statusLabel(status) {
@@ -52,8 +52,8 @@ defineStackBundle(({ ui }) => {
     return 'Queued';
   }
 
-  function reportRows(globalState) {
-    const items = selectBooks(globalState);
+  function reportRows(state) {
+    const items = selectBooks(state);
     const total = items.length;
     const toRead = items.filter((book) => toText(asRecord(book).status) === 'to-read').length;
     const reading = items.filter((book) => toText(asRecord(book).status) === 'reading').length;
@@ -88,22 +88,42 @@ defineStackBundle(({ ui }) => {
     });
   }
 
-  function readingNow(globalState) {
-    return selectBooks(globalState).filter((book) => toText(asRecord(book).status) === 'reading');
+  function readingNow(state) {
+    return selectBooks(state).filter((book) => toText(asRecord(book).status) === 'reading');
   }
 
-  function withCardState(cardState) {
-    const state = asRecord(cardState);
+  function withDraftState(state) {
+    const draft = draftState(state);
     return {
-      edits: asRecord(state.edits),
-      formValues: asRecord(state.formValues),
-      submitResult: toText(state.submitResult),
+      edits: asRecord(draft.edits),
+      formValues: asRecord(draft.formValues),
+      submitResult: toText(draft.submitResult),
     };
   }
 
-  function goTo(dispatchSystemCommand, cardId, param) {
+  function dispatchDomain(context, actionType, payload) {
+    context.dispatch({ type: 'books/' + actionType, payload });
+  }
+
+  function patchDraft(context, payload) {
+    context.dispatch({ type: 'draft.patch', payload });
+  }
+
+  function setDraft(context, path, value) {
+    context.dispatch({ type: 'draft.set', payload: { path, value } });
+  }
+
+  function navigate(context, cardId, param) {
     const payload = param ? { cardId, param: toText(param) } : { cardId };
-    dispatchSystemCommand('nav.go', payload);
+    context.dispatch({ type: 'nav.go', payload });
+  }
+
+  function goBack(context) {
+    context.dispatch({ type: 'nav.back' });
+  }
+
+  function notify(context, message) {
+    context.dispatch({ type: 'notify.show', payload: { message: toText(message) } });
   }
 
   function quickOpenButtons(items) {
@@ -142,23 +162,23 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, toText(asRecord(args).cardId, 'home'));
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
-          markAllRead({ dispatchDomainAction, dispatchSystemCommand }) {
-            dispatchDomainAction('books', 'markAllRead');
-            dispatchSystemCommand('notify', { message: 'All books marked read' });
+          markAllRead(context) {
+            dispatchDomain(context, 'markAllRead');
+            notify(context, 'All books marked read');
           },
-          resetDemo({ dispatchDomainAction, dispatchSystemCommand }) {
-            dispatchDomainAction('books', 'resetDemo');
-            dispatchSystemCommand('notify', { message: 'Book demo data reset' });
+          resetDemo(context) {
+            dispatchDomain(context, 'resetDemo');
+            notify(context, 'Book demo data reset');
           },
         },
       },
 
       browse: {
-        render({ globalState }) {
-          const items = selectBooks(globalState);
+        render({ state }) {
+          const items = selectBooks(state);
           return ui.panel([
             ui.text('Browse Books (' + items.length + ')'),
             ui.table(booksRows(items), {
@@ -175,24 +195,24 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, toText(asRecord(args).cardId, 'home'));
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
-          openBook({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, 'bookDetail', toText(asRecord(args).id));
+          openBook(context, args) {
+            navigate(context, 'bookDetail', toText(asRecord(args).id));
           },
-          markAllRead({ dispatchDomainAction }) {
-            dispatchDomainAction('books', 'markAllRead');
+          markAllRead(context) {
+            dispatchDomain(context, 'markAllRead');
           },
-          resetDemo({ dispatchDomainAction }) {
-            dispatchDomainAction('books', 'resetDemo');
+          resetDemo(context) {
+            dispatchDomain(context, 'resetDemo');
           },
         },
       },
 
       readingNow: {
-        render({ globalState }) {
-          const items = readingNow(globalState);
+        render({ state }) {
+          const items = readingNow(state);
           return ui.panel([
             ui.text('Reading Now (' + items.length + ')'),
             ui.table(booksRows(items), {
@@ -207,22 +227,22 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, toText(asRecord(args).cardId, 'home'));
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
-          openBook({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, 'bookDetail', toText(asRecord(args).id));
+          openBook(context, args) {
+            navigate(context, 'bookDetail', toText(asRecord(args).id));
           },
-          markAllRead({ dispatchDomainAction }) {
-            dispatchDomainAction('books', 'markAllRead');
+          markAllRead(context) {
+            dispatchDomain(context, 'markAllRead');
           },
         },
       },
 
       bookDetail: {
-        render({ cardState, globalState }) {
-          const id = navParam(globalState);
-          const record = findBook(globalState, id);
+        render({ state }) {
+          const id = navParam(state);
+          const record = findBook(state, id);
           if (!record) {
             return ui.panel([
               ui.text('Book not found: ' + toText(id, '(none)')),
@@ -230,8 +250,8 @@ defineStackBundle(({ ui }) => {
             ]);
           }
 
-          const state = withCardState(cardState);
-          const current = { ...asRecord(record), ...state.edits };
+          const draft = withDraftState(state);
+          const current = { ...asRecord(record), ...draft.edits };
 
           return ui.panel([
             ui.text('Book Detail: ' + toText(current.title, id)),
@@ -264,54 +284,51 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          back({ dispatchSystemCommand }) {
-            dispatchSystemCommand('nav.back');
+          back(context) {
+            goBack(context);
           },
-          change({ dispatchCardAction }, args) {
+          change(context, args) {
             const field = toText(asRecord(args).field);
             if (!field) return;
-            dispatchCardAction('set', {
-              path: 'edits.' + field,
-              value: asRecord(args).value,
-            });
+            setDraft(context, 'edits.' + field, asRecord(args).value);
           },
-          save({ dispatchCardAction, dispatchDomainAction, dispatchSystemCommand, cardState, globalState }) {
-            const id = navParam(globalState);
+          save(context) {
+            const id = navParam(context.state);
             if (!id) return;
-            const edits = { ...asRecord(asRecord(cardState).edits) };
+            const edits = { ...asRecord(draftState(context.state).edits) };
             if (edits.rating !== undefined) {
               edits.rating = toNumber(edits.rating, 0);
             }
-            dispatchDomainAction('books', 'saveBook', { id, edits });
-            dispatchCardAction('patch', { edits: {} });
-            dispatchSystemCommand('notify', { message: 'Saved book ' + id });
+            dispatchDomain(context, 'saveBook', { id, edits });
+            patchDraft(context, { edits: {} });
+            notify(context, 'Saved book ' + id);
           },
-          setStatus({ dispatchCardAction, dispatchDomainAction, globalState }, args) {
-            const id = navParam(globalState);
+          setStatus(context, args) {
+            const id = navParam(context.state);
             if (!id) return;
             const status = toText(asRecord(args).status);
             if (!status) return;
-            dispatchDomainAction('books', 'setStatus', { id, status });
-            dispatchCardAction('patch', { edits: {} });
+            dispatchDomain(context, 'setStatus', { id, status });
+            patchDraft(context, { edits: {} });
           },
-          remove({ dispatchDomainAction, dispatchSystemCommand, globalState }) {
-            const id = navParam(globalState);
+          remove(context) {
+            const id = navParam(context.state);
             if (!id) return;
-            dispatchDomainAction('books', 'deleteBook', { id });
-            dispatchSystemCommand('notify', { message: 'Deleted book ' + id });
-            dispatchSystemCommand('nav.back');
+            dispatchDomain(context, 'deleteBook', { id });
+            notify(context, 'Deleted book ' + id);
+            goBack(context);
           },
         },
       },
 
       addBook: {
-        render({ cardState }) {
-          const state = withCardState(cardState);
+        render({ state }) {
+          const draft = withDraftState(state);
           const form = {
-            title: toText(state.formValues.title),
-            author: toText(state.formValues.author),
-            status: toText(state.formValues.status, 'to-read'),
-            rating: toText(state.formValues.rating, '0'),
+            title: toText(draft.formValues.title),
+            author: toText(draft.formValues.author),
+            status: toText(draft.formValues.status, 'to-read'),
+            rating: toText(draft.formValues.rating, '0'),
           };
 
           return ui.panel([
@@ -332,7 +349,7 @@ defineStackBundle(({ ui }) => {
               ui.text('Rating:'),
               ui.input(form.rating, { onChange: { handler: 'change', args: { field: 'rating' } } }),
             ]),
-            state.submitResult ? ui.badge(state.submitResult) : ui.text(''),
+            draft.submitResult ? ui.badge(draft.submitResult) : ui.text(''),
             ui.row([
               ui.button('Add Book', { onClick: { handler: 'submit' } }),
               ui.button('← Back', { onClick: { handler: 'back' } }),
@@ -340,47 +357,44 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          back({ dispatchSystemCommand }) {
-            dispatchSystemCommand('nav.back');
+          back(context) {
+            goBack(context);
           },
-          change({ dispatchCardAction }, args) {
+          change(context, args) {
             const field = toText(asRecord(args).field);
             if (!field) return;
-            dispatchCardAction('set', {
-              path: 'formValues.' + field,
-              value: asRecord(args).value,
-            });
+            setDraft(context, 'formValues.' + field, asRecord(args).value);
           },
-          submit({ dispatchCardAction, dispatchDomainAction, dispatchSystemCommand, cardState }) {
-            const values = asRecord(asRecord(cardState).formValues);
+          submit(context) {
+            const values = asRecord(draftState(context.state).formValues);
             const title = toText(values.title).trim();
             const author = toText(values.author).trim();
             if (!title || !author) {
-              dispatchCardAction('patch', { submitResult: 'Title and Author are required' });
+              patchDraft(context, { submitResult: 'Title and Author are required' });
               return;
             }
 
-            dispatchDomainAction('books', 'createBook', {
+            dispatchDomain(context, 'createBook', {
               title,
               author,
               status: toText(values.status, 'to-read'),
               rating: toNumber(values.rating, 0),
             });
 
-            dispatchCardAction('patch', {
+            patchDraft(context, {
               submitResult: 'Book added',
               formValues: { title: '', author: '', status: 'to-read', rating: 0 },
             });
-            dispatchSystemCommand('notify', { message: 'Book added: ' + title });
+            notify(context, 'Book added: ' + title);
           },
         },
       },
 
       readingReport: {
-        render({ globalState }) {
+        render({ state }) {
           return ui.panel([
             ui.text('Reading Report'),
-            ui.table(reportRows(globalState), { headers: ['Metric', 'Value'] }),
+            ui.table(reportRows(state), { headers: ['Metric', 'Value'] }),
             ui.row([
               ui.button('📋 Browse', { onClick: { handler: 'go', args: { cardId: 'browse' } } }),
               ui.button('✅ Mark All Read', { onClick: { handler: 'markAllRead' } }),
@@ -389,14 +403,14 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, toText(asRecord(args).cardId, 'home'));
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
-          markAllRead({ dispatchDomainAction }) {
-            dispatchDomainAction('books', 'markAllRead');
+          markAllRead(context) {
+            dispatchDomain(context, 'markAllRead');
           },
-          resetDemo({ dispatchDomainAction }) {
-            dispatchDomainAction('books', 'resetDemo');
+          resetDemo(context) {
+            dispatchDomain(context, 'resetDemo');
           },
         },
       },

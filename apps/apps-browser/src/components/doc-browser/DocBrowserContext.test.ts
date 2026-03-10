@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { docBrowserReducer, type DocBrowserState } from './DocBrowserContext';
+import { buildDocObjectPath } from '../../domain/docsObjects';
+import { buildDocSearchLocation, type DocBrowserState, docBrowserReducer } from './DocBrowserContext';
 
 describe('docBrowserReducer', () => {
   function createState(screen: DocBrowserState['current']['screen']): DocBrowserState {
@@ -17,19 +18,16 @@ describe('docBrowserReducer', () => {
     });
     const toReader = docBrowserReducer(toSearch, {
       type: 'navigate',
-      location: { screen: 'reader', moduleId: 'inventory', slug: 'overview' },
+      location: { screen: 'reader', path: buildDocObjectPath('module', 'inventory', 'overview') },
     });
 
-    expect(toReader.current).toEqual({ screen: 'reader', moduleId: 'inventory', slug: 'overview' });
-    expect(toReader.history).toEqual([
-      { screen: 'home' },
-      { screen: 'search', query: 'inventory' },
-    ]);
+    expect(toReader.current).toEqual({ screen: 'reader', path: '/docs/objects/module/inventory/overview' });
+    expect(toReader.history).toEqual([{ screen: 'home' }, { screen: 'search', query: 'inventory' }]);
   });
 
   it('returns to previous location on back', () => {
     const state: DocBrowserState = {
-      current: { screen: 'reader', moduleId: 'inventory', slug: 'overview' },
+      current: { screen: 'reader', path: '/docs/objects/module/inventory/overview' },
       history: [{ screen: 'home' }, { screen: 'search', query: 'inventory' }],
     };
 
@@ -45,5 +43,19 @@ describe('docBrowserReducer', () => {
     const next = docBrowserReducer(state, { type: 'back' });
 
     expect(next).toEqual(state);
+  });
+
+  it('builds structured search locations for facet-driven navigation', () => {
+    expect(buildDocSearchLocation('inventory')).toEqual({ query: 'inventory' });
+    expect(buildDocSearchLocation({ kinds: ['module'], query: '   ' })).toEqual({
+      query: undefined,
+      searchQuery: {
+        query: undefined,
+        kinds: ['module'],
+        owners: undefined,
+        topics: undefined,
+        docTypes: undefined,
+      },
+    });
   });
 });

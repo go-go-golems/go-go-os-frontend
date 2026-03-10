@@ -65,7 +65,7 @@ function resolveBasePrefix(basePrefix?: string): string {
 function profileSelectionKey(selection?: ChatProfileSelection): string {
   const profile = String(selection?.profile ?? '').trim();
   const registry = String(selection?.registry ?? '').trim();
-  return `${registry}|${profile}`;
+  return `${profile}::${registry}`;
 }
 
 function resolveWsUrl(
@@ -82,10 +82,10 @@ function resolveWsUrl(
   const protocol = source.protocol === 'https:' ? 'wss' : 'ws';
   let url = `${protocol}://${source.host}${resolveBasePrefix(basePrefix)}/ws?conv_id=${encodeURIComponent(convId)}`;
   const profile = String(profileSelection?.profile ?? '').trim();
-  const registry = String(profileSelection?.registry ?? '').trim();
   if (profile.length > 0) {
     url += `&profile=${encodeURIComponent(profile)}`;
   }
+  const registry = String(profileSelection?.registry ?? '').trim();
   if (registry.length > 0) {
     url += `&registry=${encodeURIComponent(registry)}`;
   }

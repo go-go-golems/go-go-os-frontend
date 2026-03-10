@@ -7,12 +7,14 @@ import type {
   DesktopMenuSection,
   WindowContentAdapter,
 } from '@hypercard/engine/desktop-react';
-import { type ReactNode, useRef } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { Provider } from 'react-redux';
 import { createAppsBrowserStore } from '../app/store';
+import { buildDocObjectPath, buildDocsMountPath, type DocObjectPath, type DocsMountPath } from '../domain/docsObjects';
+import { docsRegistry } from '../domain/docsRegistry';
+import { registerDefaultDocsMounts } from '../domain/docsMountAdapters';
 import { AppsFolderWindow } from '../components/AppsFolderWindow';
 import { DocBrowserWindow } from '../components/doc-browser/DocBrowserWindow';
-import type { DocBrowserMode } from '../components/doc-browser/DocBrowserContext';
 import { GetInfoWindowByAppId } from '../components/GetInfoWindowByAppId';
 import { HealthDashboardWindow } from '../components/HealthDashboardWindow';
 import { ModuleBrowserWindow } from '../components/ModuleBrowserWindow';
@@ -32,10 +34,37 @@ const COMMAND_SEARCH_DOCS = 'apps-browser.search-docs';
 const COMMAND_OPEN_HELP = 'apps-browser.open-help';
 const DOC_ROUTE_HOME = 'home';
 const DOC_ROUTE_SEARCH = 'search';
-const DOC_ROUTE_MODULE = 'module';
+const DOC_ROUTE_COLLECTION = 'collection';
 const DOC_ROUTE_DOC = 'doc';
-const DOC_MODE_APPS = 'apps';
-const DOC_MODE_HELP = 'help';
+const DOC_ROUTE_TOPIC = 'topic';
+const docsBootstrapByRegistry = new WeakSet<object>();
+const docsBootstrapJobs = new WeakMap<object, Promise<void>>();
+
+function ensureDefaultDocsBootstrapped() {
+  if (docsBootstrapByRegistry.has(docsRegistry)) {
+    return Promise.resolve();
+  }
+
+  const pending = docsBootstrapJobs.get(docsRegistry);
+  if (pending) {
+    return pending;
+  }
+
+  const job = registerDefaultDocsMounts((mount) => {
+    docsRegistry.register(mount);
+  })
+    .then(() => {
+      docsBootstrapByRegistry.add(docsRegistry);
+      docsBootstrapJobs.delete(docsRegistry);
+    })
+    .catch((error) => {
+      docsBootstrapJobs.delete(docsRegistry);
+      console.error('[apps-browser] Failed to register default docs mounts', error);
+    });
+
+  docsBootstrapJobs.set(docsRegistry, job);
+  return job;
+}
 
 function buildFolderWindowPayload(reason: LaunchReason): OpenWindowPayload {
   return {
@@ -73,45 +102,34 @@ export function buildHealthWindowPayload(): OpenWindowPayload {
 let docWindowCounter = 0;
 
 export function buildDocBrowserWindowPayload(opts?: {
-  mode?: DocBrowserMode;
   screen?: 'home' | 'search';
-  moduleId?: string;
-  slug?: string;
+  mountPath?: DocsMountPath;
+  path?: DocObjectPath;
   query?: string;
   newWindow?: boolean;
+  topic?: string;
 }): OpenWindowPayload {
-  const mode: DocBrowserMode = opts?.mode ?? DOC_MODE_APPS;
-  const moduleId = asNonEmptyString(opts?.moduleId);
-  const slug = asNonEmptyString(opts?.slug);
+  const mountPath = asNonEmptyString(opts?.mountPath);
+  const path = asNonEmptyString(opts?.path);
   const query = asNonEmptyString(opts?.query);
+  const topic = asNonEmptyString(opts?.topic);
 
-  // Build the route part (without mode prefix)
   let routePart: string;
-  if (mode === DOC_MODE_HELP) {
-    // Help mode: help:home, help:search:<query>, help:doc:<slug>
-    if (slug) {
-      routePart = `${DOC_ROUTE_DOC}:${encodeDocRoutePart(slug)}`;
-    } else if (opts?.screen === 'search' || opts?.query !== undefined) {
-      routePart = query ? `${DOC_ROUTE_SEARCH}:${encodeDocRoutePart(query)}` : DOC_ROUTE_SEARCH;
-    } else {
-      routePart = DOC_ROUTE_HOME;
-    }
+  if (path) {
+    routePart = `${DOC_ROUTE_DOC}:${encodeDocRoutePart(path)}`;
+  } else if (mountPath) {
+    routePart = `${DOC_ROUTE_COLLECTION}:${encodeDocRoutePart(mountPath)}`;
+  } else if (topic) {
+    routePart = `${DOC_ROUTE_TOPIC}:${encodeDocRoutePart(topic)}`;
+  } else if (opts?.screen === 'search' || opts?.query !== undefined) {
+    routePart = query ? `${DOC_ROUTE_SEARCH}:${encodeDocRoutePart(query)}` : DOC_ROUTE_SEARCH;
   } else {
-    // Apps mode: apps:home, apps:search:<query>, apps:module:<id>, apps:doc:<id>:<slug>
-    if (moduleId) {
-      routePart = slug
-        ? `${DOC_ROUTE_DOC}:${encodeDocRoutePart(moduleId)}:${encodeDocRoutePart(slug)}`
-        : `${DOC_ROUTE_MODULE}:${encodeDocRoutePart(moduleId)}`;
-    } else if (opts?.screen === 'search' || opts?.query !== undefined) {
-      routePart = query ? `${DOC_ROUTE_SEARCH}:${encodeDocRoutePart(query)}` : DOC_ROUTE_SEARCH;
-    } else {
-      routePart = DOC_ROUTE_HOME;
-    }
+    routePart = DOC_ROUTE_HOME;
   }
 
-  const suffix = `${mode}:${routePart}`;
-  const title = mode === DOC_MODE_HELP ? 'Help' : 'Documentation';
-  const dedupeBase = mode === DOC_MODE_HELP ? 'apps-browser:help' : 'apps-browser:docs';
+  const suffix = routePart;
+  const title = 'Documentation';
+  const dedupeBase = 'apps-browser:docs';
 
   if (opts?.newWindow) {
     const counter = ++docWindowCounter;
@@ -180,11 +198,11 @@ function createAppsBrowserAdapter(hostContext: LauncherHostContext): WindowConte
           <ModuleBrowserWindow
             initialAppId={initialAppId}
             onOpenDocs={(moduleId) =>
-              hostContext.openWindow(buildDocBrowserWindowPayload(moduleId ? { moduleId } : undefined))
+              hostContext.openWindow(buildDocBrowserWindowPayload(moduleId ? { mountPath: buildDocsMountPath('module', moduleId) } : undefined))
             }
             onOpenDocsCenter={() => hostContext.openWindow(buildDocBrowserWindowPayload())}
-            onOpenDoc={(moduleId, slug, newWindow) =>
-              hostContext.openWindow(buildDocBrowserWindowPayload({ moduleId, slug, newWindow }))
+            onOpenDoc={(path, newWindow) =>
+              hostContext.openWindow(buildDocBrowserWindowPayload({ path, newWindow }))
             }
           />
         );
@@ -200,8 +218,8 @@ function createAppsBrowserAdapter(hostContext: LauncherHostContext): WindowConte
         content = (
           <DocBrowserWindow
             {...parsed}
-            onOpenDocNewWindow={(moduleId, slug) =>
-              hostContext.openWindow(buildDocBrowserWindowPayload({ mode: parsed.mode, moduleId, slug, newWindow: true }))
+            onOpenDocNewWindow={(path) =>
+              hostContext.openWindow(buildDocBrowserWindowPayload({ path, newWindow: true }))
             }
           />
         );
@@ -214,8 +232,8 @@ function createAppsBrowserAdapter(hostContext: LauncherHostContext): WindowConte
             <GetInfoWindowByAppId
               appId={appId}
               onOpenInBrowser={() => hostContext.openWindow(buildBrowserWindowPayload(appId))}
-              onOpenDoc={(moduleId, slug) =>
-                hostContext.openWindow(buildDocBrowserWindowPayload({ moduleId, slug }))
+              onOpenDoc={(path) =>
+                hostContext.openWindow(buildDocBrowserWindowPayload({ path }))
               }
             />
           );
@@ -256,72 +274,46 @@ function decodeDocRoutePart(value: string | undefined): string | undefined {
 }
 
 function parseDocBrowserSuffix(suffix: string): {
-  mode?: DocBrowserMode;
-  initialScreen?: 'home' | 'search' | 'module-docs' | 'reader' | 'topic-browser';
-  initialModuleId?: string;
-  initialSlug?: string;
+  initialScreen?: 'home' | 'search' | 'collection' | 'reader' | 'topic-browser';
+  initialMountPath?: DocsMountPath;
+  initialPath?: DocObjectPath;
   initialQuery?: string;
+  initialTopic?: string;
 } {
   if (!suffix || suffix === DOC_ROUTE_HOME) {
     return {};
   }
 
   const parts = suffix.split(':');
-  const firstToken = parts[0];
-
-  // Check if first token is a mode prefix
-  let mode: DocBrowserMode | undefined;
-  let routeParts: string[];
-  if (firstToken === DOC_MODE_APPS || firstToken === DOC_MODE_HELP) {
-    mode = firstToken;
-    routeParts = parts.slice(1);
-  } else {
-    // Backwards compatibility: no mode prefix defaults to apps
-    mode = undefined;
-    routeParts = parts;
-  }
-
-  const route = routeParts[0];
+  const route = parts[0];
   if (!route || route === DOC_ROUTE_HOME) {
-    return { mode };
+    return {};
   }
 
   if (route === DOC_ROUTE_SEARCH) {
-    const query = decodeDocRoutePart(routeParts.slice(1).join(':'));
-    return { mode, initialScreen: 'search', initialQuery: query };
+    const query = decodeDocRoutePart(parts.slice(1).join(':'));
+    return { initialScreen: 'search', initialQuery: query };
   }
 
-  if (mode === DOC_MODE_HELP) {
-    // Help mode: help:doc:<slug> (no moduleId)
-    if (route === DOC_ROUTE_DOC) {
-      const slug = decodeDocRoutePart(routeParts.slice(1).join(':'));
-      if (!slug) {
-        return { mode };
-      }
-      return { mode, initialModuleId: 'wesen-os', initialSlug: slug };
+  if (route === DOC_ROUTE_COLLECTION) {
+    const mountPath = decodeDocRoutePart(parts.slice(1).join(':'));
+    if (!mountPath) {
+      return {};
     }
-    return { mode };
-  }
-
-  // Apps mode routes
-  if (route === DOC_ROUTE_MODULE) {
-    const moduleId = decodeDocRoutePart(routeParts[1]);
-    if (!moduleId) {
-      return { mode };
-    }
-    return { mode, initialModuleId: moduleId };
+    return { initialScreen: 'collection', initialMountPath: mountPath as DocsMountPath };
   }
   if (route === DOC_ROUTE_DOC) {
-    const moduleId = decodeDocRoutePart(routeParts[1]);
-    const slug = decodeDocRoutePart(routeParts.slice(2).join(':'));
-    if (!moduleId) {
-      return { mode };
+    const path = decodeDocRoutePart(parts.slice(1).join(':'));
+    if (!path) {
+      return {};
     }
-    return slug
-      ? { mode, initialModuleId: moduleId, initialSlug: slug }
-      : { mode, initialModuleId: moduleId };
+    return { initialScreen: 'reader', initialPath: path as DocObjectPath };
   }
-  return { mode };
+  if (route === DOC_ROUTE_TOPIC) {
+    const initialTopic = decodeDocRoutePart(parts.slice(1).join(':'));
+    return { initialScreen: 'topic-browser', initialTopic };
+  }
+  return {};
 }
 
 function resolveAppFromInvocation(invocation: DesktopCommandInvocation): { appId?: string; appName?: string } {
@@ -363,24 +355,24 @@ function createAppsBrowserCommandHandler(hostContext: LauncherHostContext): Desk
         return 'handled';
       }
       if (commandId === COMMAND_OPEN_DOCS) {
-        hostContext.openWindow(buildDocBrowserWindowPayload({ mode: 'apps', ...(appId ? { moduleId: appId } : {}) }));
+        hostContext.openWindow(buildDocBrowserWindowPayload(appId ? { mountPath: buildDocsMountPath('module', appId) } : undefined));
         return 'handled';
       }
       if (commandId === COMMAND_OPEN_DOC_PAGE) {
         const slug = asNonEmptyString(payload.slug);
         if (appId && slug) {
-          hostContext.openWindow(buildDocBrowserWindowPayload({ mode: 'apps', moduleId: appId, slug }));
+          hostContext.openWindow(buildDocBrowserWindowPayload({ path: buildDocObjectPath('module', appId, slug) }));
           return 'handled';
         }
         return 'pass';
       }
       if (commandId === COMMAND_SEARCH_DOCS) {
         const query = asNonEmptyString(payload.query);
-        hostContext.openWindow(buildDocBrowserWindowPayload({ mode: 'apps', screen: 'search', query }));
+        hostContext.openWindow(buildDocBrowserWindowPayload({ screen: 'search', query }));
         return 'handled';
       }
       if (commandId === COMMAND_OPEN_HELP) {
-        hostContext.openWindow(buildDocBrowserWindowPayload({ mode: 'help' }));
+        hostContext.openWindow(buildDocBrowserWindowPayload({ mountPath: buildDocsMountPath('help', 'wesen-os') }));
         return 'handled';
       }
       return 'pass';
@@ -390,6 +382,9 @@ function createAppsBrowserCommandHandler(hostContext: LauncherHostContext): Desk
 
 function AppsBrowserHost({ children }: { children: ReactNode }) {
   const storeRef = useRef<ReturnType<typeof createAppsBrowserStore> | null>(null);
+  useEffect(() => {
+    void ensureDefaultDocsBootstrapped();
+  }, []);
   if (!storeRef.current) {
     storeRef.current = createAppsBrowserStore();
   }

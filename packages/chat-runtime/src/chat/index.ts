@@ -1,4 +1,5 @@
 export * from './components/ChatConversationWindow';
+export * from './components/ChatProfileSelector';
 export * from './components/ChatSidebar';
 export * from './components/ChatView';
 export * from './components/ChatWindow';

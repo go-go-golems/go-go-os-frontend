@@ -3,8 +3,8 @@ defineStackBundle(({ ui }) => {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   }
 
-  function navParam(globalState) {
-    const param = asRecord(asRecord(globalState).nav).param;
+  function navParam(state) {
+    const param = asRecord(asRecord(state).nav).param;
     return typeof param === 'string' ? param : '';
   }
 
@@ -55,15 +55,15 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
+          go({ dispatch }, args) {
             const payload = asRecord(args);
-            dispatchSystemCommand('nav.go', { cardId: String(payload.cardId || 'list'), param: String(payload.param || '') });
+            dispatch({ type: 'nav.go', payload: { cardId: String(payload.cardId || 'list'), param: String(payload.param || '') } });
           },
         },
       },
       detail: {
-        render({ globalState }) {
-          const current = item(navParam(globalState));
+        render({ state }) {
+          const current = item(navParam(state));
           return ui.panel([
             ui.text('Item Detail'),
             ui.table(
@@ -85,11 +85,11 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          back({ dispatchSystemCommand }) {
-            dispatchSystemCommand('nav.back');
+          back({ dispatch }) {
+            dispatch({ type: 'nav.back' });
           },
-          notify({ dispatchSystemCommand }, args) {
-            dispatchSystemCommand('notify', { message: String(asRecord(args).message || '') });
+          notify({ dispatch }, args) {
+            dispatch({ type: 'notify.show', payload: { message: String(asRecord(args).message || '') } });
           },
         },
       },

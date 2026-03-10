@@ -23,28 +23,28 @@ defineStackBundle(({ ui }) => {
     return '$' + Math.round(toNumber(value, 0)).toLocaleString();
   }
 
-  function domains(globalState) {
-    return asRecord(asRecord(globalState).domains);
+  function draftState(state) {
+    return asRecord(asRecord(state).draft);
   }
 
-  function selectContacts(globalState) {
-    return asArray(asRecord(domains(globalState).contacts).items);
+  function selectContacts(state) {
+    return asArray(asRecord(asRecord(state).contacts).items);
   }
 
-  function selectCompanies(globalState) {
-    return asArray(asRecord(domains(globalState).companies).items);
+  function selectCompanies(state) {
+    return asArray(asRecord(asRecord(state).companies).items);
   }
 
-  function selectDeals(globalState) {
-    return asArray(asRecord(domains(globalState).deals).items);
+  function selectDeals(state) {
+    return asArray(asRecord(asRecord(state).deals).items);
   }
 
-  function selectActivities(globalState) {
-    return asArray(asRecord(domains(globalState).activities).items);
+  function selectActivities(state) {
+    return asArray(asRecord(asRecord(state).activities).items);
   }
 
-  function navParam(globalState) {
-    const param = asRecord(asRecord(globalState).nav).param;
+  function navParam(state) {
+    const param = asRecord(asRecord(state).nav).param;
     return typeof param === 'string' ? param : '';
   }
 
@@ -58,24 +58,24 @@ defineStackBundle(({ ui }) => {
     return items.find((item) => toText(asRecord(item).id).toLowerCase() === target) || null;
   }
 
-  function findContact(globalState, id) {
-    return findById(selectContacts(globalState), id);
+  function findContact(state, id) {
+    return findById(selectContacts(state), id);
   }
 
-  function findCompany(globalState, id) {
-    return findById(selectCompanies(globalState), id);
+  function findCompany(state, id) {
+    return findById(selectCompanies(state), id);
   }
 
-  function findDeal(globalState, id) {
-    return findById(selectDeals(globalState), id);
+  function findDeal(state, id) {
+    return findById(selectDeals(state), id);
   }
 
-  function withCardState(cardState) {
-    const state = asRecord(cardState);
+  function withDraftState(state) {
+    const draft = draftState(state);
     return {
-      edits: asRecord(state.edits),
-      formValues: asRecord(state.formValues),
-      submitResult: toText(state.submitResult),
+      edits: asRecord(draft.edits),
+      formValues: asRecord(draft.formValues),
+      submitResult: toText(draft.submitResult),
     };
   }
 
@@ -158,19 +158,19 @@ defineStackBundle(({ ui }) => {
     });
   }
 
-  function openDeals(globalState) {
-    return selectDeals(globalState).filter((deal) => !toText(asRecord(deal).stage).startsWith('closed'));
+  function openDeals(state) {
+    return selectDeals(state).filter((deal) => !toText(asRecord(deal).stage).startsWith('closed'));
   }
 
-  function recentActivities(globalState) {
-    return [...selectActivities(globalState)]
+  function recentActivities(state) {
+    return [...selectActivities(state)]
       .sort((a, b) => toText(asRecord(b).date).localeCompare(toText(asRecord(a).date)))
       .slice(0, 20);
   }
 
-  function pipelineSections(globalState) {
-    const deals = selectDeals(globalState);
-    const contacts = selectContacts(globalState);
+  function pipelineSections(state) {
+    const deals = selectDeals(state);
+    const contacts = selectContacts(state);
 
     const open = deals.filter((deal) => !toText(asRecord(deal).stage).startsWith('closed'));
     const won = deals.filter((deal) => toText(asRecord(deal).stage) === 'closed-won');
@@ -212,9 +212,29 @@ defineStackBundle(({ ui }) => {
     return safe;
   }
 
-  function goTo(dispatchSystemCommand, cardId, param) {
+  function dispatchDomain(context, domain, actionType, payload) {
+    context.dispatch({ type: domain + '/' + actionType, payload });
+  }
+
+  function patchDraft(context, payload) {
+    context.dispatch({ type: 'draft.patch', payload });
+  }
+
+  function setDraft(context, path, value) {
+    context.dispatch({ type: 'draft.set', payload: { path, value } });
+  }
+
+  function navigate(context, cardId, param) {
     const payload = param ? { cardId, param: toText(param) } : { cardId };
-    dispatchSystemCommand('nav.go', payload);
+    context.dispatch({ type: 'nav.go', payload });
+  }
+
+  function goBack(context) {
+    context.dispatch({ type: 'nav.back' });
+  }
+
+  function notify(context, message) {
+    context.dispatch({ type: 'notify.show', payload: { message: toText(message) } });
   }
 
   function quickOpenButtons(items, labelField, handlerName) {
@@ -274,22 +294,22 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, toText(asRecord(args).cardId, 'home'));
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
-          resetAll({ dispatchDomainAction, dispatchSystemCommand }) {
-            dispatchDomainAction('contacts', 'resetContacts');
-            dispatchDomainAction('companies', 'resetCompanies');
-            dispatchDomainAction('deals', 'resetDeals');
-            dispatchDomainAction('activities', 'resetActivities');
-            dispatchSystemCommand('notify', { message: 'CRM demo data reset' });
+          resetAll(context) {
+            dispatchDomain(context, 'contacts', 'resetContacts');
+            dispatchDomain(context, 'companies', 'resetCompanies');
+            dispatchDomain(context, 'deals', 'resetDeals');
+            dispatchDomain(context, 'activities', 'resetActivities');
+            notify(context, 'CRM demo data reset');
           },
         },
       },
 
       contacts: {
-        render({ globalState }) {
-          const contacts = selectContacts(globalState);
+        render({ state }) {
+          const contacts = selectContacts(state);
           return ui.panel([
             ui.text('Contacts (' + contacts.length + ')'),
             ui.table(contactsRows(contacts), {
@@ -305,22 +325,22 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, toText(asRecord(args).cardId, 'home'));
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
-          openContact({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, 'contactDetail', toText(asRecord(args).id));
+          openContact(context, args) {
+            navigate(context, 'contactDetail', toText(asRecord(args).id));
           },
-          resetContacts({ dispatchDomainAction }) {
-            dispatchDomainAction('contacts', 'resetContacts');
+          resetContacts(context) {
+            dispatchDomain(context, 'contacts', 'resetContacts');
           },
         },
       },
 
       contactDetail: {
-        render({ cardState, globalState }) {
-          const id = navParam(globalState);
-          const record = findContact(globalState, id);
+        render({ state }) {
+          const id = navParam(state);
+          const record = findContact(state, id);
           if (!record) {
             return ui.panel([
               ui.text('Contact not found: ' + toText(id, '(none)')),
@@ -328,8 +348,8 @@ defineStackBundle(({ ui }) => {
             ]);
           }
 
-          const state = withCardState(cardState);
-          const current = { ...asRecord(record), ...state.edits };
+          const draft = withDraftState(state);
+          const current = { ...asRecord(record), ...draft.edits };
 
           return ui.panel([
             ui.text('Contact Detail: ' + toText(current.name, id)),
@@ -366,54 +386,51 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, toText(asRecord(args).cardId, 'home'));
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
-          back({ dispatchSystemCommand }) {
-            dispatchSystemCommand('nav.back');
+          back(context) {
+            goBack(context);
           },
-          change({ dispatchCardAction }, args) {
+          change(context, args) {
             const field = toText(asRecord(args).field);
             if (!field) return;
-            dispatchCardAction('set', {
-              path: 'edits.' + field,
-              value: asRecord(args).value,
-            });
+            setDraft(context, 'edits.' + field, asRecord(args).value);
           },
-          save({ dispatchCardAction, dispatchDomainAction, dispatchSystemCommand, cardState, globalState }) {
-            const id = navParam(globalState);
+          save(context) {
+            const id = navParam(context.state);
             if (!id) return;
-            dispatchDomainAction('contacts', 'saveContact', {
+            dispatchDomain(context, 'contacts', 'saveContact', {
               id,
-              edits: asRecord(asRecord(cardState).edits),
+              edits: asRecord(draftState(context.state).edits),
             });
-            dispatchCardAction('patch', { edits: {} });
-            dispatchSystemCommand('notify', { message: 'Saved contact ' + id });
+            patchDraft(context, { edits: {} });
+            notify(context, 'Saved contact ' + id);
           },
-          promote({ dispatchDomainAction, globalState }) {
-            const id = navParam(globalState);
+          promote(context) {
+            const id = navParam(context.state);
             if (!id) return;
-            dispatchDomainAction('contacts', 'setContactStatus', { id, status: 'customer' });
+            dispatchDomain(context, 'contacts', 'setContactStatus', { id, status: 'customer' });
           },
-          remove({ dispatchDomainAction, dispatchSystemCommand, globalState }) {
-            const id = navParam(globalState);
+          remove(context) {
+            const id = navParam(context.state);
             if (!id) return;
-            dispatchDomainAction('contacts', 'deleteContact', { id });
-            dispatchSystemCommand('notify', { message: 'Deleted contact ' + id });
-            dispatchSystemCommand('nav.back');
+            dispatchDomain(context, 'contacts', 'deleteContact', { id });
+            notify(context, 'Deleted contact ' + id);
+            goBack(context);
           },
         },
       },
 
       addContact: {
-        render({ cardState }) {
-          const state = withCardState(cardState);
+        render({ state }) {
+          const draft = withDraftState(state);
           const form = {
-            name: toText(state.formValues.name),
-            email: toText(state.formValues.email),
-            phone: toText(state.formValues.phone),
-            companyId: toText(state.formValues.companyId),
-            status: toText(state.formValues.status, 'lead'),
+            name: toText(draft.formValues.name),
+            email: toText(draft.formValues.email),
+            phone: toText(draft.formValues.phone),
+            companyId: toText(draft.formValues.companyId),
+            status: toText(draft.formValues.status, 'lead'),
           };
 
           return ui.panel([
@@ -438,7 +455,7 @@ defineStackBundle(({ ui }) => {
               ui.text('Status:'),
               ui.input(form.status, { onChange: { handler: 'change', args: { field: 'status' } } }),
             ]),
-            state.submitResult ? ui.badge(state.submitResult) : ui.text(''),
+            draft.submitResult ? ui.badge(draft.submitResult) : ui.text(''),
             ui.row([
               ui.button('Add Contact', { onClick: { handler: 'submit' } }),
               ui.button('← Back', { onClick: { handler: 'back' } }),
@@ -446,27 +463,24 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          back({ dispatchSystemCommand }) {
-            dispatchSystemCommand('nav.back');
+          back(context) {
+            goBack(context);
           },
-          change({ dispatchCardAction }, args) {
+          change(context, args) {
             const field = toText(asRecord(args).field);
             if (!field) return;
-            dispatchCardAction('set', {
-              path: 'formValues.' + field,
-              value: asRecord(args).value,
-            });
+            setDraft(context, 'formValues.' + field, asRecord(args).value);
           },
-          submit({ dispatchCardAction, dispatchDomainAction, dispatchSystemCommand, cardState }) {
-            const values = asRecord(asRecord(cardState).formValues);
+          submit(context) {
+            const values = asRecord(draftState(context.state).formValues);
             const name = toText(values.name).trim();
             const email = toText(values.email).trim();
             if (!name || !email) {
-              dispatchCardAction('patch', { submitResult: 'Name and Email are required' });
+              patchDraft(context, { submitResult: 'Name and Email are required' });
               return;
             }
 
-            dispatchDomainAction('contacts', 'createContact', {
+            dispatchDomain(context, 'contacts', 'createContact', {
               name,
               email,
               phone: toText(values.phone),
@@ -475,18 +489,18 @@ defineStackBundle(({ ui }) => {
               tags: [],
             });
 
-            dispatchCardAction('patch', {
+            patchDraft(context, {
               submitResult: 'Contact created',
               formValues: { name: '', email: '', phone: '', companyId: '', status: 'lead' },
             });
-            dispatchSystemCommand('notify', { message: 'Contact created: ' + name });
+            notify(context, 'Contact created: ' + name);
           },
         },
       },
 
       companies: {
-        render({ globalState }) {
-          const companies = selectCompanies(globalState);
+        render({ state }) {
+          const companies = selectCompanies(state);
           return ui.panel([
             ui.text('Companies (' + companies.length + ')'),
             ui.table(companiesRows(companies), {
@@ -501,22 +515,22 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, toText(asRecord(args).cardId, 'home'));
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
-          openCompany({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, 'companyDetail', toText(asRecord(args).id));
+          openCompany(context, args) {
+            navigate(context, 'companyDetail', toText(asRecord(args).id));
           },
-          resetCompanies({ dispatchDomainAction }) {
-            dispatchDomainAction('companies', 'resetCompanies');
+          resetCompanies(context) {
+            dispatchDomain(context, 'companies', 'resetCompanies');
           },
         },
       },
 
       companyDetail: {
-        render({ cardState, globalState }) {
-          const id = navParam(globalState);
-          const record = findCompany(globalState, id);
+        render({ state }) {
+          const id = navParam(state);
+          const record = findCompany(state, id);
           if (!record) {
             return ui.panel([
               ui.text('Company not found: ' + toText(id, '(none)')),
@@ -524,8 +538,8 @@ defineStackBundle(({ ui }) => {
             ]);
           }
 
-          const state = withCardState(cardState);
-          const current = { ...asRecord(record), ...state.edits };
+          const draft = withDraftState(state);
+          const current = { ...asRecord(record), ...draft.edits };
 
           return ui.panel([
             ui.text('Company Detail: ' + toText(current.name, id)),
@@ -554,40 +568,37 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          back({ dispatchSystemCommand }) {
-            dispatchSystemCommand('nav.back');
+          back(context) {
+            goBack(context);
           },
-          change({ dispatchCardAction }, args) {
+          change(context, args) {
             const field = toText(asRecord(args).field);
             if (!field) return;
-            dispatchCardAction('set', {
-              path: 'edits.' + field,
-              value: asRecord(args).value,
-            });
+            setDraft(context, 'edits.' + field, asRecord(args).value);
           },
-          save({ dispatchCardAction, dispatchDomainAction, dispatchSystemCommand, cardState, globalState }) {
-            const id = navParam(globalState);
+          save(context) {
+            const id = navParam(context.state);
             if (!id) return;
-            dispatchDomainAction('companies', 'saveCompany', {
+            dispatchDomain(context, 'companies', 'saveCompany', {
               id,
-              edits: asRecord(asRecord(cardState).edits),
+              edits: asRecord(draftState(context.state).edits),
             });
-            dispatchCardAction('patch', { edits: {} });
-            dispatchSystemCommand('notify', { message: 'Saved company ' + id });
+            patchDraft(context, { edits: {} });
+            notify(context, 'Saved company ' + id);
           },
-          remove({ dispatchDomainAction, dispatchSystemCommand, globalState }) {
-            const id = navParam(globalState);
+          remove(context) {
+            const id = navParam(context.state);
             if (!id) return;
-            dispatchDomainAction('companies', 'deleteCompany', { id });
-            dispatchSystemCommand('notify', { message: 'Deleted company ' + id });
-            dispatchSystemCommand('nav.back');
+            dispatchDomain(context, 'companies', 'deleteCompany', { id });
+            notify(context, 'Deleted company ' + id);
+            goBack(context);
           },
         },
       },
 
       deals: {
-        render({ globalState }) {
-          const deals = selectDeals(globalState);
+        render({ state }) {
+          const deals = selectDeals(state);
           return ui.panel([
             ui.text('Deals (' + deals.length + ')'),
             ui.table(dealsRows(deals), {
@@ -603,21 +614,21 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, toText(asRecord(args).cardId, 'home'));
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
-          openDeal({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, 'dealDetail', toText(asRecord(args).id));
+          openDeal(context, args) {
+            navigate(context, 'dealDetail', toText(asRecord(args).id));
           },
-          resetDeals({ dispatchDomainAction }) {
-            dispatchDomainAction('deals', 'resetDeals');
+          resetDeals(context) {
+            dispatchDomain(context, 'deals', 'resetDeals');
           },
         },
       },
 
       openDeals: {
-        render({ globalState }) {
-          const deals = openDeals(globalState);
+        render({ state }) {
+          const deals = openDeals(state);
           return ui.panel([
             ui.text('Open Deals (' + deals.length + ')'),
             ui.table(dealsRows(deals), {
@@ -632,19 +643,19 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, toText(asRecord(args).cardId, 'home'));
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
-          openDeal({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, 'dealDetail', toText(asRecord(args).id));
+          openDeal(context, args) {
+            navigate(context, 'dealDetail', toText(asRecord(args).id));
           },
         },
       },
 
       dealDetail: {
-        render({ cardState, globalState }) {
-          const id = navParam(globalState);
-          const record = findDeal(globalState, id);
+        render({ state }) {
+          const id = navParam(state);
+          const record = findDeal(state, id);
           if (!record) {
             return ui.panel([
               ui.text('Deal not found: ' + toText(id, '(none)')),
@@ -652,8 +663,8 @@ defineStackBundle(({ ui }) => {
             ]);
           }
 
-          const state = withCardState(cardState);
-          const current = { ...asRecord(record), ...state.edits };
+          const draft = withDraftState(state);
+          const current = { ...asRecord(record), ...draft.edits };
           const weightedValue = toNumber(current.value, 0) * (toNumber(current.probability, 0) / 100);
 
           return ui.panel([
@@ -701,56 +712,53 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          back({ dispatchSystemCommand }) {
-            dispatchSystemCommand('nav.back');
+          back(context) {
+            goBack(context);
           },
-          change({ dispatchCardAction }, args) {
+          change(context, args) {
             const field = toText(asRecord(args).field);
             if (!field) return;
-            dispatchCardAction('set', {
-              path: 'edits.' + field,
-              value: asRecord(args).value,
-            });
+            setDraft(context, 'edits.' + field, asRecord(args).value);
           },
-          save({ dispatchCardAction, dispatchDomainAction, dispatchSystemCommand, cardState, globalState }) {
-            const id = navParam(globalState);
+          save(context) {
+            const id = navParam(context.state);
             if (!id) return;
-            dispatchDomainAction('deals', 'saveDeal', {
+            dispatchDomain(context, 'deals', 'saveDeal', {
               id,
-              edits: sanitizeDealEdits(asRecord(asRecord(cardState).edits)),
+              edits: sanitizeDealEdits(asRecord(draftState(context.state).edits)),
             });
-            dispatchCardAction('patch', { edits: {} });
-            dispatchSystemCommand('notify', { message: 'Saved deal ' + id });
+            patchDraft(context, { edits: {} });
+            notify(context, 'Saved deal ' + id);
           },
-          setStage({ dispatchDomainAction, globalState }, args) {
-            const id = navParam(globalState);
+          setStage(context, args) {
+            const id = navParam(context.state);
             if (!id) return;
-            dispatchDomainAction('deals', 'setDealStage', {
+            dispatchDomain(context, 'deals', 'setDealStage', {
               id,
               stage: toText(asRecord(args).stage),
             });
           },
-          remove({ dispatchDomainAction, dispatchSystemCommand, globalState }) {
-            const id = navParam(globalState);
+          remove(context) {
+            const id = navParam(context.state);
             if (!id) return;
-            dispatchDomainAction('deals', 'deleteDeal', { id });
-            dispatchSystemCommand('notify', { message: 'Deleted deal ' + id });
-            dispatchSystemCommand('nav.back');
+            dispatchDomain(context, 'deals', 'deleteDeal', { id });
+            notify(context, 'Deleted deal ' + id);
+            goBack(context);
           },
         },
       },
 
       addDeal: {
-        render({ cardState }) {
-          const state = withCardState(cardState);
+        render({ state }) {
+          const draft = withDraftState(state);
           const form = {
-            title: toText(state.formValues.title),
-            contactId: toText(state.formValues.contactId),
-            companyId: toText(state.formValues.companyId),
-            stage: toText(state.formValues.stage, 'qualification'),
-            value: toText(state.formValues.value, '0'),
-            probability: toText(state.formValues.probability, '25'),
-            closeDate: toText(state.formValues.closeDate),
+            title: toText(draft.formValues.title),
+            contactId: toText(draft.formValues.contactId),
+            companyId: toText(draft.formValues.companyId),
+            stage: toText(draft.formValues.stage, 'qualification'),
+            value: toText(draft.formValues.value, '0'),
+            probability: toText(draft.formValues.probability, '25'),
+            closeDate: toText(draft.formValues.closeDate),
           };
 
           return ui.panel([
@@ -783,7 +791,7 @@ defineStackBundle(({ ui }) => {
               ui.text('Close Date:'),
               ui.input(form.closeDate, { onChange: { handler: 'change', args: { field: 'closeDate' } } }),
             ]),
-            state.submitResult ? ui.badge(state.submitResult) : ui.text(''),
+            draft.submitResult ? ui.badge(draft.submitResult) : ui.text(''),
             ui.row([
               ui.button('Create Deal', { onClick: { handler: 'submit' } }),
               ui.button('← Back', { onClick: { handler: 'back' } }),
@@ -791,26 +799,23 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          back({ dispatchSystemCommand }) {
-            dispatchSystemCommand('nav.back');
+          back(context) {
+            goBack(context);
           },
-          change({ dispatchCardAction }, args) {
+          change(context, args) {
             const field = toText(asRecord(args).field);
             if (!field) return;
-            dispatchCardAction('set', {
-              path: 'formValues.' + field,
-              value: asRecord(args).value,
-            });
+            setDraft(context, 'formValues.' + field, asRecord(args).value);
           },
-          submit({ dispatchCardAction, dispatchDomainAction, dispatchSystemCommand, cardState }) {
-            const values = asRecord(asRecord(cardState).formValues);
+          submit(context) {
+            const values = asRecord(draftState(context.state).formValues);
             const title = toText(values.title).trim();
             if (!title) {
-              dispatchCardAction('patch', { submitResult: 'Deal title is required' });
+              patchDraft(context, { submitResult: 'Deal title is required' });
               return;
             }
 
-            dispatchDomainAction('deals', 'createDeal', {
+            dispatchDomain(context, 'deals', 'createDeal', {
               title,
               contactId: toText(values.contactId),
               companyId: toText(values.companyId),
@@ -820,7 +825,7 @@ defineStackBundle(({ ui }) => {
               closeDate: toText(values.closeDate),
             });
 
-            dispatchCardAction('patch', {
+            patchDraft(context, {
               submitResult: 'Deal created',
               formValues: {
                 title: '',
@@ -832,14 +837,14 @@ defineStackBundle(({ ui }) => {
                 closeDate: '',
               },
             });
-            dispatchSystemCommand('notify', { message: 'Deal created: ' + title });
+            notify(context, 'Deal created: ' + title);
           },
         },
       },
 
       pipeline: {
-        render({ globalState }) {
-          const sections = pipelineSections(globalState);
+        render({ state }) {
+          const sections = pipelineSections(state);
           return ui.panel([
             ui.text('Pipeline Report'),
             ui.table(sections, { headers: ['Metric', 'Value'] }),
@@ -851,22 +856,22 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, toText(asRecord(args).cardId, 'home'));
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
-          resetAll({ dispatchDomainAction, dispatchSystemCommand }) {
-            dispatchDomainAction('contacts', 'resetContacts');
-            dispatchDomainAction('companies', 'resetCompanies');
-            dispatchDomainAction('deals', 'resetDeals');
-            dispatchDomainAction('activities', 'resetActivities');
-            dispatchSystemCommand('notify', { message: 'CRM demo data reset' });
+          resetAll(context) {
+            dispatchDomain(context, 'contacts', 'resetContacts');
+            dispatchDomain(context, 'companies', 'resetCompanies');
+            dispatchDomain(context, 'deals', 'resetDeals');
+            dispatchDomain(context, 'activities', 'resetActivities');
+            notify(context, 'CRM demo data reset');
           },
         },
       },
 
       activityLog: {
-        render({ globalState }) {
-          const items = recentActivities(globalState);
+        render({ state }) {
+          const items = recentActivities(state);
           return ui.panel([
             ui.text('Activity Log (' + items.length + ')'),
             ui.table(activitiesRows(items), {
@@ -880,25 +885,25 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          go({ dispatchSystemCommand }, args) {
-            goTo(dispatchSystemCommand, toText(asRecord(args).cardId, 'home'));
+          go(context, args) {
+            navigate(context, toText(asRecord(args).cardId, 'home'));
           },
-          resetActivities({ dispatchDomainAction }) {
-            dispatchDomainAction('activities', 'resetActivities');
+          resetActivities(context) {
+            dispatchDomain(context, 'activities', 'resetActivities');
           },
         },
       },
 
       addActivity: {
-        render({ cardState }) {
-          const state = withCardState(cardState);
+        render({ state }) {
+          const draft = withDraftState(state);
           const form = {
-            subject: toText(state.formValues.subject),
-            type: toText(state.formValues.type, 'note'),
-            contactId: toText(state.formValues.contactId),
-            dealId: toText(state.formValues.dealId),
-            date: toText(state.formValues.date),
-            notes: toText(state.formValues.notes),
+            subject: toText(draft.formValues.subject),
+            type: toText(draft.formValues.type, 'note'),
+            contactId: toText(draft.formValues.contactId),
+            dealId: toText(draft.formValues.dealId),
+            date: toText(draft.formValues.date),
+            notes: toText(draft.formValues.notes),
           };
 
           return ui.panel([
@@ -927,7 +932,7 @@ defineStackBundle(({ ui }) => {
               ui.text('Notes:'),
               ui.input(form.notes, { onChange: { handler: 'change', args: { field: 'notes' } } }),
             ]),
-            state.submitResult ? ui.badge(state.submitResult) : ui.text(''),
+            draft.submitResult ? ui.badge(draft.submitResult) : ui.text(''),
             ui.row([
               ui.button('Log Activity', { onClick: { handler: 'submit' } }),
               ui.button('← Back', { onClick: { handler: 'back' } }),
@@ -935,26 +940,23 @@ defineStackBundle(({ ui }) => {
           ]);
         },
         handlers: {
-          back({ dispatchSystemCommand }) {
-            dispatchSystemCommand('nav.back');
+          back(context) {
+            goBack(context);
           },
-          change({ dispatchCardAction }, args) {
+          change(context, args) {
             const field = toText(asRecord(args).field);
             if (!field) return;
-            dispatchCardAction('set', {
-              path: 'formValues.' + field,
-              value: asRecord(args).value,
-            });
+            setDraft(context, 'formValues.' + field, asRecord(args).value);
           },
-          submit({ dispatchCardAction, dispatchDomainAction, dispatchSystemCommand, cardState }) {
-            const values = asRecord(asRecord(cardState).formValues);
+          submit(context) {
+            const values = asRecord(draftState(context.state).formValues);
             const subject = toText(values.subject).trim();
             if (!subject) {
-              dispatchCardAction('patch', { submitResult: 'Subject is required' });
+              patchDraft(context, { submitResult: 'Subject is required' });
               return;
             }
 
-            dispatchDomainAction('activities', 'createActivity', {
+            dispatchDomain(context, 'activities', 'createActivity', {
               contactId: toText(values.contactId),
               dealId: toText(values.dealId),
               type: toText(values.type, 'note'),
@@ -963,7 +965,7 @@ defineStackBundle(({ ui }) => {
               notes: toText(values.notes),
             });
 
-            dispatchCardAction('patch', {
+            patchDraft(context, {
               submitResult: 'Activity logged',
               formValues: {
                 subject: '',
@@ -974,7 +976,7 @@ defineStackBundle(({ ui }) => {
                 notes: '',
               },
             });
-            dispatchSystemCommand('notify', { message: 'Activity logged' });
+            notify(context, 'Activity logged');
           },
         },
       },

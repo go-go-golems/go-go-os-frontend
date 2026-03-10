@@ -1,5 +1,3 @@
-import type { UINode } from './uiTypes';
-
 export type StackId = string;
 export type SessionId = string;
 export type CardId = string;
@@ -10,32 +8,56 @@ export interface RuntimeErrorPayload {
   details?: unknown;
 }
 
-export interface CardIntent {
-  scope: 'card';
-  actionType: string;
+export interface RuntimeAction {
+  type: string;
   payload?: unknown;
+  meta?: Record<string, unknown>;
 }
 
-export interface SessionIntent {
-  scope: 'session';
-  actionType: string;
-  payload?: unknown;
+export type RuntimeActionKind = 'draft' | 'filters' | 'domain' | 'system' | 'unknown';
+
+const SYSTEM_ACTION_TYPES = new Set(['nav.go', 'nav.back', 'notify.show', 'window.close']);
+
+export function getRuntimeActionKind(actionType: string): RuntimeActionKind {
+  if (actionType.startsWith('draft.')) {
+    return 'draft';
+  }
+
+  if (actionType.startsWith('filters.')) {
+    return 'filters';
+  }
+
+  if (SYSTEM_ACTION_TYPES.has(actionType)) {
+    return 'system';
+  }
+
+  const slashIndex = actionType.indexOf('/');
+  if (slashIndex > 0) {
+    return 'domain';
+  }
+
+  return 'unknown';
 }
 
-export interface DomainIntent {
-  scope: 'domain';
-  domain: string;
-  actionType: string;
-  payload?: unknown;
+export function getRuntimeActionDomain(actionType: string): string | null {
+  if (getRuntimeActionKind(actionType) !== 'domain') {
+    return null;
+  }
+
+  return actionType.split('/', 1)[0] ?? null;
 }
 
-export interface SystemIntent {
-  scope: 'system';
-  command: string;
-  payload?: unknown;
-}
+export function getRuntimeActionOperation(actionType: string): string {
+  if (actionType.startsWith('draft.')) {
+    return actionType.slice('draft.'.length);
+  }
 
-export type RuntimeIntent = CardIntent | SessionIntent | DomainIntent | SystemIntent;
+  if (actionType.startsWith('filters.')) {
+    return actionType.slice('filters.'.length);
+  }
+
+  return actionType;
+}
 
 export interface LoadedStackBundle {
   stackId: StackId;
@@ -46,6 +68,7 @@ export interface LoadedStackBundle {
   initialSessionState?: unknown;
   initialCardState?: Record<string, unknown>;
   cards: string[];
+  cardPacks?: Record<string, string>;
 }
 
 export interface LoadStackBundleRequest {
@@ -61,9 +84,7 @@ export interface RenderCardRequest {
   type: 'renderCard';
   sessionId: SessionId;
   cardId: CardId;
-  cardState: unknown;
-  sessionState: unknown;
-  globalState: unknown;
+  state: unknown;
 }
 
 export interface EventCardRequest {
@@ -73,9 +94,7 @@ export interface EventCardRequest {
   cardId: CardId;
   handler: string;
   args?: unknown;
-  cardState: unknown;
-  sessionState: unknown;
-  globalState: unknown;
+  state: unknown;
 }
 
 export interface DefineCardRequest {
@@ -129,11 +148,11 @@ export interface LoadStackBundleResult {
 }
 
 export interface RenderCardResult {
-  tree: UINode;
+  tree: unknown;
 }
 
 export interface EventCardResult {
-  intents: RuntimeIntent[];
+  actions: RuntimeAction[];
 }
 
 export interface DefineCardResult {

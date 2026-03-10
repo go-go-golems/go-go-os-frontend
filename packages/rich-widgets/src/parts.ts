@@ -28,6 +28,9 @@ export const RICH_PARTS = {
   commandPaletteItem: 'command-palette-item',
   commandPaletteFooter: 'command-palette-footer',
   buttonGroup: 'button-group',
+  rwLauncher: 'rw-launcher',
+  rwLauncherHeader: 'rw-launcher-header',
+  rwLauncherHint: 'rw-launcher-hint',
 
   // Sparkline
   sparkline: 'sparkline',
@@ -68,6 +71,12 @@ export const RICH_PARTS = {
 
   // KanbanBoard
   kb: 'kb',
+  kbHighlights: 'kb-highlights',
+  kbHighlight: 'kb-highlight',
+  kbHighlightLabel: 'kb-highlight-label',
+  kbHighlightValue: 'kb-highlight-value',
+  kbHighlightCaption: 'kb-highlight-caption',
+  kbHighlightTrend: 'kb-highlight-trend',
   kbBoard: 'kb-board',
   kbColumn: 'kb-column',
   kbColumnHeader: 'kb-column-header',

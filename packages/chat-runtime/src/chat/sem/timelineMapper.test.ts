@@ -17,7 +17,7 @@ describe('timelineEntityFromProto', () => {
           },
         },
       } as any,
-      7
+      7,
     );
 
     expect(mapped).toEqual(
@@ -28,74 +28,11 @@ describe('timelineEntityFromProto', () => {
         props: expect.objectContaining({
           customKind: 'hypercard.widget.v1',
         }),
-      })
+      }),
     );
   });
 
-  it('remaps first-class hypercard.widget.v1 timeline kind into hypercard_widget entity', () => {
-    const mapped = timelineEntityFromProto(
-      {
-        id: 'tool-widget-1:result',
-        kind: 'hypercard.widget.v1',
-        createdAtMs: 400,
-        props: {
-          toolCallId: 'tool-widget-1',
-          result: {
-            itemId: 'widget-first-class',
-            title: 'Top Movers',
-            widgetType: 'report',
-            data: { artifact: { id: 'artifact-widget-fc' } },
-          },
-        },
-      } as any,
-      10
-    );
-
-    expect(mapped).toEqual(
-      expect.objectContaining({
-        id: 'widget:widget-first-class',
-        kind: 'hypercard_widget',
-        props: expect.objectContaining({
-          artifactId: 'artifact-widget-fc',
-          template: 'report',
-          title: 'Top Movers',
-        }),
-      })
-    );
-  });
-
-  it('remaps hypercard.widget.v1 error payloads into hypercard_widget error state', () => {
-    const mapped = timelineEntityFromProto(
-      {
-        id: 'tool-widget-err-1:result',
-        kind: 'hypercard.widget.v1',
-        createdAtMs: 410,
-        props: {
-          toolCallId: 'tool-widget-err-1',
-          error: 'yaml: unmarshal errors: mapping key artifact already defined',
-          result: {
-            itemId: 'widget-error',
-            error: 'yaml: unmarshal errors: mapping key artifact already defined',
-          },
-        },
-      } as any,
-      12
-    );
-
-    expect(mapped).toEqual(
-      expect.objectContaining({
-        id: 'widget:widget-error',
-        kind: 'hypercard_widget',
-        props: expect.objectContaining({
-          status: 'error',
-          detail: 'yaml: unmarshal errors: mapping key artifact already defined',
-          itemId: 'widget-error',
-        }),
-      })
-    );
-  });
-
-  it('remaps first-class hypercard.card.v2 timeline kind and surfaces runtime card fields', () => {
+  it('preserves first-class hypercard.card.v2 timeline kind and props', () => {
     const mapped = timelineEntityFromProto(
       {
         id: 'tool-card-1:result',
@@ -116,19 +53,22 @@ describe('timelineEntityFromProto', () => {
           },
         },
       } as any,
-      11
+      11,
     );
 
     expect(mapped).toEqual(
       expect.objectContaining({
-        id: 'card:card-first-class',
-        kind: 'hypercard_card',
+        id: 'tool-card-1:result',
+        kind: 'hypercard.card.v2',
+        version: 11,
         props: expect.objectContaining({
-          artifactId: 'artifact-card-fc',
-          runtimeCardId: 'runtime-low-stock',
-          runtimeCardCode: '({ ui }) => ({ render() { return ui.text("hi"); } })',
+          toolCallId: 'tool-card-1',
+          result: expect.objectContaining({
+            itemId: 'card-first-class',
+            title: 'Low Stock Drilldown',
+          }),
         }),
-      })
+      }),
     );
   });
 });

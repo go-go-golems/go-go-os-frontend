@@ -1,62 +1,33 @@
-import type { RuntimeIntent } from './contracts';
+import type { RuntimeAction } from './contracts';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-export function validateRuntimeIntent(value: unknown): RuntimeIntent {
+export function validateRuntimeAction(value: unknown): RuntimeAction {
   if (!isRecord(value)) {
-    throw new Error('Runtime intent must be an object');
+    throw new Error('Runtime action must be an object');
   }
 
-  if (value.scope !== 'card' && value.scope !== 'session' && value.scope !== 'domain' && value.scope !== 'system') {
-    throw new Error("Runtime intent scope must be one of: 'card', 'session', 'domain', 'system'");
+  if (typeof value.type !== 'string' || value.type.length === 0) {
+    throw new Error('Runtime action type must be a non-empty string');
   }
 
-  if (value.scope === 'domain') {
-    if (typeof value.domain !== 'string' || value.domain.length === 0) {
-      throw new Error('Domain runtime intent must have a non-empty domain');
-    }
-
-    if (typeof value.actionType !== 'string' || value.actionType.length === 0) {
-      throw new Error('Domain runtime intent actionType must be a non-empty string');
-    }
-
-    return {
-      scope: 'domain',
-      domain: value.domain,
-      actionType: value.actionType,
-      payload: value.payload,
-    };
-  }
-
-  if (value.scope === 'system') {
-    if (typeof value.command !== 'string' || value.command.length === 0) {
-      throw new Error('System runtime intent command must be a non-empty string');
-    }
-
-    return {
-      scope: 'system',
-      command: value.command,
-      payload: value.payload,
-    };
-  }
-
-  if (typeof value.actionType !== 'string' || value.actionType.length === 0) {
-    throw new Error('Card/session runtime intent actionType must be a non-empty string');
+  if (value.meta !== undefined && !isRecord(value.meta)) {
+    throw new Error('Runtime action meta must be an object when provided');
   }
 
   return {
-    scope: value.scope,
-    actionType: value.actionType,
+    type: value.type,
     payload: value.payload,
+    meta: value.meta,
   };
 }
 
-export function validateRuntimeIntents(value: unknown): RuntimeIntent[] {
+export function validateRuntimeActions(value: unknown): RuntimeAction[] {
   if (!Array.isArray(value)) {
-    throw new Error('Runtime intents result must be an array');
+    throw new Error('Runtime actions result must be an array');
   }
 
-  return value.map((intent) => validateRuntimeIntent(intent));
+  return value.map((action) => validateRuntimeAction(action));
 }

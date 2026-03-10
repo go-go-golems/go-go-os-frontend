@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { notificationsReducer } from '@hypercard/engine';
 import { pluginCardRuntimeReducer, registerRuntimeSession } from '../features/pluginCardRuntime';
 import { openWindow, windowingReducer } from '@hypercard/engine/desktop-core';
-import { dispatchRuntimeIntent } from '../runtime-host/pluginIntentRouting';
+import { dispatchRuntimeAction } from '../runtime-host/pluginIntentRouting';
 
 function inventoryReducer(state = { events: [] as unknown[] }, action: { type: string; payload?: unknown }) {
   if (action.type === 'inventory/reserve-item') {
@@ -16,8 +16,8 @@ function inventoryReducer(state = { events: [] as unknown[] }, action: { type: s
   return state;
 }
 
-describe('dispatchRuntimeIntent', () => {
-  it('routes domain and system intents to reducers while preserving nav behavior', () => {
+describe('dispatchRuntimeAction', () => {
+  it('routes domain and system actions to reducers while preserving nav behavior', () => {
     const sessionId = 'session-routing';
     const windowId = 'window:home:session-routing';
 
@@ -43,7 +43,7 @@ describe('dispatchRuntimeIntent', () => {
             cardSessionId: sessionId,
           },
         },
-      })
+      }),
     );
 
     store.dispatch(
@@ -53,16 +53,14 @@ describe('dispatchRuntimeIntent', () => {
         status: 'ready',
         capabilities: {
           domain: ['inventory'],
-          system: ['nav.go', 'nav.back', 'notify', 'window.close'],
+          system: ['nav.go', 'nav.back', 'notify.show', 'window.close'],
         },
-      })
+      }),
     );
 
-    dispatchRuntimeIntent(
+    dispatchRuntimeAction(
       {
-        scope: 'domain',
-        domain: 'inventory',
-        actionType: 'reserve-item',
+        type: 'inventory/reserve-item',
         payload: { sku: 'A-1' },
       },
       {
@@ -71,13 +69,12 @@ describe('dispatchRuntimeIntent', () => {
         sessionId,
         cardId: 'home',
         windowId,
-      }
+      },
     );
 
-    dispatchRuntimeIntent(
+    dispatchRuntimeAction(
       {
-        scope: 'system',
-        command: 'nav.go',
+        type: 'nav.go',
         payload: { cardId: 'detail', param: 'A-1' },
       },
       {
@@ -86,27 +83,23 @@ describe('dispatchRuntimeIntent', () => {
         sessionId,
         cardId: 'home',
         windowId,
-      }
+      },
     );
 
-    dispatchRuntimeIntent(
-      {
-        scope: 'system',
-        command: 'nav.back',
-      },
+    dispatchRuntimeAction(
+      { type: 'nav.back' },
       {
         dispatch: (action) => store.dispatch(action as never),
         getState: () => store.getState(),
         sessionId,
         cardId: 'detail',
         windowId,
-      }
+      },
     );
 
-    dispatchRuntimeIntent(
+    dispatchRuntimeAction(
       {
-        scope: 'system',
-        command: 'notify',
+        type: 'notify.show',
         payload: { message: 'Reserved A-1' },
       },
       {
@@ -115,7 +108,7 @@ describe('dispatchRuntimeIntent', () => {
         sessionId,
         cardId: 'home',
         windowId,
-      }
+      },
     );
 
     let state = store.getState();
@@ -124,18 +117,15 @@ describe('dispatchRuntimeIntent', () => {
     expect(state.windowing.sessions[sessionId].nav).toEqual([{ card: 'home' }]);
     expect(state.notifications.toast).toBe('Reserved A-1');
 
-    dispatchRuntimeIntent(
-      {
-        scope: 'system',
-        command: 'window.close',
-      },
+    dispatchRuntimeAction(
+      { type: 'window.close' },
       {
         dispatch: (action) => store.dispatch(action as never),
         getState: () => store.getState(),
         sessionId,
         cardId: 'home',
         windowId,
-      }
+      },
     );
 
     state = store.getState();
@@ -144,7 +134,7 @@ describe('dispatchRuntimeIntent', () => {
     expect(state.windowing.sessions[sessionId]).toBeUndefined();
   });
 
-  it('does not route denied system intents to downstream reducers', () => {
+  it('does not route denied system actions to downstream reducers', () => {
     const sessionId = 'session-denied';
     const windowId = 'window:home:session-denied';
 
@@ -170,7 +160,7 @@ describe('dispatchRuntimeIntent', () => {
             cardSessionId: sessionId,
           },
         },
-      })
+      }),
     );
 
     store.dispatch(
@@ -181,29 +171,24 @@ describe('dispatchRuntimeIntent', () => {
         capabilities: {
           system: ['nav.go'],
         },
-      })
+      }),
     );
 
-    dispatchRuntimeIntent(
-      {
-        scope: 'system',
-        command: 'window.close',
-      },
+    dispatchRuntimeAction(
+      { type: 'window.close' },
       {
         dispatch: (action) => store.dispatch(action as never),
         getState: () => store.getState(),
         sessionId,
         cardId: 'home',
         windowId,
-      }
+      },
     );
 
     const state = store.getState();
 
     expect(state.windowing.windows[windowId]).toBeDefined();
-    const deniedEntry = state.pluginCardRuntime.timeline.find(
-      (entry) => entry.scope === 'system' && entry.command === 'window.close'
-    );
+    const deniedEntry = state.pluginCardRuntime.timeline.find((entry) => entry.actionType === 'window.close');
     expect(deniedEntry?.outcome).toBe('denied');
   });
 
@@ -239,11 +224,9 @@ describe('dispatchRuntimeIntent', () => {
       }),
     );
 
-    dispatchRuntimeIntent(
+    dispatchRuntimeAction(
       {
-        scope: 'domain',
-        domain: 'domain-demo',
-        actionType: 'command.request',
+        type: 'domain-demo/command.request',
         payload: {
           op: 'create-session',
           requestId: 'req-routing',
@@ -260,13 +243,18 @@ describe('dispatchRuntimeIntent', () => {
     );
 
     const actions = store.getState().pluginCardRuntime.timeline;
-    const applied = actions.find((entry) => entry.scope === 'domain' && entry.domain === 'domain-demo');
+    const applied = actions.find((entry) => entry.actionType === 'domain-demo/command.request');
     expect(applied?.outcome).toBe('applied');
 
     const emitted = observedActions.find((action) => action.type === 'domain-demo/command.request');
-    expect(emitted).toBeDefined();
-    expect(emitted?.meta?.source).toBe('plugin-runtime');
-    expect(emitted?.meta?.runtimeSessionId).toBe(sessionId);
-    expect(emitted?.meta?.cardId).toBe('home');
+    expect(emitted?.meta).toEqual(
+      expect.objectContaining({
+        source: 'plugin-runtime',
+        sessionId,
+        runtimeSessionId: sessionId,
+        cardId: 'home',
+        windowId,
+      }),
+    );
   });
 });

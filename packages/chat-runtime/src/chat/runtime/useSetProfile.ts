@@ -1,48 +1,48 @@
 import { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
-import { setCurrentProfile } from './profileApi';
 import { chatProfilesSlice } from '../state/profileSlice';
 
 export interface UseSetProfileOptions {
   scopeKey?: string;
+  registry?: string;
 }
 
-export function useSetProfile(basePrefix = '', options: UseSetProfileOptions = {}) {
+type NextProfileSelection = string | null | { profile: string | null; registry?: string | null };
+
+export function useSetProfile(_basePrefix = '', options: UseSetProfileOptions = {}) {
   const dispatch = useDispatch();
   const scopeKey = String(options.scopeKey ?? '').trim() || undefined;
+  const registry = String(options.registry ?? '').trim() || undefined;
 
   return useCallback(
-    async (profile: string | null, registry?: string | null) => {
-      const normalized = String(profile ?? '').trim();
+    async (selection: NextProfileSelection) => {
+      const explicitProfile = typeof selection === 'object' && selection !== null
+        ? selection.profile
+        : selection;
+      const explicitRegistry = typeof selection === 'object' && selection !== null
+        ? String(selection.registry ?? '').trim() || undefined
+        : undefined;
+      const normalized = String(explicitProfile ?? '').trim();
+      const nextRegistry = explicitRegistry ?? registry;
+      dispatch(chatProfilesSlice.actions.setProfileError(null));
       if (!normalized) {
         dispatch(
           chatProfilesSlice.actions.setSelectedProfile({
             profile: null,
-            registry: registry ?? undefined,
+            registry: nextRegistry,
             scopeKey,
           })
         );
         return;
       }
-      dispatch(chatProfilesSlice.actions.setProfileError(null));
-      try {
-        const payload = await setCurrentProfile(normalized, { basePrefix });
-        const serverSlug = String(payload.slug ?? payload.profile ?? normalized).trim() || normalized;
-        dispatch(
-          chatProfilesSlice.actions.setSelectedProfile({
-            profile: serverSlug,
-            registry: registry ?? undefined,
-            scopeKey,
-          })
-        );
-      } catch (err) {
-        dispatch(
-          chatProfilesSlice.actions.setProfileError(
-            err instanceof Error ? err.message : String(err)
-          )
-        );
-      }
+      dispatch(
+        chatProfilesSlice.actions.setSelectedProfile({
+          profile: normalized,
+          registry: nextRegistry,
+          scopeKey,
+        })
+      );
     },
-    [basePrefix, dispatch, scopeKey]
+    [dispatch, registry, scopeKey]
   );
 }

@@ -1,15 +1,16 @@
 import { showToast } from '@hypercard/engine';
 import { authorizeDomainIntent, authorizeSystemIntent } from '../features/pluginCardRuntime';
-import { ingestRuntimeIntent } from '../features/pluginCardRuntime';
+import { ingestRuntimeAction } from '../features/pluginCardRuntime';
 import { closeWindow, sessionNavBack, sessionNavGo } from '@hypercard/engine/desktop-core';
-import type { RuntimeIntent, SystemIntent } from '../plugin-runtime/contracts';
+import type { RuntimeAction } from '../plugin-runtime/contracts';
 import type { CapabilityPolicy } from '../features/pluginCardRuntime';
+import { getRuntimeActionDomain, getRuntimeActionKind } from '../plugin-runtime/contracts';
 
 interface DispatchLike {
   (action: unknown): unknown;
 }
 
-interface IntentDispatchContext {
+interface ActionDispatchContext {
   dispatch: DispatchLike;
   getState?: () => unknown;
   sessionId: string;
@@ -27,31 +28,31 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function toSystemAction(intent: SystemIntent, context: IntentDispatchContext): unknown | null {
-  if (intent.command === 'nav.back') {
+function toSystemAction(action: RuntimeAction, context: ActionDispatchContext): unknown | null {
+  if (action.type === 'nav.back') {
     return sessionNavBack({ sessionId: context.sessionId });
   }
 
-  if (intent.command === 'nav.go') {
-    if (!isRecord(intent.payload)) {
+  if (action.type === 'nav.go') {
+    if (!isRecord(action.payload)) {
       return null;
     }
 
-    const card = intent.payload.cardId;
+    const card = action.payload.cardId;
     if (typeof card !== 'string' || card.length === 0) {
       return null;
     }
 
-    const param = typeof intent.payload.param === 'string' ? intent.payload.param : undefined;
+    const param = typeof action.payload.param === 'string' ? action.payload.param : undefined;
     return sessionNavGo({ sessionId: context.sessionId, card, param });
   }
 
-  if (intent.command === 'notify') {
-    if (!isRecord(intent.payload)) {
+  if (action.type === 'notify.show') {
+    if (!isRecord(action.payload)) {
       return null;
     }
 
-    const message = intent.payload.message;
+    const message = action.payload.message;
     if (typeof message !== 'string' || message.length === 0) {
       return null;
     }
@@ -59,17 +60,17 @@ function toSystemAction(intent: SystemIntent, context: IntentDispatchContext): u
     return showToast(message);
   }
 
-  if (intent.command === 'window.close') {
+  if (action.type === 'window.close') {
     return closeWindow(context.windowId);
   }
 
   return null;
 }
 
-function toDomainAction(intent: Extract<RuntimeIntent, { scope: 'domain' }>, context: IntentDispatchContext) {
+function toDomainAction(action: RuntimeAction, context: ActionDispatchContext) {
   return {
-    type: `${intent.domain}/${intent.actionType}`,
-    payload: intent.payload,
+    type: action.type,
+    payload: action.payload,
     meta: {
       source: 'plugin-runtime',
       sessionId: context.sessionId,
@@ -80,42 +81,44 @@ function toDomainAction(intent: Extract<RuntimeIntent, { scope: 'domain' }>, con
   };
 }
 
-export function dispatchRuntimeIntent(intent: RuntimeIntent, context: IntentDispatchContext) {
+export function dispatchRuntimeAction(action: RuntimeAction, context: ActionDispatchContext) {
   context.dispatch(
-    ingestRuntimeIntent({
+    ingestRuntimeAction({
       sessionId: context.sessionId,
       cardId: context.cardId,
-      intent,
-    })
+      action,
+    }),
   );
 
   const runtimeSession = (context.getState?.() as RuntimeStateLike | undefined)?.pluginCardRuntime?.sessions?.[
     context.sessionId
   ];
+  const kind = getRuntimeActionKind(action.type);
 
-  if (intent.scope === 'domain' && runtimeSession?.capabilities) {
-    const decision = authorizeDomainIntent(runtimeSession.capabilities, intent.domain);
+  if (kind === 'domain' && runtimeSession?.capabilities) {
+    const domain = getRuntimeActionDomain(action.type);
+    const decision = authorizeDomainIntent(runtimeSession.capabilities, domain ?? '');
     if (!decision.allowed) {
       return;
     }
   }
 
-  if (intent.scope === 'system' && runtimeSession?.capabilities) {
-    const decision = authorizeSystemIntent(runtimeSession.capabilities, intent.command);
+  if (kind === 'system' && runtimeSession?.capabilities) {
+    const decision = authorizeSystemIntent(runtimeSession.capabilities, action.type);
     if (!decision.allowed) {
       return;
     }
   }
 
-  if (intent.scope === 'domain') {
-    context.dispatch(toDomainAction(intent, context));
+  if (kind === 'domain') {
+    context.dispatch(toDomainAction(action, context));
     return;
   }
 
-  if (intent.scope === 'system') {
-    const action = toSystemAction(intent, context);
-    if (action) {
-      context.dispatch(action);
+  if (kind === 'system') {
+    const routed = toSystemAction(action, context);
+    if (routed) {
+      context.dispatch(routed);
     }
   }
 }

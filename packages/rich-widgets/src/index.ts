@@ -72,23 +72,36 @@ export { parseMarkdown } from './mac-write/markdown';
 export { SAMPLE_DOCUMENT } from './mac-write/sampleData';
 
 // KanbanBoard
-export { KanbanBoard, type KanbanBoardProps } from './kanban/KanbanBoard';
+export { KanbanBoard, KanbanBoardFrame, type KanbanBoardProps } from './kanban/KanbanBoard';
+export { KanbanBoardView, type KanbanBoardViewProps } from './kanban/KanbanBoardView';
+export { KanbanHighlights, type KanbanHighlightsProps } from './kanban/KanbanHighlights';
+export { KanbanHeaderBar, type KanbanHeaderBarProps } from './kanban/KanbanHeaderBar';
+export { KanbanFilterBar, type KanbanFilterBarProps } from './kanban/KanbanFilterBar';
+export { KanbanLaneView, type KanbanLaneViewProps } from './kanban/KanbanLaneView';
+export { KanbanStatusBar, type KanbanStatusBarProps, type KanbanStatusMetric } from './kanban/KanbanStatusBar';
+export { KanbanTaskCard, type KanbanTaskCardProps } from './kanban/KanbanTaskCard';
+export { KanbanTaskModal, type KanbanTaskModalProps } from './kanban/KanbanTaskModal';
 export {
   KANBAN_STATE_KEY,
   createKanbanStateSeed,
   kanbanActions,
   kanbanReducer,
   selectKanbanState,
+  type KanbanAction,
+  type KanbanState,
 } from './kanban/kanbanState';
 export {
   type Task,
   type Column,
-  type TagId,
-  type Priority,
-  TAG_LABELS,
-  PRIORITY_LABELS,
-  ALL_TAGS,
-  ALL_PRIORITIES,
+  type KanbanIssueTypeId,
+  type KanbanPriorityId,
+  type KanbanLabelId,
+  type KanbanTaxonomy,
+  type KanbanOptionDescriptor,
+  type KanbanHighlight,
+  DEFAULT_KANBAN_TAXONOMY,
+  formatKanbanOption,
+  findKanbanOption,
 } from './kanban/types';
 export { INITIAL_COLUMNS, INITIAL_TASKS } from './kanban/sampleData';
 
