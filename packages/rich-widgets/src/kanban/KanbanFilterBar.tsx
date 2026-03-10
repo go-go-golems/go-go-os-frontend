@@ -1,50 +1,52 @@
 import { Btn } from '@hypercard/engine';
 import { WidgetToolbar } from '../primitives/WidgetToolbar';
 import { Separator } from '../primitives/Separator';
-import { ALL_PRIORITIES, ALL_TAGS, PRIORITY_LABELS, TAG_LABELS, type Priority, type TagId } from './types';
+import { formatKanbanOption, type KanbanPriorityId, type KanbanIssueTypeId, type KanbanTaxonomy } from './types';
 
 export interface KanbanFilterBarProps {
-  filterTag: TagId | null;
-  filterPriority: Priority | null;
+  taxonomy: KanbanTaxonomy;
+  filterType: KanbanIssueTypeId | null;
+  filterPriority: KanbanPriorityId | null;
   searchQuery: string;
-  onSetFilterTag: (tag: TagId | null) => void;
-  onSetFilterPriority: (priority: Priority | null) => void;
+  onSetFilterType: (type: KanbanIssueTypeId | null) => void;
+  onSetFilterPriority: (priority: KanbanPriorityId | null) => void;
   onClearFilters: () => void;
 }
 
 export function KanbanFilterBar({
-  filterTag,
+  taxonomy,
+  filterType,
   filterPriority,
   searchQuery,
-  onSetFilterTag,
+  onSetFilterType,
   onSetFilterPriority,
   onClearFilters,
 }: KanbanFilterBarProps) {
-  const hasFilters = Boolean(filterTag || filterPriority || searchQuery);
+  const hasFilters = Boolean(filterType || filterPriority || searchQuery);
 
   return (
     <WidgetToolbar>
-      {ALL_TAGS.map((tag) => (
+      {taxonomy.issueTypes.map((issueType) => (
         <Btn
-          key={tag}
-          onClick={() => onSetFilterTag(filterTag === tag ? null : tag)}
-          data-state={filterTag === tag ? 'active' : undefined}
+          key={issueType.id}
+          onClick={() => onSetFilterType(filterType === issueType.id ? null : issueType.id)}
+          data-state={filterType === issueType.id ? 'active' : undefined}
           style={{ fontSize: 9, padding: '1px 5px' }}
         >
-          {TAG_LABELS[tag]}
+          {formatKanbanOption(issueType, issueType.id)}
         </Btn>
       ))}
 
       <Separator />
 
-      {ALL_PRIORITIES.map((priority) => (
+      {taxonomy.priorities.map((priority) => (
         <Btn
-          key={priority}
-          onClick={() => onSetFilterPriority(filterPriority === priority ? null : priority)}
-          data-state={filterPriority === priority ? 'active' : undefined}
+          key={priority.id}
+          onClick={() => onSetFilterPriority(filterPriority === priority.id ? null : priority.id)}
+          data-state={filterPriority === priority.id ? 'active' : undefined}
           style={{ fontSize: 9, padding: '1px 5px' }}
         >
-          {PRIORITY_LABELS[priority]}
+          {formatKanbanOption(priority, priority.id)}
         </Btn>
       ))}
 

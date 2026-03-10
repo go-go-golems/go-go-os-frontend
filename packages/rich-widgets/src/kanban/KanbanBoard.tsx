@@ -15,16 +15,17 @@ import {
   type KanbanAction,
   type KanbanState,
 } from './kanbanState';
-import type { Column, Priority, TagId, Task } from './types';
+import type { Column, KanbanPriorityId, KanbanIssueTypeId, KanbanTaxonomy, Task } from './types';
 import { KanbanBoardView } from './KanbanBoardView';
 
 // ── Props ────────────────────────────────────────────────────────────
 export interface KanbanBoardProps {
   initialTasks?: Task[];
   initialColumns?: Column[];
+  initialTaxonomy?: KanbanTaxonomy;
   initialEditingTask?: Partial<Task> | null;
-  initialFilterTag?: TagId | null;
-  initialFilterPriority?: Priority | null;
+  initialFilterType?: KanbanIssueTypeId | null;
+  initialFilterPriority?: KanbanPriorityId | null;
   initialSearchQuery?: string;
   initialCollapsedCols?: Record<string, boolean>;
 }
@@ -33,8 +34,9 @@ function createInitialSeed(props: KanbanBoardProps) {
   return createKanbanStateSeed({
     initialTasks: props.initialTasks ?? INITIAL_TASKS,
     initialColumns: props.initialColumns ?? INITIAL_COLUMNS,
+    initialTaxonomy: props.initialTaxonomy,
     editingTask: props.initialEditingTask,
-    filterTag: props.initialFilterTag,
+    filterType: props.initialFilterType,
     filterPriority: props.initialFilterPriority,
     searchQuery: props.initialSearchQuery,
     collapsedCols: props.initialCollapsedCols,
@@ -57,7 +59,7 @@ export function KanbanBoardFrame({
       onDeleteTask={(id) => dispatch(kanbanActions.deleteTask(id))}
       onMoveTask={(payload) => dispatch(kanbanActions.moveTask(payload))}
       onSearchChange={(value) => dispatch(kanbanActions.setSearchQuery(value))}
-      onSetFilterTag={(tag) => dispatch(kanbanActions.setFilterTag(tag))}
+      onSetFilterType={(type) => dispatch(kanbanActions.setFilterType(type))}
       onSetFilterPriority={(priority) => dispatch(kanbanActions.setFilterPriority(priority))}
       onClearFilters={() => dispatch(kanbanActions.clearFilters())}
       onToggleCollapsed={(columnId) => dispatch(kanbanActions.toggleCollapsed(columnId))}
@@ -82,9 +84,10 @@ function ConnectedKanbanBoard(props: KanbanBoardProps) {
     props.initialColumns,
     props.initialEditingTask,
     props.initialFilterPriority,
-    props.initialFilterTag,
+    props.initialFilterType,
     props.initialSearchQuery,
     props.initialTasks,
+    props.initialTaxonomy,
     reduxDispatch,
   ]);
 

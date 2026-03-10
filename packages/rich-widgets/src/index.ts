@@ -92,12 +92,14 @@ export {
 export {
   type Task,
   type Column,
-  type TagId,
-  type Priority,
-  TAG_LABELS,
-  PRIORITY_LABELS,
-  ALL_TAGS,
-  ALL_PRIORITIES,
+  type KanbanIssueTypeId,
+  type KanbanPriorityId,
+  type KanbanLabelId,
+  type KanbanTaxonomy,
+  type KanbanOptionDescriptor,
+  DEFAULT_KANBAN_TAXONOMY,
+  formatKanbanOption,
+  findKanbanOption,
 } from './kanban/types';
 export { INITIAL_COLUMNS, INITIAL_TASKS } from './kanban/sampleData';
 

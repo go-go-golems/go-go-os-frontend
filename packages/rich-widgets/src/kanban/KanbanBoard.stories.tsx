@@ -11,6 +11,7 @@ import {
   kanbanReducer,
 } from './kanbanState';
 import { KANBAN_EXAMPLE_BOARDS } from './exampleBoards';
+import { DEFAULT_KANBAN_TAXONOMY } from './types';
 import '@hypercard/rich-widgets/theme';
 
 const meta: Meta<typeof KanbanBoard> = {
@@ -66,11 +67,11 @@ function renderSeededStory(
 
 const denseTagTasks = INITIAL_TASKS.map((task, index) => ({
   ...task,
-  tags: Array.from(
+  labels: Array.from(
     new Set([
-      ...task.tags,
+      ...task.labels,
       index % 2 === 0 ? 'urgent' : 'design',
-      index % 3 === 0 ? 'docs' : 'feature',
+      index % 3 === 0 ? 'docs' : 'frontend',
     ]),
   ),
 }));
@@ -111,7 +112,8 @@ export const ManyTasks: Story = {
         id: `gen-${i}`,
         col: INITIAL_COLUMNS[i % INITIAL_COLUMNS.length].id,
         title: `Generated task ${i + 1}`,
-        tags: [(['bug', 'feature', 'docs'] as const)[i % 3]],
+        type: (['bug', 'feature', 'task'] as const)[i % 3],
+        labels: [(['backend', 'frontend', 'docs'] as const)[i % 3]],
         priority: (['high', 'medium', 'low'] as const)[i % 3],
         desc: i % 2 === 0 ? `Description for task ${i + 1}` : '',
       })),
@@ -147,7 +149,7 @@ export const ReduxEditingExistingTask: Story = {
 
 export const ReduxFilteredUrgent: Story = {
   render: renderSeededStory({
-    filterTag: 'urgent',
+    filterType: 'bug',
     searchQuery: 'fix',
   }),
   decorators: [fullscreenDecorator],
@@ -176,5 +178,35 @@ export const BugTriageBoard: Story = {
 
 export const PersonalPlannerBoard: Story = {
   render: renderSeededStory(KANBAN_EXAMPLE_BOARDS[2].props),
+  decorators: [fullscreenDecorator],
+};
+
+export const CustomTaxonomyBoard: Story = {
+  render: renderSeededStory({
+    initialTaxonomy: {
+      issueTypes: [
+        { id: 'crash', label: 'Crash', icon: '💥' },
+        { id: 'regression', label: 'Regression', icon: '↩️' },
+        { id: 'ux', label: 'UX', icon: '🎯' },
+      ],
+      priorities: DEFAULT_KANBAN_TAXONOMY.priorities,
+      labels: [
+        { id: 'ios', label: 'iOS', icon: '📱' },
+        { id: 'android', label: 'Android', icon: '🤖' },
+        { id: 'perf', label: 'Perf', icon: '⚡' },
+      ],
+    },
+    initialColumns: [
+      { id: 'reported', title: 'Reported', icon: '📥' },
+      { id: 'triage', title: 'Triage', icon: '🔎' },
+      { id: 'fixing', title: 'Fixing', icon: '🛠️' },
+    ],
+    initialTasks: [
+      { id: 'c-1', col: 'reported', title: 'Player crashes on startup', type: 'crash', labels: ['ios'], priority: 'high', desc: 'Only on iPhone 14' },
+      { id: 'c-2', col: 'triage', title: 'Progress spinner regressed', type: 'regression', labels: ['android', 'perf'], priority: 'medium', desc: 'More visible on low-end devices' },
+      { id: 'c-3', col: 'fixing', title: 'Settings affordance unclear', type: 'ux', labels: ['ios'], priority: 'low', desc: '' },
+    ],
+    initialFilterType: 'crash',
+  }),
   decorators: [fullscreenDecorator],
 };

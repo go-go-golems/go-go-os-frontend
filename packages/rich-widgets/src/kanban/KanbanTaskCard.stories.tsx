@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { KanbanTaskCard } from './KanbanTaskCard';
+import { DEFAULT_KANBAN_TAXONOMY } from './types';
 import '@hypercard/rich-widgets/theme';
 
 const meta: Meta<typeof KanbanTaskCard> = {
@@ -24,9 +25,11 @@ export const Default: Story = {
       col: 'todo',
       title: 'Refactor board view',
       desc: 'Split KanbanBoard into reusable host-rendered pieces.',
-      tags: ['feature', 'design'],
+      type: 'feature',
+      labels: ['design', 'frontend'],
       priority: 'medium',
     },
+    taxonomy: DEFAULT_KANBAN_TAXONOMY,
     onEdit: () => {},
   },
 };
@@ -38,9 +41,11 @@ export const HighPriority: Story = {
       col: 'review',
       title: 'Validate runtime pack',
       desc: 'Confirm kanban.v1 path renders and emits semantic actions.',
-      tags: ['urgent', 'docs'],
+      type: 'bug',
+      labels: ['urgent', 'docs'],
       priority: 'high',
     },
+    taxonomy: DEFAULT_KANBAN_TAXONOMY,
     onEdit: () => {},
   },
 };

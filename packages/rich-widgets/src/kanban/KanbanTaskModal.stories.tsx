@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { KanbanTaskModal } from './KanbanTaskModal';
 import { fixedFrameDecorator } from '../storybook/frameDecorators';
 import { INITIAL_COLUMNS, INITIAL_TASKS } from './sampleData';
+import { DEFAULT_KANBAN_TAXONOMY } from './types';
 import '@hypercard/rich-widgets/theme';
 
 const meta: Meta<typeof KanbanTaskModal> = {
@@ -17,6 +18,7 @@ export const NewTask: Story = {
   args: {
     task: { col: 'todo' },
     columns: INITIAL_COLUMNS,
+    taxonomy: DEFAULT_KANBAN_TAXONOMY,
     onSave: () => {},
     onDelete: () => {},
     onClose: () => {},
@@ -27,6 +29,7 @@ export const EditExistingTask: Story = {
   args: {
     task: INITIAL_TASKS[1],
     columns: INITIAL_COLUMNS,
+    taxonomy: DEFAULT_KANBAN_TAXONOMY,
     onSave: () => {},
     onDelete: () => {},
     onClose: () => {},

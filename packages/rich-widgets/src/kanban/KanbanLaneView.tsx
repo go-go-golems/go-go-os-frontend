@@ -1,10 +1,11 @@
 import type { DragEvent } from 'react';
 import { RICH_PARTS as P } from '../parts';
-import type { Column, Task } from './types';
+import type { Column, KanbanTaxonomy, Task } from './types';
 import { KanbanTaskCard } from './KanbanTaskCard';
 
 export interface KanbanLaneViewProps {
   column: Column;
+  taxonomy: KanbanTaxonomy;
   tasks: Task[];
   total: number;
   collapsed: boolean;
@@ -20,6 +21,7 @@ export interface KanbanLaneViewProps {
 
 export function KanbanLaneView({
   column,
+  taxonomy,
   tasks,
   total,
   collapsed,
@@ -83,6 +85,7 @@ export function KanbanLaneView({
             <KanbanTaskCard
               key={task.id}
               task={task}
+              taxonomy={taxonomy}
               onEdit={onOpenTaskEditor}
             />
           ))}

@@ -1,12 +1,28 @@
-export type Priority = 'high' | 'medium' | 'low';
-export type TagId = 'bug' | 'feature' | 'urgent' | 'design' | 'docs';
+export type KanbanIssueTypeId = string;
+export type KanbanPriorityId = string;
+export type KanbanLabelId = string;
+
+export interface KanbanOptionDescriptor {
+  id: string;
+  label: string;
+  icon?: string;
+  color?: string;
+  description?: string;
+}
+
+export interface KanbanTaxonomy {
+  issueTypes: KanbanOptionDescriptor[];
+  priorities: KanbanOptionDescriptor[];
+  labels: KanbanOptionDescriptor[];
+}
 
 export interface Task {
   id: string;
   col: string;
   title: string;
-  tags: TagId[];
-  priority: Priority;
+  type: KanbanIssueTypeId;
+  labels: KanbanLabelId[];
+  priority: KanbanPriorityId;
   desc: string;
 }
 
@@ -16,19 +32,58 @@ export interface Column {
   icon: string;
 }
 
-export const TAG_LABELS: Record<TagId, string> = {
-  bug: 'Bug',
-  feature: 'Feature',
-  urgent: 'Urgent',
-  design: 'Design',
-  docs: 'Docs',
+export const DEFAULT_KANBAN_TAXONOMY: KanbanTaxonomy = {
+  issueTypes: [
+    { id: 'bug', label: 'Bug', icon: '🐞', color: '#f28b82' },
+    { id: 'feature', label: 'Feature', icon: '✨', color: '#8ab4f8' },
+    { id: 'task', label: 'Task', icon: '🧩', color: '#81c995' },
+  ],
+  priorities: [
+    { id: 'high', label: 'High', icon: '▲', color: '#f28b82' },
+    { id: 'medium', label: 'Medium', icon: '●', color: '#fdd663' },
+    { id: 'low', label: 'Low', icon: '▽', color: '#81c995' },
+  ],
+  labels: [
+    { id: 'urgent', label: 'Urgent', icon: '🔥', color: '#f28b82' },
+    { id: 'design', label: 'Design', icon: '🎨', color: '#fbbc04' },
+    { id: 'docs', label: 'Docs', icon: '📚', color: '#a7ff83' },
+    { id: 'backend', label: 'Backend', icon: '🛠️', color: '#8ab4f8' },
+    { id: 'frontend', label: 'Frontend', icon: '🖼️', color: '#ccadff' },
+  ],
 };
 
-export const PRIORITY_LABELS: Record<Priority, string> = {
-  high: '▲ High',
-  medium: '● Medium',
-  low: '▽ Low',
-};
+export function cloneKanbanOption(option: KanbanOptionDescriptor): KanbanOptionDescriptor {
+  return { ...option };
+}
 
-export const ALL_TAGS: TagId[] = ['bug', 'feature', 'urgent', 'design', 'docs'];
-export const ALL_PRIORITIES: Priority[] = ['high', 'medium', 'low'];
+export function cloneKanbanTaxonomy(taxonomy: KanbanTaxonomy): KanbanTaxonomy {
+  return {
+    issueTypes: taxonomy.issueTypes.map(cloneKanbanOption),
+    priorities: taxonomy.priorities.map(cloneKanbanOption),
+    labels: taxonomy.labels.map(cloneKanbanOption),
+  };
+}
+
+export function normalizeKanbanTaxonomy(taxonomy?: Partial<KanbanTaxonomy> | null): KanbanTaxonomy {
+  return {
+    issueTypes: (taxonomy?.issueTypes?.length ? taxonomy.issueTypes : DEFAULT_KANBAN_TAXONOMY.issueTypes).map(cloneKanbanOption),
+    priorities: (taxonomy?.priorities?.length ? taxonomy.priorities : DEFAULT_KANBAN_TAXONOMY.priorities).map(cloneKanbanOption),
+    labels: (taxonomy?.labels?.length ? taxonomy.labels : DEFAULT_KANBAN_TAXONOMY.labels).map(cloneKanbanOption),
+  };
+}
+
+export function findKanbanOption(options: KanbanOptionDescriptor[], id: string | null | undefined) {
+  if (!id) {
+    return undefined;
+  }
+
+  return options.find((option) => option.id === id);
+}
+
+export function formatKanbanOption(option: KanbanOptionDescriptor | undefined, fallbackId: string) {
+  if (!option) {
+    return fallbackId;
+  }
+
+  return option.icon ? `${option.icon} ${option.label}` : option.label;
+}

@@ -25,7 +25,7 @@ export const WithSearchValue: Story = {
     title: 'Bug Triage',
     subtitle: 'Review incoming defects',
     searchQuery: 'crash',
-    primaryActionLabel: '+ Report Bug',
+    primaryActionLabel: '+ Report Issue',
     onPrimaryAction: () => {},
     onSearchChange: () => {},
   },

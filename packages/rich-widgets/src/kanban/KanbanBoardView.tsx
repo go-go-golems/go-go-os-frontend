@@ -1,17 +1,17 @@
 import { useCallback, useMemo, useState, type DragEvent } from 'react';
 import { RICH_PARTS as P } from '../parts';
-import { type Priority, type TagId, type Task } from './types';
+import { type KanbanPriorityId, type KanbanIssueTypeId, type Task } from './types';
 import { KanbanHeaderBar } from './KanbanHeaderBar';
 import { KanbanFilterBar } from './KanbanFilterBar';
 import { KanbanLaneView } from './KanbanLaneView';
-import { KanbanStatusBar } from './KanbanStatusBar';
+import { KanbanStatusBar, type KanbanStatusMetric } from './KanbanStatusBar';
 import { KanbanTaskModal } from './KanbanTaskModal';
 import type { KanbanState } from './kanbanState';
 
-function filterTasks(tasks: Task[], filterTag: TagId | null, filterPriority: Priority | null, searchQuery: string) {
+function filterTasks(tasks: Task[], filterType: KanbanIssueTypeId | null, filterPriority: KanbanPriorityId | null, searchQuery: string) {
   const normalizedQuery = searchQuery.toLowerCase();
   return tasks.filter((task) => {
-    if (filterTag && !task.tags.includes(filterTag)) {
+    if (filterType && task.type !== filterType) {
       return false;
     }
     if (filterPriority && task.priority !== filterPriority) {
@@ -36,8 +36,8 @@ export interface KanbanBoardViewProps {
   onDeleteTask: (id: string) => void;
   onMoveTask: (payload: { id: string; col: string }) => void;
   onSearchChange: (value: string) => void;
-  onSetFilterTag: (tag: TagId | null) => void;
-  onSetFilterPriority: (priority: Priority | null) => void;
+  onSetFilterType: (type: KanbanIssueTypeId | null) => void;
+  onSetFilterPriority: (priority: KanbanPriorityId | null) => void;
   onClearFilters: () => void;
   onToggleCollapsed: (columnId: string) => void;
   defaultNewColumnId?: string;
@@ -46,6 +46,9 @@ export interface KanbanBoardViewProps {
   title?: string;
   subtitle?: string;
   primaryActionLabel?: string;
+  showFilterBar?: boolean;
+  statusMetrics?: KanbanStatusMetric[] | null;
+  onPrimaryAction?: () => void;
 }
 
 export function KanbanBoardView({
@@ -56,7 +59,7 @@ export function KanbanBoardView({
   onDeleteTask,
   onMoveTask,
   onSearchChange,
-  onSetFilterTag,
+  onSetFilterType,
   onSetFilterPriority,
   onClearFilters,
   onToggleCollapsed,
@@ -66,13 +69,17 @@ export function KanbanBoardView({
   title = 'Kanban Board',
   subtitle = 'Host-composed board shell',
   primaryActionLabel = '+ New',
+  showFilterBar = true,
+  statusMetrics = null,
+  onPrimaryAction,
 }: KanbanBoardViewProps) {
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const {
     tasks,
     columns,
+    taxonomy,
     editingTask,
-    filterTag,
+    filterType,
     filterPriority,
     searchQuery,
     collapsedCols,
@@ -84,8 +91,8 @@ export function KanbanBoardView({
   );
 
   const filteredTasks = useMemo(
-    () => filterTasks(tasks, filterTag, filterPriority, searchQuery),
-    [tasks, filterTag, filterPriority, searchQuery],
+    () => filterTasks(tasks, filterType, filterPriority, searchQuery),
+    [tasks, filterType, filterPriority, searchQuery],
   );
 
   const tasksByCol = useMemo(() => {
@@ -125,18 +132,21 @@ export function KanbanBoardView({
         subtitle={subtitle}
         searchQuery={searchQuery}
         primaryActionLabel={primaryActionLabel}
-        onPrimaryAction={() => onOpenTaskEditor(createTaskSeed())}
+        onPrimaryAction={onPrimaryAction ?? (() => onOpenTaskEditor(createTaskSeed()))}
         onSearchChange={onSearchChange}
       />
 
-      <KanbanFilterBar
-        filterTag={filterTag}
-        filterPriority={filterPriority}
-        searchQuery={searchQuery}
-        onSetFilterTag={onSetFilterTag}
-        onSetFilterPriority={onSetFilterPriority}
-        onClearFilters={onClearFilters}
-      />
+      {showFilterBar ? (
+        <KanbanFilterBar
+          taxonomy={taxonomy}
+          filterType={filterType}
+          filterPriority={filterPriority}
+          searchQuery={searchQuery}
+          onSetFilterType={onSetFilterType}
+          onSetFilterPriority={onSetFilterPriority}
+          onClearFilters={onClearFilters}
+        />
+      ) : null}
 
       <div data-part={P.kbBoard}>
         {columns.map((column) => {
@@ -149,6 +159,7 @@ export function KanbanBoardView({
             <KanbanLaneView
               key={column.id}
               column={column}
+              taxonomy={taxonomy}
               tasks={colTasks}
               total={total}
               collapsed={collapsed}
@@ -172,11 +183,11 @@ export function KanbanBoardView({
       </div>
 
       <KanbanStatusBar
-        metrics={[
+        metrics={statusMetrics ?? [
           { label: 'total', value: tasks.length },
-          { label: 'high', value: tasks.filter((task) => task.priority === 'high').length },
+          { label: 'visible', value: filteredTasks.length },
           { label: 'done', value: tasks.filter((task) => task.col === 'done').length },
-          ...(filterTag || filterPriority || searchQuery ? [{ label: 'state', value: 'filtered' }] : []),
+          ...(filterType || filterPriority || searchQuery ? [{ label: 'state', value: 'filtered' }] : []),
         ]}
       />
 
@@ -184,6 +195,7 @@ export function KanbanBoardView({
         <KanbanTaskModal
           task={editingTask}
           columns={columns}
+          taxonomy={taxonomy}
           onSave={onSaveTask}
           onDelete={onDeleteTask}
           onClose={onCloseTaskEditor}

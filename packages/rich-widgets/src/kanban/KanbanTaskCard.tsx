@@ -1,14 +1,17 @@
-import type { Task } from './types';
+import type { KanbanTaxonomy, Task } from './types';
 import { RICH_PARTS as P } from '../parts';
-import { TAG_LABELS } from './types';
+import { findKanbanOption, formatKanbanOption } from './types';
 
 export interface KanbanTaskCardProps {
   task: Task;
+  taxonomy: KanbanTaxonomy;
   onEdit: (task: Task) => void;
   onDragStart?: (id: string) => void;
 }
 
-export function KanbanTaskCard({ task, onEdit, onDragStart }: KanbanTaskCardProps) {
+export function KanbanTaskCard({ task, taxonomy, onEdit, onDragStart }: KanbanTaskCardProps) {
+  const issueType = findKanbanOption(taxonomy.issueTypes, task.type);
+
   return (
     <div
       data-part={P.kbCard}
@@ -21,14 +24,22 @@ export function KanbanTaskCard({ task, onEdit, onDragStart }: KanbanTaskCardProp
       onClick={() => onEdit(task)}
     >
       <div data-part={P.kbCardTitle}>{task.title}</div>
+      <div data-part={P.kbCardTags}>
+        <span data-part={P.kbTag} data-tag={task.type}>
+          {formatKanbanOption(issueType, task.type)}
+        </span>
+      </div>
       {task.desc && <div data-part={P.kbCardDesc}>{task.desc}</div>}
-      {task.tags.length > 0 && (
+      {task.labels.length > 0 && (
         <div data-part={P.kbCardTags}>
-          {task.tags.map((tag) => (
-            <span key={tag} data-part={P.kbTag} data-tag={tag}>
-              {TAG_LABELS[tag]}
-            </span>
-          ))}
+          {task.labels.map((labelId) => {
+            const label = findKanbanOption(taxonomy.labels, labelId);
+            return (
+              <span key={labelId} data-part={P.kbTag} data-tag={labelId}>
+                {formatKanbanOption(label, labelId)}
+              </span>
+            );
+          })}
         </div>
       )}
     </div>

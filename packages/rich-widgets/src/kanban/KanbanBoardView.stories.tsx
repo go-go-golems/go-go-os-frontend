@@ -24,7 +24,7 @@ function createArgs(seed: Parameters<typeof createKanbanStateSeed>[0] = {}) {
     onDeleteTask: noop,
     onMoveTask: noop,
     onSearchChange: noop,
-    onSetFilterTag: noop,
+    onSetFilterType: noop,
     onSetFilterPriority: noop,
     onClearFilters: noop,
     onToggleCollapsed: noop,
@@ -38,7 +38,7 @@ export const Default: Story = {
 
 export const Filtered: Story = {
   args: createArgs({
-    filterTag: 'urgent',
+    filterType: 'bug',
     searchQuery: 'fix',
   }),
   decorators: [fullscreenDecorator],

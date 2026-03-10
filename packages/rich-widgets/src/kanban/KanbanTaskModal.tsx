@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { Btn } from '@hypercard/engine';
 import { ModalOverlay } from '../primitives/ModalOverlay';
 import { RICH_PARTS as P } from '../parts';
-import type { Column, Priority, TagId, Task } from './types';
-import { ALL_PRIORITIES, ALL_TAGS, PRIORITY_LABELS, TAG_LABELS } from './types';
+import type { Column, KanbanPriorityId, KanbanLabelId, KanbanTaxonomy, Task } from './types';
+import { formatKanbanOption } from './types';
 
 let idSeq = 0;
 const mkId = () => `task-${Date.now()}-${++idSeq}`;
@@ -11,32 +11,35 @@ const mkId = () => `task-${Date.now()}-${++idSeq}`;
 export interface KanbanTaskModalProps {
   task: Partial<Task>;
   columns: Column[];
+  taxonomy: KanbanTaxonomy;
   onSave: (task: Task) => void;
   onDelete: (id: string) => void;
   onClose: () => void;
 }
 
-export function KanbanTaskModal({ task, columns, onSave, onDelete, onClose }: KanbanTaskModalProps) {
+export function KanbanTaskModal({ task, columns, taxonomy, onSave, onDelete, onClose }: KanbanTaskModalProps) {
   const [title, setTitle] = useState(task.title ?? '');
   const [desc, setDesc] = useState(task.desc ?? '');
-  const [tags, setTags] = useState<TagId[]>(task.tags ?? []);
-  const [priority, setPriority] = useState<Priority>(task.priority ?? 'medium');
+  const [type, setType] = useState(task.type ?? taxonomy.issueTypes[0]?.id ?? 'task');
+  const [labels, setLabels] = useState<KanbanLabelId[]>(task.labels ?? []);
+  const [priority, setPriority] = useState<KanbanPriorityId>(task.priority ?? taxonomy.priorities[1]?.id ?? taxonomy.priorities[0]?.id ?? 'medium');
   const [col, setCol] = useState(task.col ?? columns[0]?.id ?? 'todo');
   const isNew = !task.id;
 
   useEffect(() => {
     setTitle(task.title ?? '');
     setDesc(task.desc ?? '');
-    setTags(task.tags ?? []);
-    setPriority(task.priority ?? 'medium');
+    setType(task.type ?? taxonomy.issueTypes[0]?.id ?? 'task');
+    setLabels(task.labels ?? []);
+    setPriority(task.priority ?? taxonomy.priorities[1]?.id ?? taxonomy.priorities[0]?.id ?? 'medium');
     setCol(task.col ?? columns[0]?.id ?? 'todo');
-  }, [columns, task]);
+  }, [columns, task, taxonomy]);
 
-  const toggleTag = (tag: TagId) => {
-    setTags((previous) => (
-      previous.includes(tag)
-        ? previous.filter((entry) => entry !== tag)
-        : [...previous, tag]
+  const toggleLabel = (labelId: KanbanLabelId) => {
+    setLabels((previous) => (
+      previous.includes(labelId)
+        ? previous.filter((entry) => entry !== labelId)
+        : [...previous, labelId]
     ));
   };
 
@@ -84,16 +87,31 @@ export function KanbanTaskModal({ task, columns, onSave, onDelete, onClose }: Ka
             </div>
           </div>
           <div>
-            <label>Tags</label>
+            <label>Issue Type</label>
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {ALL_TAGS.map((tag) => (
+              {taxonomy.issueTypes.map((issueType) => (
                 <Btn
-                  key={tag}
-                  onClick={() => toggleTag(tag)}
-                  data-state={tags.includes(tag) ? 'active' : undefined}
+                  key={issueType.id}
+                  onClick={() => setType(issueType.id)}
+                  data-state={type === issueType.id ? 'active' : undefined}
                   style={{ fontSize: 10 }}
                 >
-                  {TAG_LABELS[tag]}
+                  {formatKanbanOption(issueType, issueType.id)}
+                </Btn>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label>Labels</label>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {taxonomy.labels.map((label) => (
+                <Btn
+                  key={label.id}
+                  onClick={() => toggleLabel(label.id)}
+                  data-state={labels.includes(label.id) ? 'active' : undefined}
+                  style={{ fontSize: 10 }}
+                >
+                  {formatKanbanOption(label, label.id)}
                 </Btn>
               ))}
             </div>
@@ -101,14 +119,14 @@ export function KanbanTaskModal({ task, columns, onSave, onDelete, onClose }: Ka
           <div>
             <label>Priority</label>
             <div style={{ display: 'flex', gap: 4 }}>
-              {ALL_PRIORITIES.map((entry) => (
+              {taxonomy.priorities.map((entry) => (
                 <Btn
-                  key={entry}
-                  onClick={() => setPriority(entry)}
-                  data-state={priority === entry ? 'active' : undefined}
+                  key={entry.id}
+                  onClick={() => setPriority(entry.id)}
+                  data-state={priority === entry.id ? 'active' : undefined}
                   style={{ fontSize: 10 }}
                 >
-                  {PRIORITY_LABELS[entry]}
+                  {formatKanbanOption(entry, entry.id)}
                 </Btn>
               ))}
             </div>
@@ -140,7 +158,8 @@ export function KanbanTaskModal({ task, columns, onSave, onDelete, onClose }: Ka
                 id: task.id ?? mkId(),
                 title,
                 desc,
-                tags,
+                type,
+                labels,
                 priority,
                 col,
               });

@@ -24,14 +24,25 @@ defineStackBundle(({ ui }) => ({
 
 defineCard('board', ({ widgets }) => ({
   render() {
-    return widgets.kanban.board({
-      columns: [{ id: 'todo', title: 'To Do', icon: '📋' }],
-      tasks: [],
-      editingTask: null,
-      filterTag: null,
-      filterPriority: null,
-      searchQuery: '',
-      collapsedCols: {},
+    return widgets.kanban.shell({
+      taxonomy: widgets.kanban.taxonomy({
+        issueTypes: [{ id: 'task', label: 'Task', icon: '🧩' }],
+        priorities: [{ id: 'medium', label: 'Medium', icon: '●' }],
+        labels: [{ id: 'docs', label: 'Docs', icon: '📚' }],
+      }),
+      header: widgets.kanban.header({
+        title: 'Built-in Kanban',
+        searchQuery: '',
+      }),
+      board: widgets.kanban.board({
+        columns: [{ id: 'todo', title: 'To Do', icon: '📋' }],
+        tasks: [],
+        editingTask: null,
+        collapsedCols: {},
+      }),
+      status: widgets.kanban.status({
+        metrics: [{ label: 'total', value: 0 }],
+      }),
     });
   },
 }), 'kanban.v1');
@@ -203,6 +214,11 @@ describe('QuickJSCardRuntimeService', () => {
 
     const rawTree = service.renderCard('inventory@kanban', 'sprintBoard', {
       app_kanban: {
+        taxonomy: {
+          issueTypes: [{ id: 'feature', label: 'Feature', icon: '✨' }],
+          priorities: [{ id: 'high', label: 'High', icon: '▲' }],
+          labels: [{ id: 'frontend', label: 'Frontend', icon: '🖼️' }],
+        },
         columns: [{ id: 'todo', title: 'To Do', icon: '📋' }],
         tasks: [
           {
@@ -210,19 +226,20 @@ describe('QuickJSCardRuntimeService', () => {
             col: 'todo',
             title: 'Ship pack registry',
             desc: 'Validate kanban.v1 render path',
-            tags: ['feature'],
+            type: 'feature',
+            labels: ['frontend'],
             priority: 'high',
           },
         ],
         editingTask: null,
-        filterTag: null,
+        filterType: null,
         filterPriority: null,
         searchQuery: '',
         collapsedCols: {},
       },
     });
     const tree = validateRuntimeTree('kanban.v1', rawTree);
-    expect(tree.kind).toBe('kanban.board');
+    expect(tree.kind).toBe('kanban.shell');
 
     const actions = service.eventCard(
       'inventory@kanban',
@@ -252,7 +269,7 @@ describe('QuickJSCardRuntimeService', () => {
 
     const rawTree = service.renderCard('builtin-kanban@one', 'board', {});
     const tree = validateRuntimeTree('kanban.v1', rawTree);
-    expect(tree.kind).toBe('kanban.board');
+    expect(tree.kind).toBe('kanban.shell');
   });
 
   it('rejects unknown runtime packs during card definition', async () => {
