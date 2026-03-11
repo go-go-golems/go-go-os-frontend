@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import { Provider } from 'react-redux';
 import { createAppStore } from '../../app/createAppStore';
 import type { RuntimeBundleDefinition } from '@hypercard/engine';
-import { RuntimeCardDebugWindow } from './RuntimeCardDebugWindow';
+import { RuntimeSurfaceDebugWindow } from './RuntimeSurfaceDebugWindow';
 import { upsertArtifact } from '../artifacts/artifactsSlice';
 import { clearRuntimeSurfaceRegistry, registerRuntimeSurface } from '../../plugin-runtime';
 import { clearRegisteredRuntimeDebugStacks, registerRuntimeDebugStacks } from './runtimeDebugRegistry';
@@ -49,7 +49,7 @@ const SECOND_STACK: RuntimeBundleDefinition = {
   },
 };
 
-function RuntimeCardDebugStory() {
+function RuntimeSurfaceDebugStory() {
   const { createStore } = createAppStore({});
   const storeRef = useRef<ReturnType<typeof createStore> | null>(null);
   if (!storeRef.current) {
@@ -87,14 +87,14 @@ function RuntimeCardDebugStory() {
   return (
     <Provider store={storeRef.current}>
       <div style={{ width: 980, height: 620, background: '#f4f4f6' }}>
-        <RuntimeCardDebugWindow ownerAppId="hypercard-runtime-debug" />
+        <RuntimeSurfaceDebugWindow ownerAppId="hypercard-runtime-debug" />
       </div>
     </Provider>
   );
 }
 
 const meta = {
-  title: 'HypercardRuntime/Debug/RuntimeCardDebugWindow',
+  title: 'HypercardRuntime/Debug/RuntimeSurfaceDebugWindow',
   parameters: { layout: 'centered' },
 } satisfies Meta;
 
@@ -102,5 +102,5 @@ export default meta;
 type Story = StoryObj;
 
 export const Default: Story = {
-  render: () => <RuntimeCardDebugStory />,
+  render: () => <RuntimeSurfaceDebugStory />,
 };

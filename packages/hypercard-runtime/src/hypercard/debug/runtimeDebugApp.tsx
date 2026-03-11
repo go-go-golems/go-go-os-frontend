@@ -1,6 +1,6 @@
 import type { RuntimeBundleDefinition } from '@hypercard/engine';
 import type { OpenWindowPayload } from '@hypercard/engine/desktop-core';
-import { RuntimeCardDebugWindow } from './RuntimeCardDebugWindow';
+import { RuntimeSurfaceDebugWindow } from './RuntimeSurfaceDebugWindow';
 
 export const HYPERCARD_RUNTIME_DEBUG_APP_ID = 'hypercard-runtime-debug';
 export const HYPERCARD_RUNTIME_DEBUG_INSTANCE_ID = 'stacks';
@@ -46,5 +46,5 @@ export function RuntimeDebugAppWindow({ ownerAppId, instanceId, bundles }: Runti
     );
   }
 
-  return <RuntimeCardDebugWindow ownerAppId={ownerAppId} bundles={bundles} />;
+  return <RuntimeSurfaceDebugWindow ownerAppId={ownerAppId} bundles={bundles} />;
 }

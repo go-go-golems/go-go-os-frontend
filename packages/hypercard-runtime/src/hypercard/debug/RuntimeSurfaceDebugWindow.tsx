@@ -33,7 +33,7 @@ interface StoreSlice {
   };
 }
 
-export interface RuntimeCardDebugWindowProps {
+export interface RuntimeSurfaceDebugWindowProps {
   ownerAppId: string;
   bundles?: RuntimeBundleDefinition[];
   initialStackId?: string;
@@ -110,11 +110,11 @@ function Badge({ text, color }: { text: string; color: string }) {
   );
 }
 
-export function RuntimeCardDebugWindow({
+export function RuntimeSurfaceDebugWindow({
   ownerAppId,
   bundles,
   initialStackId,
-}: RuntimeCardDebugWindowProps) {
+}: RuntimeSurfaceDebugWindowProps) {
   const dispatch = useDispatch();
   const [registryCards, setRegistryCards] = useState<RuntimeSurfaceDefinition[]>(getPendingRuntimeSurfaces());
   const registeredStacks = useRegisteredRuntimeDebugStacks();

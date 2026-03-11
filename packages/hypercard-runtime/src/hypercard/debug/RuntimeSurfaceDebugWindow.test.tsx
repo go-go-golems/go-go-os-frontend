@@ -7,7 +7,7 @@ import type { RuntimeBundleDefinition } from '@hypercard/engine';
 import { openWindow } from '@hypercard/engine/desktop-core';
 import { createAppStore } from '../../app/createAppStore';
 import { registerRuntimeSession } from '../../features/runtimeSessions';
-import { RuntimeCardDebugWindow } from './RuntimeCardDebugWindow';
+import { RuntimeSurfaceDebugWindow } from './RuntimeSurfaceDebugWindow';
 
 const DEBUG_STACK: RuntimeBundleDefinition = {
   id: 'os-launcher',
@@ -61,7 +61,7 @@ afterEach(() => {
   }
 });
 
-describe('RuntimeCardDebugWindow', () => {
+describe('RuntimeSurfaceDebugWindow', () => {
   it('shows only the actively running card in plugin session actions', async () => {
     const { createStore } = createAppStore({});
     const store = createStore();
@@ -105,7 +105,7 @@ describe('RuntimeCardDebugWindow', () => {
     await act(async () => {
       root.render(
         <Provider store={store}>
-          <RuntimeCardDebugWindow ownerAppId="hypercard-runtime-debug" bundles={[DEBUG_STACK]} />
+          <RuntimeSurfaceDebugWindow ownerAppId="hypercard-runtime-debug" bundles={[DEBUG_STACK]} />
         </Provider>,
       );
     });
