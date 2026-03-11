@@ -8,6 +8,7 @@ export * from './features/runtimeSessions';
 export * from './hypercard';
 export * from './hypercard/debug/runtimeDebugApp';
 export * from './hypercard/debug/runtimeDebugRegistry';
+export * from './hypercard/task-manager';
 export * from './runtime-packs';
 export * from './runtime-packages';
 export { RuntimeSurfaceSessionHost, type RuntimeSurfaceSessionHostProps } from './runtime-host/RuntimeSurfaceSessionHost';

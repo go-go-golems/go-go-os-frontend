@@ -8,4 +8,5 @@ export * from './debug/jsSessionDebugRegistry';
 export * from './editor/CodeEditorWindow';
 export * from './editor/editorLaunch';
 export * from './editor/runtimeSurfaceRef';
+export * from './task-manager';
 export * from './timeline/hypercardCard';
