@@ -33,7 +33,7 @@ describe('hypercard card timeline projection', () => {
     ensureChatModulesRegistered();
   });
 
-  it('keeps hypercard.card.v2 as the stored timeline kind and registers runtime card', async () => {
+  it('keeps hypercard.card.v2 as the stored timeline kind and registers a runtime surface', async () => {
     const store = createStore();
 
     handleSem(
