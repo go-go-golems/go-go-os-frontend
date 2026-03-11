@@ -100,13 +100,13 @@ defineRuntimeBundle(({ ui }) => {
     return toText(asRecord(args).value);
   }
 
-  function goTo(context, cardId, param) {
-    const payload = param ? { cardId, param: toText(param) } : { cardId };
+  function goTo(context, surfaceId, param) {
+    const payload = param ? { surfaceId, param: toText(param) } : { surfaceId };
     context.dispatch({ type: 'nav.go', payload });
   }
 
   function goHome(context) {
-    context.dispatch({ type: 'nav.go', payload: { cardId: 'home' } });
+    context.dispatch({ type: 'nav.go', payload: { surfaceId: 'home' } });
   }
 
   function back(context) {
@@ -177,7 +177,7 @@ defineRuntimeBundle(({ ui }) => {
       ui.button('Open ' + card.title, {
         onClick: {
           handler: 'openDemo',
-          args: { cardId: card.id },
+          args: { surfaceId: card.id },
         },
       })
     );
@@ -283,13 +283,13 @@ defineRuntimeBundle(({ ui }) => {
             patchFilters(context, { catalogFilter: readInputValue(args) });
           },
           openDemo(context, args) {
-            const cardId = toText(asRecord(args).cardId, 'home');
+            const surfaceId = toText(asRecord(args).surfaceId, 'home');
             const nextVisitCount = toNumber(filtersState(context.state).visitCount, 0) + 1;
             patchFilters(context, {
-              lastVisited: cardId,
+              lastVisited: surfaceId,
               visitCount: nextVisitCount,
             });
-            context.dispatch({ type: 'nav.go', payload: { cardId } });
+            context.dispatch({ type: 'nav.go', payload: { surfaceId } });
           },
           resetSessionState(context) {
             resetFilters(context);
@@ -330,13 +330,13 @@ defineRuntimeBundle(({ ui }) => {
             ui.row([
               ui.button('Back', { onClick: { handler: 'back' } }),
               ui.button('Home', { onClick: { handler: 'home' } }),
-              ui.button('Next: Text/Badges', { onClick: { handler: 'go', args: { cardId: 'textBadges' } } }),
+              ui.button('Next: Text/Badges', { onClick: { handler: 'go', args: { surfaceId: 'textBadges' } } }),
             ]),
           ]);
         },
         handlers: {
           go(context, args) {
-            goTo(context, toText(asRecord(args).cardId, 'home'));
+            goTo(context, toText(asRecord(args).surfaceId, 'home'));
           },
           back,
           home: goHome,
@@ -409,7 +409,7 @@ defineRuntimeBundle(({ ui }) => {
             ui.row([
               ui.button('Back', { onClick: { handler: 'back' } }),
               ui.button('Home', { onClick: { handler: 'home' } }),
-              ui.button('Next: Inputs', { onClick: { handler: 'go', args: { cardId: 'inputs' } } }),
+              ui.button('Next: Inputs', { onClick: { handler: 'go', args: { surfaceId: 'inputs' } } }),
             ]),
           ]);
         },
@@ -432,7 +432,7 @@ defineRuntimeBundle(({ ui }) => {
             patchDraft(context, { clicks: 0, lastAction: 'reset' });
           },
           go(context, args) {
-            goTo(context, toText(asRecord(args).cardId, 'home'));
+            goTo(context, toText(asRecord(args).surfaceId, 'home'));
           },
           back,
           home: goHome,
@@ -521,7 +521,7 @@ defineRuntimeBundle(({ ui }) => {
               ui.button('Clear Filter', { onClick: { handler: 'clearQuery' }, variant: 'danger' }),
               ui.button('Back', { onClick: { handler: 'back' } }),
               ui.button('Home', { onClick: { handler: 'home' } }),
-              ui.button('Next: Dropdowns', { onClick: { handler: 'go', args: { cardId: 'dropdowns' } } }),
+              ui.button('Next: Dropdowns', { onClick: { handler: 'go', args: { surfaceId: 'dropdowns' } } }),
             ]),
           ]);
         },
@@ -533,7 +533,7 @@ defineRuntimeBundle(({ ui }) => {
             patchDraft(context, { query: '' });
           },
           go(context, args) {
-            goTo(context, toText(asRecord(args).cardId, 'home'));
+            goTo(context, toText(asRecord(args).surfaceId, 'home'));
           },
           back,
           home: goHome,
@@ -566,7 +566,7 @@ defineRuntimeBundle(({ ui }) => {
             ui.row([
               ui.button('Back', { onClick: { handler: 'back' } }),
               ui.button('Home', { onClick: { handler: 'home' } }),
-              ui.button('Next: Selectable Table', { onClick: { handler: 'go', args: { cardId: 'selectableTable' } } }),
+              ui.button('Next: Selectable Table', { onClick: { handler: 'go', args: { surfaceId: 'selectableTable' } } }),
             ]),
           ]);
         },
@@ -583,7 +583,7 @@ defineRuntimeBundle(({ ui }) => {
             dispatchToolsDomain(context, 'logDemoEvent', { label: 'Dropdown selected: ' + value });
           },
           go(context, args) {
-            goTo(context, toText(asRecord(args).cardId, 'home'));
+            goTo(context, toText(asRecord(args).surfaceId, 'home'));
           },
           back,
           home: goHome,
@@ -621,7 +621,7 @@ defineRuntimeBundle(({ ui }) => {
             ui.row([
               ui.button('Back', { onClick: { handler: 'back' } }),
               ui.button('Home', { onClick: { handler: 'home' } }),
-              ui.button('Next: Grid Board', { onClick: { handler: 'go', args: { cardId: 'gridBoard' } } }),
+              ui.button('Next: Grid Board', { onClick: { handler: 'go', args: { surfaceId: 'gridBoard' } } }),
             ]),
           ]);
         },
@@ -651,7 +651,7 @@ defineRuntimeBundle(({ ui }) => {
             dispatchToolsDomain(context, 'setSelectedRows', { selectedRowKeys: [] });
           },
           go(context, args) {
-            goTo(context, toText(asRecord(args).cardId, 'home'));
+            goTo(context, toText(asRecord(args).surfaceId, 'home'));
           },
           back,
           home: goHome,
@@ -680,7 +680,7 @@ defineRuntimeBundle(({ ui }) => {
               ui.button('Back', { onClick: { handler: 'back' } }),
               ui.button('Home', { onClick: { handler: 'home' } }),
               ui.button('Next: Event Payloads', {
-                onClick: { handler: 'go', args: { cardId: 'eventPayloads' } },
+                onClick: { handler: 'go', args: { surfaceId: 'eventPayloads' } },
                 variant: 'primary',
               }),
             ]),
@@ -704,7 +704,7 @@ defineRuntimeBundle(({ ui }) => {
             dispatchToolsDomain(context, 'setSelectedCellIndex', { selectedIndex: null });
           },
           go(context, args) {
-            goTo(context, toText(asRecord(args).cardId, 'home'));
+            goTo(context, toText(asRecord(args).surfaceId, 'home'));
           },
           back,
           home: goHome,
@@ -745,7 +745,7 @@ defineRuntimeBundle(({ ui }) => {
               ui.button('Back', { onClick: { handler: 'back' } }),
               ui.button('Home', { onClick: { handler: 'home' } }),
               ui.button('Next: Domain Intents', {
-                onClick: { handler: 'go', args: { cardId: 'domainIntents' } },
+                onClick: { handler: 'go', args: { surfaceId: 'domainIntents' } },
                 variant: 'primary',
               }),
             ]),
@@ -764,7 +764,7 @@ defineRuntimeBundle(({ ui }) => {
             dispatchToolsDomain(context, 'logDemoEvent', { label: 'Merged payload captured' });
           },
           go(context, args) {
-            goTo(context, toText(asRecord(args).cardId, 'home'));
+            goTo(context, toText(asRecord(args).surfaceId, 'home'));
           },
           back,
           home: goHome,
@@ -810,7 +810,7 @@ defineRuntimeBundle(({ ui }) => {
             ui.row([
               ui.button('Back', { onClick: { handler: 'back' } }),
               ui.button('Home', { onClick: { handler: 'home' } }),
-              ui.button('Next: State/Nav', { onClick: { handler: 'go', args: { cardId: 'stateNav' } } }),
+              ui.button('Next: State/Nav', { onClick: { handler: 'go', args: { surfaceId: 'stateNav' } } }),
             ]),
           ]);
         },
@@ -837,7 +837,7 @@ defineRuntimeBundle(({ ui }) => {
             });
           },
           go(context, args) {
-            goTo(context, toText(asRecord(args).cardId, 'home'));
+            goTo(context, toText(asRecord(args).surfaceId, 'home'));
           },
           back,
           home: goHome,
@@ -872,7 +872,7 @@ defineRuntimeBundle(({ ui }) => {
             ]),
             ui.row([
               ui.button('Go playground with param', {
-                onClick: { handler: 'go', args: { cardId: 'playground', param: 'from-state-nav' } },
+                onClick: { handler: 'go', args: { surfaceId: 'playground', param: 'from-state-nav' } },
               }),
               ui.button('Reset card state', { onClick: { handler: 'resetCardState' }, variant: 'danger' }),
             ]),
@@ -900,7 +900,7 @@ defineRuntimeBundle(({ ui }) => {
           },
           go(context, args) {
             const payload = asRecord(args);
-            goTo(context, toText(payload.cardId, 'home'), payload.param);
+            goTo(context, toText(payload.surfaceId, 'home'), payload.param);
           },
           back,
           home: goHome,
