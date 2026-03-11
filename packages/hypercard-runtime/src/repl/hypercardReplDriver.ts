@@ -98,6 +98,11 @@ const COMMAND_HELP: Record<string, ReplHelpEntry> = {
     detail: 'List spawned and attached runtime sessions visible to the REPL.',
     usage: 'sessions',
   },
+  help: {
+    title: 'help',
+    detail: 'Show HyperCard REPL command help or docs for a command, package symbol, or runtime surface.',
+    usage: 'help [topic]',
+  },
   use: {
     title: 'use',
     detail: 'Select an active runtime session for later render/event commands.',
@@ -324,6 +329,10 @@ function linesForSessions(broker: RuntimeBroker, activeSessionId: string | null)
   ]);
 }
 
+function promptForSession(sessionId: string | null): string {
+  return sessionId ? `hc[${sessionId}]>` : 'hc>';
+}
+
 export function createHypercardReplDriver(
   options: HypercardReplDriverOptions = {},
 ): ReplDriver {
@@ -403,6 +412,9 @@ export function createHypercardReplDriver(
           text: `surfaces: ${handle.getBundleMeta().surfaces.join(', ') || 'none'}`,
         },
       ],
+      envVars: {
+        REPL_PROMPT: promptForSession(handle.sessionId),
+      },
     };
   }
 
@@ -450,6 +462,26 @@ export function createHypercardReplDriver(
           return {
             lines: linesForSessions(broker, activeSessionId),
           };
+        case 'help': {
+          const topic = rest[0] ?? null;
+          const entries = helpForTopic(topic, bundleLibrary);
+          if (!entries || entries.length === 0) {
+            return {
+              lines: [
+                {
+                  type: 'error',
+                  text: topic ? `No help available for "${topic}"` : 'No help available.',
+                },
+              ],
+            };
+          }
+          return {
+            lines: entries.flatMap((entry) => [
+              { type: 'output' as const, text: `${entry.title} — ${entry.detail}` },
+              ...(entry.usage ? [{ type: 'system' as const, text: `  ${entry.usage}` }] : []),
+            ]),
+          };
+        }
         case 'attach': {
           const sessionId = rest[0];
           if (!sessionId) {
@@ -462,6 +494,9 @@ export function createHypercardReplDriver(
           activeSessionId = sessionId;
           return {
             lines: [{ type: 'system', text: `Attached to runtime session: ${sessionId} (read-only)` }],
+            envVars: {
+              REPL_PROMPT: promptForSession(sessionId),
+            },
           };
         }
         case 'use': {
@@ -476,6 +511,9 @@ export function createHypercardReplDriver(
           activeSessionId = sessionId;
           return {
             lines: [{ type: 'system', text: `Active runtime session: ${sessionId}${record.summary.writable ? '' : ' (read-only)'}` }],
+            envVars: {
+              REPL_PROMPT: promptForSession(sessionId),
+            },
           };
         }
         case 'surfaces': {
@@ -628,27 +666,28 @@ export function createHypercardReplDriver(
               detail: bundle.title ?? bundle.stackId,
             }));
         case 'use':
-          return broker
-            .listSessions()
+        case 'attach':
+          return collectSessions(broker)
             .filter((session) => session.sessionId.startsWith(tokens[1] ?? ''))
             .map((session) => ({
               value: session.sessionId,
-              detail: session.stackId,
+              detail: `${session.stackId}${session.writable ? '' : ' (read-only)'}`,
             }));
         case 'render':
         case 'event':
         case 'define-render':
         case 'define-handler':
         case 'open-surface': {
-          const session = activeSessionId ? broker.getSession(activeSessionId) : null;
+          const session = activeSessionId ? getSessionRecord(activeSessionId) : null;
           const partial = tokens[1] ?? '';
           return session
             ? session
+                .handle
                 .getBundleMeta()
                 .surfaces.filter((surfaceId) => surfaceId.startsWith(partial))
                 .map((surfaceId) => ({
                   value: surfaceId,
-                  detail: session.getBundleMeta().surfaceTypes?.[surfaceId] ?? 'ui.card.v1',
+                  detail: session.handle.getBundleMeta().surfaceTypes?.[surfaceId] ?? 'ui.card.v1',
                 }))
             : [];
         }

@@ -61,4 +61,41 @@ describe('MacRepl', () => {
     expect(text).toContain('1 + 2');
     expect(text).toContain('result:1 + 2');
   });
+
+  it('uses REPL_PROMPT from driver env vars when provided', async () => {
+    const driver: ReplDriver = {
+      execute() {
+        return {
+          lines: [{ type: 'system', text: 'ok' }],
+          envVars: {
+            REPL_PROMPT: 'hc[test-session]>',
+          },
+        };
+      },
+    };
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const root = createRoot(container);
+    roots.push(root);
+
+    await act(async () => {
+      root.render(<MacRepl driver={driver} prompt="hc>" />);
+    });
+
+    await act(async () => {
+      const input = container.querySelector('input');
+      const valueSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        'value',
+      )?.set;
+      valueSetter?.call(input, 'sessions');
+      input!.dispatchEvent(new Event('input', { bubbles: true }));
+      input!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    });
+
+    expect(container.textContent).toContain('hc[test-session]>');
+  });
 });

@@ -40,6 +40,11 @@ function createDriverContext(state: MacReplState, uptimeMs: number): ReplDriverC
   };
 }
 
+function currentPrompt(state: MacReplState): string {
+  const prompt = state.envVars.REPL_PROMPT;
+  return typeof prompt === 'string' && prompt.trim().length > 0 ? prompt : state.prompt;
+}
+
 function prependInputLine(raw: string, lines: TerminalLine[]): TerminalLine[] {
   const trimmed = raw.trim();
   if (!trimmed) {
@@ -73,6 +78,7 @@ function MacReplFrame({
   const completionState = resolveReplCompletionState(input, driver, driverContext);
   const suggestion = completionState.suggestion;
   const completions = completionState.items;
+  const prompt = currentPrompt(state);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -227,7 +233,7 @@ function MacReplFrame({
         ))}
 
         <ReplInputLine
-          prompt={state.prompt}
+          prompt={prompt}
           input={input}
           suggestion={suggestion}
           showCompletion={showCompletion}

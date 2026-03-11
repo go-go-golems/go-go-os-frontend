@@ -125,6 +125,9 @@ describe('hypercardReplDriver', () => {
         { type: 'system', text: 'Spawned runtime session inventory@repl from inventory' },
         { type: 'output', text: 'surfaces: lowStock' },
       ],
+      envVars: {
+        REPL_PROMPT: 'hc[inventory@repl]>',
+      },
     });
 
     const sessions = await driver.execute('sessions', {
@@ -343,6 +346,9 @@ describe('hypercardReplDriver', () => {
 
     await expect(driver.execute('attach inventory@live', context)).resolves.toEqual({
       lines: [{ type: 'system', text: 'Attached to runtime session: inventory@live (read-only)' }],
+      envVars: {
+        REPL_PROMPT: 'hc[inventory@live]>',
+      },
     });
 
     await expect(driver.execute('sessions', context)).resolves.toEqual({
@@ -439,5 +445,51 @@ describe('hypercardReplDriver', () => {
         { value: 'ui.card.v1', detail: 'registered runtime surface type' },
       ]),
     );
+  });
+
+  it('executes help commands for commands and docs topics', async () => {
+    const driver = createHypercardReplDriver({
+      bundleLibrary: {
+        inventory: {
+          key: 'inventory',
+          title: 'Inventory fixture',
+          stackId: 'inventory',
+          packageIds: ['ui'],
+          bundleCode: INVENTORY_STACK,
+          docsMetadata: {
+            packId: 'ui.card.v1',
+            docs: {
+              by_symbol: {
+                lowStock: {
+                  name: 'lowStock',
+                  summary: 'Threshold-based inventory triage view for low or empty stock.',
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const context = {
+      lines: [],
+      historyStack: [],
+      envVars: {},
+      aliases: {},
+      uptimeMs: 0,
+    };
+
+    await expect(driver.execute('help attach', context)).resolves.toEqual({
+      lines: [
+        { type: 'output', text: 'attach — Attach the REPL to a live host-owned runtime session in read-only mode.' },
+        { type: 'system', text: '  attach <session-id>' },
+      ],
+    });
+
+    await expect(driver.execute('help lowStock', context)).resolves.toEqual({
+      lines: [
+        { type: 'output', text: 'lowStock — Threshold-based inventory triage view for low or empty stock.' },
+      ],
+    });
   });
 });
