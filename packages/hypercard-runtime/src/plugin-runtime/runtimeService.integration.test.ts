@@ -6,14 +6,14 @@ import KANBAN_CARD from './fixtures/kanban-card.vm.js?raw';
 import LOOP_STACK from './fixtures/loop-stack.vm.js?raw';
 import PATCHED_LOW_STOCK_HANDLER from './fixtures/patched-low-stock-handler.vm.js?raw';
 import PATCHED_LOW_STOCK_RENDER from './fixtures/patched-low-stock-render.vm.js?raw';
-import { QuickJSCardRuntimeService } from './runtimeService';
+import { QuickJSRuntimeService } from './runtimeService';
 import { validateRuntimeSurfaceTree } from '../runtime-packs';
 
 const BUILTIN_KANBAN_STACK = `
-defineStackBundle(({ ui }) => ({
+defineRuntimeBundle(({ ui }) => ({
   id: 'builtin-kanban',
   title: 'Built-in Kanban',
-  cards: {
+  surfaces: {
     home: {
       render() {
         return ui.text('home');
@@ -22,7 +22,7 @@ defineStackBundle(({ ui }) => ({
   },
 }));
 
-defineCard('board', ({ widgets }) => ({
+defineRuntimeSurface('board', ({ widgets }) => ({
   render() {
     return widgets.kanban.page(
       widgets.kanban.taxonomy({
@@ -48,8 +48,8 @@ defineCard('board', ({ widgets }) => ({
 }), 'kanban.v1');
 `;
 
-describe('QuickJSCardRuntimeService', () => {
-  const services: QuickJSCardRuntimeService[] = [];
+describe('QuickJSRuntimeService', () => {
+  const services: QuickJSRuntimeService[] = [];
 
   afterEach(() => {
     for (const service of services) {
@@ -61,13 +61,13 @@ describe('QuickJSCardRuntimeService', () => {
   });
 
   it('loads stack bundle and renders a valid tree', async () => {
-    const service = new QuickJSCardRuntimeService();
+    const service = new QuickJSRuntimeService();
     services.push(service);
 
-    const bundle = await service.loadStackBundle('inventory', 'inventory@one', INVENTORY_STACK);
-    expect(bundle.cards).toEqual(['lowStock']);
+    const bundle = await service.loadRuntimeBundle('inventory', 'inventory@one', INVENTORY_STACK);
+    expect(bundle.surfaces).toEqual(['lowStock']);
 
-    const tree = service.renderCard('inventory@one', 'lowStock', {
+    const tree = service.renderRuntimeSurface('inventory@one', 'lowStock', {
       filters: { filter: 'all' },
       draft: { limit: 3 },
     });
@@ -75,12 +75,12 @@ describe('QuickJSCardRuntimeService', () => {
   });
 
   it('returns generic runtime actions from handlers', async () => {
-    const service = new QuickJSCardRuntimeService();
+    const service = new QuickJSRuntimeService();
     services.push(service);
 
-    await service.loadStackBundle('inventory', 'inventory@one', INVENTORY_STACK);
+    await service.loadRuntimeBundle('inventory', 'inventory@one', INVENTORY_STACK);
 
-    const actions = service.eventCard(
+    const actions = service.eventRuntimeSurface(
       'inventory@one',
       'lowStock',
       'reserve',
@@ -109,27 +109,27 @@ describe('QuickJSCardRuntimeService', () => {
   });
 
   it('disposes runtime sessions and rejects further renders', async () => {
-    const service = new QuickJSCardRuntimeService();
+    const service = new QuickJSRuntimeService();
     services.push(service);
 
-    await service.loadStackBundle('inventory', 'inventory@one', INVENTORY_STACK);
+    await service.loadRuntimeBundle('inventory', 'inventory@one', INVENTORY_STACK);
     expect(service.disposeSession('inventory@one')).toBe(true);
     expect(service.disposeSession('inventory@one')).toBe(false);
-    expect(() => service.renderCard('inventory@one', 'lowStock', {})).toThrow(/not found/i);
+    expect(() => service.renderRuntimeSurface('inventory@one', 'lowStock', {})).toThrow(/not found/i);
   });
 
   it('supports multiple sessions from one stack bundle', async () => {
-    const service = new QuickJSCardRuntimeService();
+    const service = new QuickJSRuntimeService();
     services.push(service);
 
-    await service.loadStackBundle('inventory', 'inventory@one', INVENTORY_STACK);
-    await service.loadStackBundle('inventory', 'inventory@two', INVENTORY_STACK);
+    await service.loadRuntimeBundle('inventory', 'inventory@one', INVENTORY_STACK);
+    await service.loadRuntimeBundle('inventory', 'inventory@two', INVENTORY_STACK);
 
-    const firstTree = service.renderCard('inventory@one', 'lowStock', {
+    const firstTree = service.renderRuntimeSurface('inventory@one', 'lowStock', {
       filters: { filter: 'all' },
       draft: { limit: 1 },
     });
-    const secondTree = service.renderCard('inventory@two', 'lowStock', {
+    const secondTree = service.renderRuntimeSurface('inventory@two', 'lowStock', {
       filters: { filter: 'low-stock' },
       draft: { limit: 7 },
     });
@@ -140,45 +140,45 @@ describe('QuickJSCardRuntimeService', () => {
   });
 
   it('supports ui.column render output', async () => {
-    const service = new QuickJSCardRuntimeService();
+    const service = new QuickJSRuntimeService();
     services.push(service);
 
-    await service.loadStackBundle('column-demo', 'column-demo@one', COLUMN_STACK);
-    const tree = service.renderCard('column-demo@one', 'main', {});
+    await service.loadRuntimeBundle('column-demo', 'column-demo@one', COLUMN_STACK);
+    const tree = service.renderRuntimeSurface('column-demo@one', 'main', {});
 
     expect(tree.kind).toBe('column');
   });
 
   it('interrupts infinite render loops with timeout', async () => {
-    const service = new QuickJSCardRuntimeService({ renderTimeoutMs: 10 });
+    const service = new QuickJSRuntimeService({ renderTimeoutMs: 10 });
     services.push(service);
 
-    await service.loadStackBundle('loop', 'loop@one', LOOP_STACK);
+    await service.loadRuntimeBundle('loop', 'loop@one', LOOP_STACK);
 
-    expect(() => service.renderCard('loop@one', 'loop', {})).toThrow(/interrupted/i);
+    expect(() => service.renderRuntimeSurface('loop@one', 'loop', {})).toThrow(/interrupted/i);
   });
 
   it('supports defining cards and patching render/handlers at runtime', async () => {
-    const service = new QuickJSCardRuntimeService();
+    const service = new QuickJSRuntimeService();
     services.push(service);
 
-    await service.loadStackBundle('inventory', 'inventory@dynamic', INVENTORY_STACK);
+    await service.loadRuntimeBundle('inventory', 'inventory@dynamic', INVENTORY_STACK);
 
-    const withDynamicCard = service.defineCard('inventory@dynamic', 'onDemand', DYNAMIC_CARD);
-    expect(withDynamicCard.cards).toContain('onDemand');
+    const withDynamicCard = service.defineRuntimeSurface('inventory@dynamic', 'onDemand', DYNAMIC_CARD);
+    expect(withDynamicCard.surfaces).toContain('onDemand');
 
-    const dynamicTree = service.renderCard('inventory@dynamic', 'onDemand', { draft: { name: 'Backorder' } });
+    const dynamicTree = service.renderRuntimeSurface('inventory@dynamic', 'onDemand', { draft: { name: 'Backorder' } });
     expect(dynamicTree.kind).toBe('panel');
 
-    const dynamicActions = service.eventCard('inventory@dynamic', 'onDemand', 'back', {}, {});
+    const dynamicActions = service.eventRuntimeSurface('inventory@dynamic', 'onDemand', 'back', {}, {});
     expect(dynamicActions).toEqual([
       {
         type: 'nav.back',
       },
     ]);
 
-    service.defineCardRender('inventory@dynamic', 'lowStock', PATCHED_LOW_STOCK_RENDER);
-    const patchedTree = service.renderCard('inventory@dynamic', 'lowStock', {
+    service.defineRuntimeSurfaceRender('inventory@dynamic', 'lowStock', PATCHED_LOW_STOCK_RENDER);
+    const patchedTree = service.renderRuntimeSurface('inventory@dynamic', 'lowStock', {
       filters: { filter: 'all' },
       draft: { limit: 9 },
     });
@@ -187,8 +187,8 @@ describe('QuickJSCardRuntimeService', () => {
       'Patched limit: 9'
     );
 
-    service.defineCardHandler('inventory@dynamic', 'lowStock', 'patchedNotify', PATCHED_LOW_STOCK_HANDLER);
-    const patchedActions = service.eventCard(
+    service.defineRuntimeSurfaceHandler('inventory@dynamic', 'lowStock', 'patchedNotify', PATCHED_LOW_STOCK_HANDLER);
+    const patchedActions = service.eventRuntimeSurface(
       'inventory@dynamic',
       'lowStock',
       'patchedNotify',
@@ -204,15 +204,15 @@ describe('QuickJSCardRuntimeService', () => {
   });
 
   it('supports kanban.v1 dynamic cards', async () => {
-    const service = new QuickJSCardRuntimeService();
+    const service = new QuickJSRuntimeService();
     services.push(service);
 
-    await service.loadStackBundle('inventory', 'inventory@kanban', INVENTORY_STACK);
+    await service.loadRuntimeBundle('inventory', 'inventory@kanban', INVENTORY_STACK);
 
-    const bundle = service.defineCard('inventory@kanban', 'sprintBoard', KANBAN_CARD, 'kanban.v1');
-    expect(bundle.cards).toContain('sprintBoard');
+    const bundle = service.defineRuntimeSurface('inventory@kanban', 'sprintBoard', KANBAN_CARD, 'kanban.v1');
+    expect(bundle.surfaces).toContain('sprintBoard');
 
-    const rawTree = service.renderCard('inventory@kanban', 'sprintBoard', {
+    const rawTree = service.renderRuntimeSurface('inventory@kanban', 'sprintBoard', {
       app_kanban: {
         taxonomy: {
           issueTypes: [{ id: 'feature', label: 'Feature', icon: '✨' }],
@@ -241,7 +241,7 @@ describe('QuickJSCardRuntimeService', () => {
     const tree = validateRuntimeSurfaceTree('kanban.v1', rawTree);
     expect(tree.kind).toBe('kanban.page');
 
-    const actions = service.eventCard(
+    const actions = service.eventRuntimeSurface(
       'inventory@kanban',
       'sprintBoard',
       'moveTask',
@@ -256,30 +256,30 @@ describe('QuickJSCardRuntimeService', () => {
     ]);
   });
 
-  it('reports pack metadata for built-in stack cards defined with defineCard', async () => {
-    const service = new QuickJSCardRuntimeService();
+  it('reports surface type metadata for built-in runtime bundle surfaces defined with defineRuntimeSurface', async () => {
+    const service = new QuickJSRuntimeService();
     services.push(service);
 
-    const bundle = await service.loadStackBundle('builtin-kanban', 'builtin-kanban@one', BUILTIN_KANBAN_STACK);
-    expect(bundle.cards).toEqual(expect.arrayContaining(['home', 'board']));
-    expect(bundle.cardPacks).toMatchObject({
+    const bundle = await service.loadRuntimeBundle('builtin-kanban', 'builtin-kanban@one', BUILTIN_KANBAN_STACK);
+    expect(bundle.surfaces).toEqual(expect.arrayContaining(['home', 'board']));
+    expect(bundle.surfaceTypes).toMatchObject({
       home: 'ui.card.v1',
       board: 'kanban.v1',
     });
 
-    const rawTree = service.renderCard('builtin-kanban@one', 'board', {});
+    const rawTree = service.renderRuntimeSurface('builtin-kanban@one', 'board', {});
     const tree = validateRuntimeSurfaceTree('kanban.v1', rawTree);
     expect(tree.kind).toBe('kanban.page');
   });
 
-  it('rejects unknown runtime packs during card definition', async () => {
-    const service = new QuickJSCardRuntimeService();
+  it('rejects unknown runtime surface types during surface definition', async () => {
+    const service = new QuickJSRuntimeService();
     services.push(service);
 
-    await service.loadStackBundle('inventory', 'inventory@bad-pack', INVENTORY_STACK);
+    await service.loadRuntimeBundle('inventory', 'inventory@bad-pack', INVENTORY_STACK);
 
     expect(() =>
-      service.defineCard('inventory@bad-pack', 'broken', KANBAN_CARD, 'missing.v1')
-    ).toThrow(/unknown runtime pack/i);
+      service.defineRuntimeSurface('inventory@bad-pack', 'broken', KANBAN_CARD, 'missing.v1')
+    ).toThrow(/unknown runtime surface type/i);
   });
 });

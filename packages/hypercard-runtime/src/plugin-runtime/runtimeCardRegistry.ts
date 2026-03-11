@@ -4,8 +4,8 @@
  *
  * Flow:
  * 1. Chat receives card.v2 event → calls registerRuntimeCard(cardId, code, packId)
- * 2. PluginCardSessionHost finishes loadStackBundle → calls injectPendingCards(service, sessionId)
- * 3. injectPendingCards iterates the registry, calls service.defineCard() for each
+ * 2. PluginCardSessionHost finishes loadRuntimeBundle → calls injectPendingCards(service, sessionId)
+ * 3. injectPendingCards iterates the registry, calls service.defineRuntimeSurface() for each
  */
 
 export interface RuntimeCardDefinition {
@@ -72,21 +72,21 @@ export function clearRuntimeCardRegistry(): void {
  * Returns the list of card IDs that were successfully injected.
  */
 export function injectPendingCards(
-  service: { defineCard(sessionId: string, cardId: string, code: string, packId?: string): unknown },
+  service: { defineRuntimeSurface(sessionId: string, surfaceId: string, code: string, packId?: string): unknown },
   sessionId: string,
 ): string[] {
   return injectPendingCardsWithReport(service, sessionId).injected;
 }
 
 export function injectPendingCardsWithReport(
-  service: { defineCard(sessionId: string, cardId: string, code: string, packId?: string): unknown },
+  service: { defineRuntimeSurface(sessionId: string, surfaceId: string, code: string, packId?: string): unknown },
   sessionId: string,
 ): RuntimeCardInjectionResult {
   const injected: string[] = [];
   const failed: RuntimeCardInjectionFailure[] = [];
   for (const def of registry.values()) {
     try {
-      service.defineCard(sessionId, def.cardId, def.code, def.packId);
+      service.defineRuntimeSurface(sessionId, def.cardId, def.code, def.packId);
       injected.push(def.cardId);
     } catch (err) {
       console.error(`[runtimeCardRegistry] Failed to inject card ${def.cardId} into ${sessionId}:`, err);

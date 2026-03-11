@@ -14,9 +14,9 @@ import {
 } from '../features/pluginCardRuntime';
 import { selectFocusedWindowId, selectSessionCurrentNav, selectSessionNavDepth } from '@hypercard/engine/desktop-core';
 import { markRuntimeCardInjectionResults } from '../hypercard/artifacts/artifactsSlice';
-import type { LoadedStackBundle, RuntimeAction } from '../plugin-runtime/contracts';
+import type { RuntimeBundleMeta, RuntimeAction } from '../plugin-runtime/contracts';
 import { getPendingRuntimeCards, hasRuntimeCard, injectPendingCardsWithReport, onRegistryChange } from '../plugin-runtime/runtimeCardRegistry';
-import { QuickJSCardRuntimeService } from '../plugin-runtime/runtimeService';
+import { QuickJSRuntimeService } from '../plugin-runtime/runtimeService';
 import { dispatchRuntimeAction } from './pluginIntentRouting';
 import {
   normalizeRuntimeSurfaceTypeId,
@@ -133,11 +133,11 @@ export function PluginCardSessionHost({
     shallowEqual,
   );
 
-  const runtimeServiceRef = useRef<QuickJSCardRuntimeService | null>(null);
-  const loadedBundleRef = useRef<LoadedStackBundle | null>(null);
+  const runtimeServiceRef = useRef<QuickJSRuntimeService | null>(null);
+  const loadedBundleRef = useRef<RuntimeBundleMeta | null>(null);
   const isPreview = mode === 'preview';
   if (!runtimeServiceRef.current) {
-    runtimeServiceRef.current = new QuickJSCardRuntimeService();
+    runtimeServiceRef.current = new QuickJSRuntimeService();
   }
 
   useEffect(() => {
@@ -178,7 +178,7 @@ export function PluginCardSessionHost({
       }
 
       try {
-        const bundle = await runtimeService.loadStackBundle(stack.id, sessionId, config.bundleCode);
+        const bundle = await runtimeService.loadRuntimeBundle(stack.id, sessionId, config.bundleCode);
         if (cancelled) {
           return;
         }
@@ -221,8 +221,8 @@ export function PluginCardSessionHost({
           );
         }
 
-        if (bundle.initialCardState && typeof bundle.initialCardState === 'object') {
-          for (const [cardId, value] of Object.entries(bundle.initialCardState)) {
+        if (bundle.initialSurfaceState && typeof bundle.initialSurfaceState === 'object') {
+          for (const [cardId, value] of Object.entries(bundle.initialSurfaceState)) {
             if (typeof value === 'object' && value !== null) {
               dispatchRuntimeAction(
                 {
@@ -339,8 +339,8 @@ export function PluginCardSessionHost({
       return {
         tree: (() => {
           const runtimeCard = getPendingRuntimeCards().find((card) => card.cardId === currentCardId);
-          const packId = normalizeRuntimeSurfaceTypeId(runtimeCard?.packId ?? loadedBundleRef.current?.cardPacks?.[currentCardId]);
-          const rawTree = runtimeServiceRef.current?.renderCard(sessionId, currentCardId, projectedState) ?? null;
+          const packId = normalizeRuntimeSurfaceTypeId(runtimeCard?.packId ?? loadedBundleRef.current?.surfaceTypes?.[currentCardId]);
+          const rawTree = runtimeServiceRef.current?.renderRuntimeSurface(sessionId, currentCardId, projectedState) ?? null;
           return rawTree === null ? null : validateRuntimeSurfaceTree(packId, rawTree);
         })(),
         error: null,
@@ -380,7 +380,7 @@ export function PluginCardSessionHost({
       let actions: RuntimeAction[];
       try {
         const projectedState = projectState();
-        actions = runtimeServiceRef.current?.eventCard(
+        actions = runtimeServiceRef.current?.eventRuntimeSurface(
           sessionId,
           currentCardId,
           handler,
@@ -434,7 +434,7 @@ export function PluginCardSessionHost({
   }
 
   const runtimeCard = getPendingRuntimeCards().find((card) => card.cardId === currentCardId);
-  const packId = normalizeRuntimeSurfaceTypeId(runtimeCard?.packId ?? loadedBundleRef.current?.cardPacks?.[currentCardId]);
+  const packId = normalizeRuntimeSurfaceTypeId(runtimeCard?.packId ?? loadedBundleRef.current?.surfaceTypes?.[currentCardId]);
 
   return <>{renderRuntimeSurfaceTree(packId, tree, emitRuntimeEvent)}</>;
 }

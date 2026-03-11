@@ -1,6 +1,6 @@
 // @ts-check
 /// <reference path="./pluginBundle.authoring.d.ts" />
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   function asRecord(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   }
@@ -122,11 +122,11 @@ defineStackBundle(({ ui }) => {
     initialSessionState: {
       defaultPriority: 'medium',
     },
-    initialCardState: {
+    initialSurfaceState: {
       taskDetail: { edits: {} },
       newTask: { form: { title: '', priority: 'medium', due: '' }, submitResult: '' },
     },
-    cards: {
+    surfaces: {
       home: {
         render() {
           return ui.panel([

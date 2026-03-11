@@ -1,10 +1,10 @@
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   return {
     id: 'inventory',
     title: 'Inventory',
     initialSessionState: { filter: 'all' },
-    initialCardState: { lowStock: { limit: 5 } },
-    cards: {
+    initialSurfaceState: { lowStock: { limit: 5 } },
+    surfaces: {
       lowStock: {
         render({ state }) {
           return ui.panel([

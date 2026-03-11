@@ -117,9 +117,9 @@ const __widgets = {
 let __stackBundle = null;
 let __runtimeActions = [];
 
-function defineStackBundle(factory) {
+function defineRuntimeBundleImpl(factory) {
   if (typeof factory !== 'function') {
-    throw new Error('defineStackBundle requires a factory function');
+    throw new Error('defineRuntimeBundle requires a factory function');
   }
 
   __stackBundle = factory({ ui: __ui });
@@ -127,16 +127,16 @@ function defineStackBundle(factory) {
 
 function assertStackBundleReady() {
   if (!__stackBundle || typeof __stackBundle !== 'object') {
-    throw new Error('Stack bundle did not register via defineStackBundle');
+    throw new Error('Runtime bundle did not register via defineRuntimeBundle');
   }
 }
 
-function assertCardsMap() {
+function assertSurfacesMap() {
   assertStackBundleReady();
-  if (!__stackBundle.cards || typeof __stackBundle.cards !== 'object') {
-    __stackBundle.cards = {};
+  if (!__stackBundle.surfaces || typeof __stackBundle.surfaces !== 'object') {
+    __stackBundle.surfaces = {};
   }
-  return __stackBundle.cards;
+  return __stackBundle.surfaces;
 }
 
 function normalizePackId(packId) {
@@ -158,10 +158,10 @@ function createPackHelpers(packId) {
     return { widgets: __widgets };
   }
 
-  throw new Error('Unknown runtime pack: ' + String(normalizedPackId));
+  throw new Error('Unknown runtime surface type: ' + String(normalizedPackId));
 }
 
-function normalizeCardDefinition(cardId, definitionOrFactory, packId) {
+function normalizeRuntimeSurfaceDefinition(surfaceId, definitionOrFactory, packId) {
   const normalizedPackId = normalizePackId(packId);
   const definition =
     typeof definitionOrFactory === 'function'
@@ -169,16 +169,16 @@ function normalizeCardDefinition(cardId, definitionOrFactory, packId) {
       : definitionOrFactory;
 
   if (!definition || typeof definition !== 'object') {
-    throw new Error('Card definition must be an object for card: ' + String(cardId));
+    throw new Error('Runtime surface definition must be an object for surface: ' + String(surfaceId));
   }
 
   if (typeof definition.render !== 'function') {
-    throw new Error('Card definition render() is required for card: ' + String(cardId));
+    throw new Error('Runtime surface definition render() is required for surface: ' + String(surfaceId));
   }
 
   if (definition.handlers !== undefined) {
     if (!definition.handlers || typeof definition.handlers !== 'object' || Array.isArray(definition.handlers)) {
-      throw new Error('Card definition handlers must be an object for card: ' + String(cardId));
+      throw new Error('Runtime surface definition handlers must be an object for surface: ' + String(surfaceId));
     }
   } else {
     definition.handlers = {};
@@ -188,58 +188,58 @@ function normalizeCardDefinition(cardId, definitionOrFactory, packId) {
   return definition;
 }
 
-function ensureCardRecord(cardId) {
-  const cards = assertCardsMap();
-  const key = String(cardId);
-  const existing = cards[key];
+function ensureRuntimeSurfaceRecord(surfaceId) {
+  const surfaces = assertSurfacesMap();
+  const key = String(surfaceId);
+  const existing = surfaces[key];
   if (!existing || typeof existing !== 'object') {
-    cards[key] = {
+    surfaces[key] = {
       handlers: {},
     };
   } else if (!existing.handlers || typeof existing.handlers !== 'object') {
     existing.handlers = {};
   }
-  return cards[key];
+  return surfaces[key];
 }
 
-function defineCard(cardId, definitionOrFactory, packId) {
-  const cards = assertCardsMap();
-  const key = String(cardId);
-  cards[key] = normalizeCardDefinition(key, definitionOrFactory, packId);
+function defineRuntimeSurfaceImpl(surfaceId, definitionOrFactory, packId) {
+  const surfaces = assertSurfacesMap();
+  const key = String(surfaceId);
+  surfaces[key] = normalizeRuntimeSurfaceDefinition(key, definitionOrFactory, packId);
 }
 
-function defineCardRender(cardId, renderFn) {
+function defineRuntimeSurfaceRenderImpl(surfaceId, renderFn) {
   if (typeof renderFn !== 'function') {
-    throw new Error('defineCardRender requires a render function');
+    throw new Error('defineRuntimeSurfaceRender requires a render function');
   }
 
-  const card = ensureCardRecord(cardId);
-  card.render = renderFn;
+  const surface = ensureRuntimeSurfaceRecord(surfaceId);
+  surface.render = renderFn;
 }
 
-function defineCardHandler(cardId, handlerName, handlerFn) {
+function defineRuntimeSurfaceHandlerImpl(surfaceId, handlerName, handlerFn) {
   if (typeof handlerFn !== 'function') {
-    throw new Error('defineCardHandler requires a handler function');
+    throw new Error('defineRuntimeSurfaceHandler requires a handler function');
   }
 
-  const card = ensureCardRecord(cardId);
-  card.handlers[String(handlerName)] = handlerFn;
+  const surface = ensureRuntimeSurfaceRecord(surfaceId);
+  surface.handlers[String(handlerName)] = handlerFn;
 }
 
-globalThis.defineStackBundle = defineStackBundle;
-globalThis.defineCard = defineCard;
-globalThis.defineCardRender = defineCardRender;
-globalThis.defineCardHandler = defineCardHandler;
+globalThis.defineRuntimeBundle = defineRuntimeBundleImpl;
+globalThis.defineRuntimeSurface = defineRuntimeSurfaceImpl;
+globalThis.defineRuntimeSurfaceRender = defineRuntimeSurfaceRenderImpl;
+globalThis.defineRuntimeSurfaceHandler = defineRuntimeSurfaceHandlerImpl;
 globalThis.ui = __ui;
 
-globalThis.__stackHost = {
+globalThis.__runtimeBundleHost = {
   getMeta() {
     if (!__stackBundle || typeof __stackBundle !== 'object') {
-      throw new Error('Stack bundle did not register via defineStackBundle');
+      throw new Error('Runtime bundle did not register via defineRuntimeBundle');
     }
 
-    if (!__stackBundle.cards || typeof __stackBundle.cards !== 'object') {
-      throw new Error('Stack bundle cards must be an object');
+    if (!__stackBundle.surfaces || typeof __stackBundle.surfaces !== 'object') {
+      throw new Error('Runtime bundle surfaces must be an object');
     }
 
     return {
@@ -247,33 +247,33 @@ globalThis.__stackHost = {
       title: String(__stackBundle.title ?? 'Untitled Stack'),
       description: typeof __stackBundle.description === 'string' ? __stackBundle.description : undefined,
       initialSessionState: __stackBundle.initialSessionState,
-      initialCardState: __stackBundle.initialCardState,
-      cards: Object.keys(__stackBundle.cards),
-      cardPacks: Object.fromEntries(
-        Object.entries(__stackBundle.cards).map(([key, card]) => [
+      initialSurfaceState: __stackBundle.initialSurfaceState,
+      surfaces: Object.keys(__stackBundle.surfaces),
+      surfaceTypes: Object.fromEntries(
+        Object.entries(__stackBundle.surfaces).map(([key, surface]) => [
           key,
-          typeof card?.packId === 'string' && card.packId.length > 0 ? card.packId : 'ui.card.v1',
+          typeof surface?.packId === 'string' && surface.packId.length > 0 ? surface.packId : 'ui.card.v1',
         ]),
       ),
     };
   },
 
-  render(cardId, state) {
-    const card = __stackBundle?.cards?.[cardId];
-    if (!card || typeof card.render !== 'function') {
-      throw new Error('Card not found or render() is missing: ' + String(cardId));
+  renderRuntimeSurface(surfaceId, state) {
+    const surface = __stackBundle?.surfaces?.[surfaceId];
+    if (!surface || typeof surface.render !== 'function') {
+      throw new Error('Runtime surface not found or render() is missing: ' + String(surfaceId));
     }
 
-    return card.render({ state });
+    return surface.render({ state });
   },
 
-  event(cardId, handlerName, args, state) {
-    const card = __stackBundle?.cards?.[cardId];
-    if (!card) {
-      throw new Error('Card not found: ' + String(cardId));
+  eventRuntimeSurface(surfaceId, handlerName, args, state) {
+    const surface = __stackBundle?.surfaces?.[surfaceId];
+    if (!surface) {
+      throw new Error('Runtime surface not found: ' + String(surfaceId));
     }
 
-    const handler = card.handlers?.[handlerName];
+    const handler = surface.handlers?.[handlerName];
     if (typeof handler !== 'function') {
       throw new Error('Handler not found: ' + String(handlerName));
     }
@@ -295,18 +295,18 @@ globalThis.__stackHost = {
     return __runtimeActions.slice();
   },
 
-  defineCard(cardId, definitionOrFactory, packId) {
-    defineCard(cardId, definitionOrFactory, packId);
+  defineRuntimeSurface(surfaceId, definitionOrFactory, packId) {
+    defineRuntimeSurfaceImpl(surfaceId, definitionOrFactory, packId);
     return this.getMeta();
   },
 
-  defineCardRender(cardId, renderFn) {
-    defineCardRender(cardId, renderFn);
+  defineRuntimeSurfaceRender(surfaceId, renderFn) {
+    defineRuntimeSurfaceRenderImpl(surfaceId, renderFn);
     return this.getMeta();
   },
 
-  defineCardHandler(cardId, handlerName, handlerFn) {
-    defineCardHandler(cardId, handlerName, handlerFn);
+  defineRuntimeSurfaceHandler(surfaceId, handlerName, handlerFn) {
+    defineRuntimeSurfaceHandlerImpl(surfaceId, handlerName, handlerFn);
     return this.getMeta();
   },
 };

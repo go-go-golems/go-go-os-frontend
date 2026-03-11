@@ -1,6 +1,6 @@
 // @ts-check
 /// <reference path="./pluginBundle.authoring.d.ts" />
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   function asRecord(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   }
@@ -249,7 +249,7 @@ defineStackBundle(({ ui }) => {
   return {
     id: 'crm',
     title: 'CRM',
-    initialCardState: {
+    initialSurfaceState: {
       contactDetail: { edits: {} },
       companyDetail: { edits: {} },
       dealDetail: { edits: {} },
@@ -274,7 +274,7 @@ defineStackBundle(({ ui }) => {
         submitResult: '',
       },
     },
-    cards: {
+    surfaces: {
       home: {
         render() {
           return ui.panel([

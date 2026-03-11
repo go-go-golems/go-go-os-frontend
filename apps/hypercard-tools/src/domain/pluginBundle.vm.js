@@ -1,6 +1,6 @@
 // @ts-check
 /// <reference path="./pluginBundle.authoring.d.ts" />
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   const DEMO_CARDS = [
     { id: 'layouts', title: 'Layouts', focus: 'panel / row / column composition' },
     { id: 'textBadges', title: 'Text and Badges', focus: 'text and badge primitives' },
@@ -222,7 +222,7 @@ defineStackBundle(({ ui }) => {
       visitCount: 1,
       note: 'Use this stack as the reference for card authoring.',
     },
-    initialCardState: {
+    initialSurfaceState: {
       textBadges: { badgeLabel: 'alpha' },
       buttons: { clicks: 0, lastAction: 'none' },
       inputs: { name: '', message: '', search: '' },
@@ -247,7 +247,7 @@ defineStackBundle(({ ui }) => {
         selectedCellIndex: 0,
       },
     },
-    cards: {
+    surfaces: {
       home: {
         render({ state }) {
           const session = filtersState(state);

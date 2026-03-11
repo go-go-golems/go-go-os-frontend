@@ -24,7 +24,7 @@ const DEBUG_STACK: CardStackDefinition = {
       ui: {},
       meta: {
         runtime: {
-          source: 'defineCard("currentCard", () => ({}));',
+          source: 'defineRuntimeSurface("currentCard", () => ({}));',
         },
       },
     },
@@ -36,7 +36,7 @@ const DEBUG_STACK: CardStackDefinition = {
       ui: {},
       meta: {
         runtime: {
-          source: 'defineCard("cachedCard", () => ({}));',
+          source: 'defineRuntimeSurface("cachedCard", () => ({}));',
         },
       },
     },

@@ -1,4 +1,4 @@
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   function asRecord(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   }
@@ -105,14 +105,14 @@ defineStackBundle(({ ui }) => {
   return {
     id: 'bookTracker',
     title: 'Book Tracker',
-    initialCardState: {
+    initialSurfaceState: {
       bookDetail: { edits: {} },
       addBook: {
         formValues: { title: '', author: '', status: 'to-read', rating: 0 },
         submitResult: '',
       },
     },
-    cards: {
+    surfaces: {
       home: {
         render() {
           return ui.panel([

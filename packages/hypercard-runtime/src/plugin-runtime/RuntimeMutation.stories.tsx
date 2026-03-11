@@ -7,7 +7,7 @@ import DYNAMIC_CARD from './fixtures/dynamic-card.vm.js?raw';
 import INVENTORY_STACK from './fixtures/inventory-stack.vm.js?raw';
 import PATCHED_LOW_STOCK_HANDLER from './fixtures/patched-low-stock-handler.vm.js?raw';
 import PATCHED_LOW_STOCK_RENDER from './fixtures/patched-low-stock-render.vm.js?raw';
-import { QuickJSCardRuntimeService } from './runtimeService';
+import { QuickJSRuntimeService } from './runtimeService';
 import type { UINode } from './uiTypes';
 
 const SESSION_ID = 'story@runtime-mutation';
@@ -16,9 +16,9 @@ const STACK_ID = 'inventory';
 type RuntimeStatus = 'loading' | 'ready' | 'error';
 
 function RuntimeMutationDemo() {
-  const runtimeRef = useRef<QuickJSCardRuntimeService | null>(null);
+  const runtimeRef = useRef<QuickJSRuntimeService | null>(null);
   if (!runtimeRef.current) {
-    runtimeRef.current = new QuickJSCardRuntimeService();
+    runtimeRef.current = new QuickJSRuntimeService();
   }
 
   const runtime = runtimeRef.current;
@@ -48,9 +48,9 @@ function RuntimeMutationDemo() {
     [lowStockLimit]
   );
 
-  const renderCard = useCallback(
+  const renderRuntimeSurface = useCallback(
     (cardId: string) => {
-      const nextTree = runtime.renderCard(SESSION_ID, cardId, stateFor(cardId));
+      const nextTree = runtime.renderRuntimeSurface(SESSION_ID, cardId, stateFor(cardId));
       setTree(nextTree);
     },
     [runtime, stateFor]
@@ -61,15 +61,15 @@ function RuntimeMutationDemo() {
 
     async function load() {
       try {
-        const bundle = await runtime.loadStackBundle(STACK_ID, SESSION_ID, INVENTORY_STACK);
+        const bundle = await runtime.loadRuntimeBundle(STACK_ID, SESSION_ID, INVENTORY_STACK);
         if (cancelled) {
           return;
         }
 
-        setCards(bundle.cards);
+        setCards(bundle.surfaces);
         setStatus('ready');
         setError(null);
-        renderCard('lowStock');
+        renderRuntimeSurface('lowStock');
       } catch (cause) {
         if (cancelled) {
           return;
@@ -86,7 +86,7 @@ function RuntimeMutationDemo() {
       cancelled = true;
       runtime.disposeSession(SESSION_ID);
     };
-  }, [renderCard, runtime]);
+  }, [renderRuntimeSurface, runtime]);
 
   useEffect(() => {
     if (status !== 'ready') {
@@ -94,12 +94,12 @@ function RuntimeMutationDemo() {
     }
 
     try {
-      renderCard(activeCardId);
+      renderRuntimeSurface(activeCardId);
       setError(null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
     }
-  }, [activeCardId, renderCard, status]);
+  }, [activeCardId, renderRuntimeSurface, status]);
 
   const run = useCallback(
     (label: string, fn: () => void) => {
@@ -110,18 +110,18 @@ function RuntimeMutationDemo() {
       try {
         fn();
         setError(null);
-        renderCard(activeCardId);
+        renderRuntimeSurface(activeCardId);
       } catch (cause) {
         setError(`${label}: ${cause instanceof Error ? cause.message : String(cause)}`);
       }
     },
-    [activeCardId, renderCard, status]
+    [activeCardId, renderRuntimeSurface, status]
   );
 
   const onEvent = useCallback(
     (handler: string, args?: unknown) => {
-      run('eventCard', () => {
-        const actions = runtime.eventCard(SESSION_ID, activeCardId, handler, args, stateFor(activeCardId));
+      run('eventRuntimeSurface', () => {
+        const actions = runtime.eventRuntimeSurface(SESSION_ID, activeCardId, handler, args, stateFor(activeCardId));
         setLastActions(actions);
 
         const hasBack = actions.some((action) => action.type === 'nav.back');
@@ -165,35 +165,35 @@ function RuntimeMutationDemo() {
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           <Btn
             onClick={() =>
-              run('defineCard', () => {
-                const bundle = runtime.defineCard(SESSION_ID, 'onDemand', DYNAMIC_CARD);
-                setCards(bundle.cards);
+              run('defineRuntimeSurface', () => {
+                const bundle = runtime.defineRuntimeSurface(SESSION_ID, 'onDemand', DYNAMIC_CARD);
+                setCards(bundle.surfaces);
                 setActiveCardId('onDemand');
               })
             }
           >
-            defineCard(onDemand)
+            defineRuntimeSurface(onDemand)
           </Btn>
 
           <Btn
             onClick={() =>
-              run('defineCardRender', () => {
-                runtime.defineCardRender(SESSION_ID, 'lowStock', PATCHED_LOW_STOCK_RENDER);
+              run('defineRuntimeSurfaceRender', () => {
+                runtime.defineRuntimeSurfaceRender(SESSION_ID, 'lowStock', PATCHED_LOW_STOCK_RENDER);
                 setActiveCardId('lowStock');
               })
             }
           >
-            defineCardRender(lowStock)
+            defineRuntimeSurfaceRender(lowStock)
           </Btn>
 
           <Btn
             onClick={() =>
-              run('defineCardHandler', () => {
-                runtime.defineCardHandler(SESSION_ID, 'onDemand', 'back', PATCHED_LOW_STOCK_HANDLER);
+              run('defineRuntimeSurfaceHandler', () => {
+                runtime.defineRuntimeSurfaceHandler(SESSION_ID, 'onDemand', 'back', PATCHED_LOW_STOCK_HANDLER);
               })
             }
           >
-            defineCardHandler(onDemand.back)
+            defineRuntimeSurfaceHandler(onDemand.back)
           </Btn>
         </div>
 

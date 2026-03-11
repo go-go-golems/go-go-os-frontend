@@ -1,8 +1,8 @@
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   return {
     id: 'report-demo',
     title: 'Report Demo',
-    cards: {
+    surfaces: {
       report: {
         render() {
           return ui.panel([

@@ -1,4 +1,4 @@
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   function asRecord(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   }
@@ -44,7 +44,7 @@ defineStackBundle(({ ui }) => {
   return {
     id: 'nav-demo',
     title: 'Nav Demo',
-    cards: {
+    surfaces: {
       list: {
         render() {
           return ui.panel([

@@ -8,20 +8,16 @@ import type { CardStackDefinition } from '@hypercard/engine';
 import { PluginCardSessionHost } from './PluginCardSessionHost';
 
 vi.mock('../plugin-runtime/runtimeService', () => {
-  class MockQuickJSCardRuntimeService {
-    async loadStackBundle() {
+  class MockQuickJSRuntimeService {
+    async loadRuntimeBundle() {
       return {
         id: 'mock-plugin',
         title: 'Mock Plugin',
-        cards: {
-          home: {
-            render: () => ({ kind: 'text', text: 'unused' }),
-          },
-        },
+        surfaces: ['home'],
       };
     }
 
-    renderCard(_sessionId: string, _cardId: string, state: unknown) {
+    renderRuntimeSurface(_sessionId: string, _cardId: string, state: unknown) {
       const root = (state ?? {}) as Record<string, unknown>;
       const inventory = (root.inventory ?? {}) as Record<string, unknown>;
       const items = Array.isArray(inventory.items) ? inventory.items : [];
@@ -32,7 +28,7 @@ vi.mock('../plugin-runtime/runtimeService', () => {
       };
     }
 
-    eventCard() {
+    eventRuntimeSurface() {
       return [];
     }
 
@@ -41,7 +37,7 @@ vi.mock('../plugin-runtime/runtimeService', () => {
     }
   }
 
-  return { QuickJSCardRuntimeService: MockQuickJSCardRuntimeService };
+  return { QuickJSRuntimeService: MockQuickJSRuntimeService };
 });
 
 const TEST_STACK: CardStackDefinition = {
@@ -50,7 +46,7 @@ const TEST_STACK: CardStackDefinition = {
   icon: '🧪',
   homeCard: 'home',
   plugin: {
-    bundleCode: 'defineStackBundle(() => ({ id: "mock-plugin", title: "Mock Plugin", cards: { home: { render() { return null; } } } }));',
+    bundleCode: 'defineRuntimeBundle(() => ({ id: "mock-plugin", title: "Mock Plugin", surfaces: { home: { render() { return null; } } } }));',
   },
   cards: {
     home: {

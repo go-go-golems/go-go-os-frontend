@@ -1,6 +1,6 @@
 export type StackId = string;
 export type SessionId = string;
-export type CardId = string;
+export type RuntimeSurfaceId = string;
 
 export interface RuntimeErrorPayload {
   code: string;
@@ -59,65 +59,65 @@ export function getRuntimeActionOperation(actionType: string): string {
   return actionType;
 }
 
-export interface LoadedStackBundle {
+export interface RuntimeBundleMeta {
   stackId: StackId;
   sessionId: SessionId;
   declaredId?: string;
   title: string;
   description?: string;
   initialSessionState?: unknown;
-  initialCardState?: Record<string, unknown>;
-  cards: string[];
-  cardPacks?: Record<string, string>;
+  initialSurfaceState?: Record<string, unknown>;
+  surfaces: string[];
+  surfaceTypes?: Record<string, string>;
 }
 
-export interface LoadStackBundleRequest {
+export interface LoadRuntimeBundleRequest {
   id: number;
-  type: 'loadStackBundle';
+  type: 'loadRuntimeBundle';
   stackId: StackId;
   sessionId: SessionId;
   code: string;
 }
 
-export interface RenderCardRequest {
+export interface RenderRuntimeSurfaceRequest {
   id: number;
-  type: 'renderCard';
+  type: 'renderRuntimeSurface';
   sessionId: SessionId;
-  cardId: CardId;
+  surfaceId: RuntimeSurfaceId;
   state: unknown;
 }
 
-export interface EventCardRequest {
+export interface EventRuntimeSurfaceRequest {
   id: number;
-  type: 'eventCard';
+  type: 'eventRuntimeSurface';
   sessionId: SessionId;
-  cardId: CardId;
+  surfaceId: RuntimeSurfaceId;
   handler: string;
   args?: unknown;
   state: unknown;
 }
 
-export interface DefineCardRequest {
+export interface DefineRuntimeSurfaceRequest {
   id: number;
-  type: 'defineCard';
+  type: 'defineRuntimeSurface';
   sessionId: SessionId;
-  cardId: CardId;
+  surfaceId: RuntimeSurfaceId;
   code: string;
 }
 
-export interface DefineCardRenderRequest {
+export interface DefineRuntimeSurfaceRenderRequest {
   id: number;
-  type: 'defineCardRender';
+  type: 'defineRuntimeSurfaceRender';
   sessionId: SessionId;
-  cardId: CardId;
+  surfaceId: RuntimeSurfaceId;
   code: string;
 }
 
-export interface DefineCardHandlerRequest {
+export interface DefineRuntimeSurfaceHandlerRequest {
   id: number;
-  type: 'defineCardHandler';
+  type: 'defineRuntimeSurfaceHandler';
   sessionId: SessionId;
-  cardId: CardId;
+  surfaceId: RuntimeSurfaceId;
   handler: string;
   code: string;
 }
@@ -134,29 +134,29 @@ export interface HealthRequest {
 }
 
 export type WorkerRequest =
-  | LoadStackBundleRequest
-  | RenderCardRequest
-  | EventCardRequest
-  | DefineCardRequest
-  | DefineCardRenderRequest
-  | DefineCardHandlerRequest
+  | LoadRuntimeBundleRequest
+  | RenderRuntimeSurfaceRequest
+  | EventRuntimeSurfaceRequest
+  | DefineRuntimeSurfaceRequest
+  | DefineRuntimeSurfaceRenderRequest
+  | DefineRuntimeSurfaceHandlerRequest
   | DisposeSessionRequest
   | HealthRequest;
 
-export interface LoadStackBundleResult {
-  bundle: LoadedStackBundle;
+export interface LoadRuntimeBundleResult {
+  bundle: RuntimeBundleMeta;
 }
 
-export interface RenderCardResult {
+export interface RenderRuntimeSurfaceResult {
   tree: unknown;
 }
 
-export interface EventCardResult {
+export interface EventRuntimeSurfaceResult {
   actions: RuntimeAction[];
 }
 
-export interface DefineCardResult {
-  bundle: LoadedStackBundle;
+export interface DefineRuntimeSurfaceResult {
+  bundle: RuntimeBundleMeta;
 }
 
 export interface DisposeSessionResult {
@@ -169,10 +169,10 @@ export interface HealthResult {
 }
 
 export type WorkerResult =
-  | LoadStackBundleResult
-  | RenderCardResult
-  | EventCardResult
-  | DefineCardResult
+  | LoadRuntimeBundleResult
+  | RenderRuntimeSurfaceResult
+  | EventRuntimeSurfaceResult
+  | DefineRuntimeSurfaceResult
   | DisposeSessionResult
   | HealthResult;
 
