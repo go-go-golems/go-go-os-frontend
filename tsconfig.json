@@ -3,6 +3,7 @@
   "references": [
     { "path": "packages/engine" },
     { "path": "packages/chat-runtime" },
+    { "path": "packages/repl" },
     { "path": "packages/hypercard-runtime" },
     { "path": "packages/ui-runtime" },
     { "path": "packages/kanban-runtime" },

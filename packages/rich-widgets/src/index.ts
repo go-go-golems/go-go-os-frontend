@@ -72,26 +72,31 @@ export { parseMarkdown } from './mac-write/markdown';
 export { SAMPLE_DOCUMENT } from './mac-write/sampleData';
 
 // MacRepl
-export { MacRepl, type MacReplProps } from './repl/MacRepl';
 export {
+  MacRepl,
+  type MacReplProps,
   MAC_REPL_STATE_KEY,
   createMacReplStateSeed,
   macReplActions,
   macReplReducer,
   selectMacReplState,
-} from './repl/replState';
-export { type TerminalLine, type LineType, type CommandInfo } from './repl/types';
-export {
+  type TerminalLine,
+  type LineType,
+  type CommandInfo,
   type ReplCompletionItem,
   type ReplDriver,
   type ReplDriverContext,
   type ReplEffect,
   type ReplExecutionResult,
   type ReplHelpEntry,
-} from './repl/core/types';
-export { resolveReplCompletionState, executeReplSubmission } from './repl/core/controller';
-export { BUILTIN_DEMO_REPL_DRIVER } from './repl/replCommands';
-export { BUILT_IN_COMMANDS, FORTUNES, INITIAL_LINES } from './repl/sampleData';
+  type MaybePromise,
+  resolveReplCompletionState,
+  executeReplSubmission,
+  BUILTIN_DEMO_REPL_DRIVER,
+  BUILT_IN_COMMANDS,
+  FORTUNES,
+  INITIAL_LINES,
+} from '@hypercard/repl';
 
 // NodeEditor
 export { NodeEditor, type NodeEditorProps } from './node-editor/NodeEditor';

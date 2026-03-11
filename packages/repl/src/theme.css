@@ -1,5 +1,18 @@
-/* ── MacRepl ── */
-[data-part="repl"] {
+[data-part='widget-status-bar'] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 20px;
+  padding: 0 10px;
+  border-top: 1px solid var(--hc-color-border);
+  background: var(--hc-color-alt, #eee);
+  font-size: 9px;
+  color: var(--hc-color-muted, #666);
+  flex-shrink: 0;
+  gap: 14px;
+}
+
+[data-part='repl'] {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -10,7 +23,7 @@
   overflow: hidden;
 }
 
-[data-part="repl-body"] {
+[data-part='repl-body'] {
   flex: 1;
   overflow-y: auto;
   padding: 8px 10px;
@@ -19,39 +32,39 @@
   line-height: 1.35;
 }
 
-[data-part="repl-line"] {
+[data-part='repl-line'] {
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-[data-part="repl-line"][data-line-type="error"] {
+[data-part='repl-line'][data-line-type='error'] {
   color: var(--hc-color-error, var(--hc-color-accent));
   font-weight: bold;
 }
 
-[data-part="repl-line"][data-line-type="system"] {
+[data-part='repl-line'][data-line-type='system'] {
   opacity: 0.7;
 }
 
-[data-part="repl-line"][data-line-type="input"] {
+[data-part='repl-line'][data-line-type='input'] {
   color: var(--hc-color-accent);
 }
 
-[data-part="repl-input-line"] {
+[data-part='repl-input-line'] {
   display: flex;
   align-items: center;
   position: relative;
   margin-top: 2px;
 }
 
-[data-part="repl-prompt"] {
+[data-part='repl-prompt'] {
   color: var(--hc-color-accent);
   font-weight: bold;
   margin-right: 6px;
   white-space: nowrap;
 }
 
-[data-part="repl-input"] {
+[data-part='repl-input'] {
   background: transparent;
   border: none;
   outline: none;
@@ -64,7 +77,7 @@
   line-height: 1.35;
 }
 
-[data-part="repl-ghost"] {
+[data-part='repl-ghost'] {
   position: absolute;
   pointer-events: none;
   color: var(--hc-color-border);
@@ -74,7 +87,7 @@
   line-height: 1.35;
 }
 
-[data-part="repl-completion-popup"] {
+[data-part='repl-completion-popup'] {
   position: absolute;
   bottom: 100%;
   left: 0;
@@ -88,7 +101,7 @@
   overflow-y: auto;
 }
 
-[data-part="repl-completion-item"] {
+[data-part='repl-completion-item'] {
   padding: 2px 10px;
   cursor: pointer;
   font-size: 11px;
@@ -96,8 +109,8 @@
   align-items: center;
 }
 
-[data-part="repl-completion-item"]:hover,
-[data-part="repl-completion-item"][data-state="active"] {
+[data-part='repl-completion-item']:hover,
+[data-part='repl-completion-item'][data-state='active'] {
   background: var(--hc-confirm-selected-bg);
   color: var(--hc-confirm-selected-fg);
 }

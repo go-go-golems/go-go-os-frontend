@@ -1,4 +1,14 @@
-import type { TerminalLine } from '../types';
+export type LineType = 'input' | 'output' | 'error' | 'system';
+
+export interface TerminalLine {
+  type: LineType;
+  text: string;
+}
+
+export interface CommandInfo {
+  desc: string;
+  usage: string;
+}
 
 export type MaybePromise<T> = T | Promise<T>;
 

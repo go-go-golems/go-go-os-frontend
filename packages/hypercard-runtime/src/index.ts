@@ -1,5 +1,6 @@
 export * from './app';
 export * from './plugin-runtime';
+export * from './repl/hypercardReplDriver';
 export * from './repl/runtimeBroker';
 export * from './features/runtimeSessions';
 export * from './hypercard';

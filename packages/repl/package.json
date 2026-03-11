@@ -1,0 +1,24 @@
+{
+  "name": "@hypercard/repl",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./theme": "./src/theme.css"
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b",
+    "test": "vitest run src",
+    "test:watch": "vitest src"
+  },
+  "peerDependencies": {
+    "@reduxjs/toolkit": "^2.0.0",
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19",
+    "react-redux": "^9.0.0"
+  }
+}

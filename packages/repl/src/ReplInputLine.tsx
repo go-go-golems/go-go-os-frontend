@@ -1,5 +1,5 @@
-import { RICH_PARTS as P } from '../parts';
-import type { ReplCompletionItem } from './core/types';
+import type { ReplCompletionItem } from './types';
+import { REPL_PARTS as P } from './parts';
 
 export function ReplInputLine({
   prompt,

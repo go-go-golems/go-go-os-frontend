@@ -10,8 +10,7 @@ export function resolveReplCompletionState(
   driver: ReplDriver,
   context: ReplDriverContext,
 ): ReplCompletionState {
-  const parts = input.split(' ');
-  if (parts.length !== 1 || input.length === 0 || !driver.getCompletions) {
+  if (input.length === 0 || !driver.getCompletions) {
     return { suggestion: '', items: [] };
   }
 

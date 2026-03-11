@@ -1,10 +1,10 @@
 import './primitives.css';
+import '@hypercard/repl/theme';
 import './rich-widgets-launcher.css';
 import './sparkline.css';
 import './log-viewer.css';
 import './chart-view.css';
 import './mac-write.css';
-import './repl.css';
 import './node-editor.css';
 import './oscilloscope.css';
 import './logic-analyzer.css';

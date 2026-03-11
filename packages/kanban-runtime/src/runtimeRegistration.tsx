@@ -1,4 +1,5 @@
 import kanbanPackagePrelude from './runtime-packages/kanban.package.vm.js?raw';
+import { KANBAN_RUNTIME_DOCS_METADATA } from './docsMetadata';
 import {
   type RuntimePackageDefinition,
   type RuntimeSurfaceTypeDefinition,
@@ -9,6 +10,7 @@ export const KANBAN_RUNTIME_PACKAGE: RuntimePackageDefinition = {
   packageId: 'kanban',
   version: '1.0.0',
   summary: 'Kanban widget DSL package providing widgets.kanban.* constructors.',
+  docsMetadata: KANBAN_RUNTIME_DOCS_METADATA,
   installPrelude: kanbanPackagePrelude,
   surfaceTypes: ['kanban.v1'],
   dependencies: ['ui'],

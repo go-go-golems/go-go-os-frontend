@@ -1,6 +1,5 @@
 import { ASCII_ART, BUILT_IN_COMMANDS, FORTUNES } from './sampleData';
-import type { ReplCompletionItem, ReplDriver, ReplDriverContext, ReplExecutionResult } from './core/types';
-import type { TerminalLine } from './types';
+import type { ReplCompletionItem, ReplDriver, ReplDriverContext, ReplExecutionResult, TerminalLine } from './types';
 
 export function getCompletions(
   partial: string,
@@ -260,8 +259,6 @@ export const BUILTIN_DEMO_REPL_DRIVER: ReplDriver = {
     }
 
     const info = BUILT_IN_COMMANDS[topic as keyof typeof BUILT_IN_COMMANDS];
-    return info
-      ? [{ title: topic, detail: info.desc, usage: info.usage }]
-      : null;
+    return info ? [{ title: topic, detail: info.desc, usage: info.usage }] : null;
   },
 };

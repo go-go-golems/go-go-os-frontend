@@ -1,19 +1,22 @@
 import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
-import { fixedFrameDecorator, fullscreenDecorator } from '../storybook/frameDecorators';
-import { SeededStoreProvider, type SeedStore } from '../storybook/seededStore';
-import { MacRepl } from './MacRepl';
-import type { ReplDriver } from './core/types';
 import {
+  MacRepl,
+  type ReplDriver,
   createMacReplStateSeed,
   MAC_REPL_STATE_KEY,
   macReplActions,
   macReplReducer,
-} from './replState';
-import '@hypercard/rich-widgets/theme';
+} from './index';
+import { fixedFrameDecorator, fullscreenDecorator } from '../../rich-widgets/src/storybook/frameDecorators';
+import {
+  SeededStoreProvider,
+  type SeedStore,
+} from '../../rich-widgets/src/storybook/seededStore';
+import '@hypercard/repl/theme';
 
 const meta: Meta<typeof MacRepl> = {
-  title: 'RichWidgets/MacRepl',
+  title: 'Repl/MacRepl',
   component: MacRepl,
   parameters: {
     layout: 'fullscreen',

@@ -7,13 +7,13 @@
   ],
   "scripts": {
     "dev": "npm run dev -w apps/todo",
-    "build": "npm run build -w packages/engine && npm run build -w packages/chat-runtime && npm run build -w packages/hypercard-runtime && npm run build -w packages/ui-runtime && npm run build -w packages/kanban-runtime && npm run build -w packages/confirm-runtime && npm run build -w packages/desktop-os && npm run build -w apps/todo && npm run build -w apps/crm && npm run build -w apps/book-tracker-debug",
+    "build": "npm run build -w packages/engine && npm run build -w packages/chat-runtime && npm run build -w packages/repl && npm run build -w packages/hypercard-runtime && npm run build -w packages/ui-runtime && npm run build -w packages/kanban-runtime && npm run build -w packages/confirm-runtime && npm run build -w packages/desktop-os && npm run build -w apps/todo && npm run build -w apps/crm && npm run build -w apps/book-tracker-debug",
     "storybook": "storybook dev -p 6006 --config-dir ./.storybook",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "deps:check": "node scripts/deps/check-boundaries.mjs",
     "typecheck": "tsc --build",
-    "test": "npm run storybook:check && npm run deps:check && npm run test -w packages/engine && npm run test -w packages/chat-runtime && npm run test -w packages/hypercard-runtime && npm run test -w packages/ui-runtime && npm run test -w packages/kanban-runtime && npm run test -w packages/desktop-os",
+    "test": "npm run storybook:check && npm run deps:check && npm run test -w packages/engine && npm run test -w packages/chat-runtime && npm run test -w packages/repl && npm run test -w packages/hypercard-runtime && npm run test -w packages/ui-runtime && npm run test -w packages/kanban-runtime && npm run test -w packages/desktop-os",
     "build-storybook": "storybook build --config-dir ./.storybook",
     "storybook:check": "node scripts/storybook/check-taxonomy.mjs"
   },

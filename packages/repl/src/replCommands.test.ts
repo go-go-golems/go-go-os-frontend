@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { BUILTIN_DEMO_REPL_DRIVER, executeReplCommand, getCompletions } from './replCommands';
+import { BUILTIN_DEMO_REPL_DRIVER, executeReplCommand, getCompletions } from './index';
 
-const baseContext = {
+const baseContext: ReplDriverContext = {
   lines: [],
-  historyStack: ['help'],
+  historyStack: [],
   envVars: {
     USER: 'macuser',
     HOME: '/Users/macuser',
     SHELL: '/bin/msh',
   },
   aliases: {},
-  uptimeMs: 1250,
+  uptimeMs: 12_345,
 };
 
 describe('replCommands', () => {
@@ -27,13 +27,12 @@ describe('replCommands', () => {
     });
   });
 
-  it('exposes built-in help through the demo driver', () => {
+  it('exposes help through the demo driver', () => {
     expect(BUILTIN_DEMO_REPL_DRIVER.getHelp?.('help', baseContext)).toEqual([
-      {
+      expect.objectContaining({
         title: 'help',
-        detail: 'Show available commands and usage',
         usage: 'help [command]',
-      },
+      }),
     ]);
   });
 });

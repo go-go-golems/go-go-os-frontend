@@ -1,13 +1,20 @@
 import { useCallback, useContext, useEffect, useReducer, useRef, useState } from 'react';
 import { ReactReduxContext, useDispatch, useSelector } from 'react-redux';
-import { RICH_PARTS as P } from '../parts';
-import { WidgetStatusBar } from '../primitives/WidgetStatusBar';
+import { REPL_PARTS as P } from './parts';
+import { WidgetStatusBar } from './WidgetStatusBar';
 import { ReplInputLine } from './ReplInputLine';
-import { executeReplSubmission, resolveReplCompletionState } from './core/controller';
-import type { ReplDriver, ReplDriverContext } from './core/types';
+import { executeReplSubmission, resolveReplCompletionState } from './controller';
 import { BUILTIN_DEMO_REPL_DRIVER } from './replCommands';
-import { selectMacReplState, createMacReplStateSeed, macReplActions, macReplReducer, MAC_REPL_STATE_KEY, type MacReplAction, type MacReplState } from './replState';
-import type { TerminalLine } from './types';
+import {
+  selectMacReplState,
+  createMacReplStateSeed,
+  macReplActions,
+  macReplReducer,
+  MAC_REPL_STATE_KEY,
+  type MacReplAction,
+  type MacReplState,
+} from './replState';
+import type { ReplDriver, ReplDriverContext, TerminalLine } from './types';
 
 export interface MacReplProps {
   initialLines?: TerminalLine[];
@@ -228,7 +235,9 @@ function MacReplFrame({
 
 function StandaloneMacRepl(props: MacReplProps) {
   const [state, dispatch] = useReducer(macReplReducer, createInitialSeed(props));
-  return <MacReplFrame state={state} dispatch={dispatch} driver={props.driver ?? BUILTIN_DEMO_REPL_DRIVER} />;
+  return (
+    <MacReplFrame state={state} dispatch={dispatch} driver={props.driver ?? BUILTIN_DEMO_REPL_DRIVER} />
+  );
 }
 
 function ConnectedMacRepl(props: MacReplProps) {

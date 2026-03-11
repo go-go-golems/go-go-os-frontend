@@ -8,7 +8,7 @@ import { DesktopShell, type DesktopIconDef, type DesktopContribution, type Deskt
 import { LogViewer } from '../log-viewer/LogViewer';
 import { ChartView } from '../chart-view/ChartView';
 import { MacWrite } from '../mac-write/MacWrite';
-import { MacRepl } from '../repl/MacRepl';
+import { MacRepl } from '@hypercard/repl';
 import { NodeEditor } from '../node-editor/NodeEditor';
 import { Oscilloscope } from '../oscilloscope/Oscilloscope';
 import { LogicAnalyzer } from '../logic-analyzer/LogicAnalyzer';

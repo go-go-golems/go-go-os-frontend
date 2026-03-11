@@ -28,11 +28,11 @@ import {
   MAC_WRITE_STATE_KEY,
   macWriteReducer,
 } from '../mac-write/macWriteState';
-import { MacRepl } from '../repl/MacRepl';
+import { MacRepl } from '@hypercard/repl';
 import {
   MAC_REPL_STATE_KEY,
   macReplReducer,
-} from '../repl/replState';
+} from '@hypercard/repl';
 import { NodeEditor } from '../node-editor/NodeEditor';
 import {
   NODE_EDITOR_STATE_KEY,
