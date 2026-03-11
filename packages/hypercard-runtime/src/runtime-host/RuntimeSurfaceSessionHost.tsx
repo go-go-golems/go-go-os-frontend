@@ -17,6 +17,7 @@ import { markRuntimeSurfaceInjectionResults } from '../hypercard/artifacts/artif
 import type { RuntimeBundleMeta, RuntimeAction } from '../plugin-runtime/contracts';
 import { getPendingRuntimeSurfaces, hasRuntimeSurface, injectPendingRuntimeSurfacesWithReport, onRegistryChange } from '../plugin-runtime/runtimeSurfaceRegistry';
 import { QuickJSRuntimeService } from '../plugin-runtime/runtimeService';
+import { registerAttachedJsSession, unregisterAttachedJsSession } from '../repl/attachedJsSessionRegistry';
 import { registerAttachedRuntimeSession, unregisterAttachedRuntimeSession } from '../repl/attachedRuntimeSessionRegistry';
 import { dispatchRuntimeAction } from './pluginIntentRouting';
 import {
@@ -338,7 +339,30 @@ export function RuntimeSurfaceSessionHost({
       },
     });
 
+    registerAttachedJsSession({
+      handle: {
+        sessionId,
+        stackId: bundle.id,
+        origin: 'attached-runtime',
+        writable: true,
+        evaluate(code) {
+          return runtimeService.evaluateSessionJs(sessionId, code);
+        },
+        inspectGlobals() {
+          return runtimeService.getSessionGlobalNames(sessionId);
+        },
+      },
+      summary: {
+        sessionId,
+        stackId: bundle.id,
+        title: getMeta().title,
+        origin: 'attached-runtime',
+        writable: true,
+      },
+    });
+
     return () => {
+      unregisterAttachedJsSession(sessionId);
       unregisterAttachedRuntimeSession(sessionId);
     };
   }, [bundle.id, isPreview, pluginConfig, runtimeSession, sessionId]);

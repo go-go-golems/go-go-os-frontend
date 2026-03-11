@@ -130,6 +130,28 @@ describe('QuickJSRuntimeService', () => {
     expect(tree.kind).toBe('column');
   });
 
+  it('evaluates plain JS and inspects globals inside a live runtime session', async () => {
+    const service = new QuickJSRuntimeService();
+    services.push(service);
+
+    await service.loadRuntimeBundle('inventory', 'inventory@js', ['ui'], INVENTORY_STACK);
+
+    expect(service.evaluateSessionJs('inventory@js', 'globalThis.answer = 41')).toEqual({
+      value: 41,
+      valueType: 'number',
+      logs: [],
+    });
+
+    expect(service.evaluateSessionJs('inventory@js', 'console.log("hello"); answer + 1')).toEqual({
+      value: 42,
+      valueType: 'number',
+      logs: ['hello'],
+    });
+
+    expect(service.getSessionGlobalNames('inventory@js')).toContain('answer');
+    expect(service.getSessionGlobalNames('inventory@js')).toContain('console');
+  });
+
   it('interrupts infinite render loops with timeout', async () => {
     const service = new QuickJSRuntimeService({ renderTimeoutMs: 10 });
     services.push(service);

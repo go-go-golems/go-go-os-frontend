@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createAppStore } from '../app/createAppStore';
 import type { RuntimeBundleDefinition } from '@hypercard/engine';
+import { getAttachedJsSession, clearAttachedJsSessions } from '../repl/attachedJsSessionRegistry';
 import { getAttachedRuntimeSession, clearAttachedRuntimeSessions } from '../repl/attachedRuntimeSessionRegistry';
 import { clearRuntimePackages, registerRuntimePackage } from '../runtime-packages';
 import { clearRuntimeSurfaceTypes, registerRuntimeSurfaceType } from '../runtime-packs';
@@ -13,6 +14,18 @@ import { RuntimeSurfaceSessionHost } from './RuntimeSurfaceSessionHost';
 
 vi.mock('../plugin-runtime/runtimeService', () => {
   class MockQuickJSRuntimeService {
+    getSessionGlobalNames() {
+      return ['console', 'inventory'];
+    }
+
+    evaluateSessionJs() {
+      return {
+        value: 3,
+        valueType: 'number',
+        logs: [],
+      };
+    }
+
     getRuntimeBundleMeta(sessionId: string) {
       return {
         stackId: 'runtime-rerender-stack',
@@ -119,6 +132,7 @@ afterEach(() => {
   for (const container of containers.splice(0)) {
     container.remove();
   }
+  clearAttachedJsSessions();
   clearAttachedRuntimeSessions();
   clearRuntimePackages();
   clearRuntimeSurfaceTypes();
@@ -205,5 +219,9 @@ describe('RuntimeSurfaceSessionHost rerender invalidation', () => {
     expect(attached?.summary.origin).toBe('attached');
     expect(attached?.summary.writable).toBe(false);
     expect(attached?.summary.surfaces).toEqual(['home']);
+
+    const attachedJs = getAttachedJsSession('session-attach');
+    expect(attachedJs?.summary.origin).toBe('attached-runtime');
+    expect(attachedJs?.handle.inspectGlobals()).toContain('console');
   });
 });

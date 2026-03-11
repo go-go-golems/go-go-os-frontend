@@ -2,10 +2,14 @@ import {
   createQuickJsSessionVm,
   disposeQuickJsSessionVm,
   evalQuickJsCodeOrThrow,
-  evalQuickJsToNative,
   type QuickJsSessionCoreOptions,
   type QuickJsSessionVm,
 } from './quickJsSessionCore';
+import {
+  evaluateQuickJsSessionJs,
+  getQuickJsSessionGlobalNames,
+  installJsEvalBridge,
+} from './jsEvalSupport';
 
 export interface JsSessionServiceOptions {
   memoryLimitBytes?: number;
@@ -55,60 +59,10 @@ const DEFAULT_OPTIONS: Required<JsSessionServiceOptions> = {
   inspectTimeoutMs: 50,
 };
 
-const JS_REPL_BOOTSTRAP_SOURCE = `
-  globalThis.__jsReplHost = {
-    logs: [],
-    pushLog(text) {
-      this.logs.push(String(text));
-    },
-    consumeLogs() {
-      const copy = this.logs.slice();
-      this.logs.length = 0;
-      return copy;
-    }
-  };
-
-  globalThis.console = {
-    log(...args) {
-      globalThis.__jsReplHost.pushLog(args.map((arg) => String(arg)).join(' '));
-    }
-  };
-`;
-
 function normalizeOptions(options: JsSessionServiceOptions): Required<JsSessionServiceOptions> {
   return {
     ...DEFAULT_OPTIONS,
     ...options,
-  };
-}
-
-function valueTypeOf(value: unknown): string {
-  if (value === null) {
-    return 'null';
-  }
-  if (Array.isArray(value)) {
-    return 'array';
-  }
-  return typeof value;
-}
-
-function asError(error: unknown): JsEvalError {
-  if (error instanceof Error) {
-    const [name, ...rest] = error.message.split(':');
-    if (rest.length > 0 && name.trim().length > 0) {
-      return {
-        name: name.trim(),
-        message: rest.join(':').trim(),
-      };
-    }
-    return {
-      name: 'Error',
-      message: error.message,
-    };
-  }
-  return {
-    name: 'Error',
-    message: String(error),
   };
 }
 
@@ -138,9 +92,7 @@ export class JsSessionService {
   }
 
   private async createRecord(request: CreateJsSessionRequest): Promise<JsSessionRecord> {
-    const bootstrapSources = [
-      { code: JS_REPL_BOOTSTRAP_SOURCE, filename: 'js-repl-bootstrap.js' },
-    ];
+    const bootstrapSources: Array<{ code: string; filename: string }> = [];
     if (request.preludeCode && request.preludeCode.trim().length > 0) {
       bootstrapSources.push({
         code: request.preludeCode,
@@ -154,6 +106,8 @@ export class JsSessionService {
       toCoreOptions(this.options),
       bootstrapSources,
     );
+
+    installJsEvalBridge(vm, 'js-repl-bootstrap.js', this.options.loadTimeoutMs);
 
     return {
       vm,
@@ -191,33 +145,19 @@ export class JsSessionService {
 
   evaluate(sessionId: string, code: string): JsEvalResult {
     const record = this.getRecordOrThrow(sessionId);
-    try {
-      const value = evalQuickJsToNative<unknown>(
-        record.vm,
-        code,
-        `${sessionId}.eval.js`,
-        this.options.evalTimeoutMs,
-      );
-      return {
-        value,
-        valueType: valueTypeOf(value),
-        logs: this.consumeLogs(record.vm),
-      };
-    } catch (error) {
-      return {
-        value: undefined,
-        valueType: 'error',
-        logs: this.consumeLogs(record.vm),
-        error: asError(error),
-      };
-    }
+    return evaluateQuickJsSessionJs(
+      record.vm,
+      code,
+      `${sessionId}.eval.js`,
+      this.options.evalTimeoutMs,
+      this.options.inspectTimeoutMs,
+    );
   }
 
   getGlobalNames(sessionId: string): string[] {
     const record = this.getRecordOrThrow(sessionId);
-    return evalQuickJsToNative<string[]>(
+    return getQuickJsSessionGlobalNames(
       record.vm,
-      'Object.getOwnPropertyNames(globalThis).sort()',
       `${sessionId}.globals.js`,
       this.options.inspectTimeoutMs,
     );
@@ -261,20 +201,6 @@ export class JsSessionService {
       sessions: Array.from(this.sessions.keys()).sort(),
     };
   }
-
-  private consumeLogs(vm: QuickJsSessionVm): string[] {
-    try {
-      return evalQuickJsToNative<string[]>(
-        vm,
-        'globalThis.__jsReplHost.consumeLogs()',
-        `${vm.sessionId}.consume-logs.js`,
-        this.options.inspectTimeoutMs,
-      );
-    } catch {
-      return [];
-    }
-  }
-
   installPrelude(sessionId: string, code: string): void {
     const record = this.getRecordOrThrow(sessionId);
     evalQuickJsCodeOrThrow(

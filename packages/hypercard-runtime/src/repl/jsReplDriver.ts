@@ -6,6 +6,7 @@ import type {
   ReplHelpEntry,
   TerminalLine,
 } from '@hypercard/repl';
+import { getAttachedJsSession, listAttachedJsSessions } from './attachedJsSessionRegistry';
 import { createJsSessionBroker, type JsSessionBroker } from './jsSessionBroker';
 
 export interface JsReplDriverOptions {
@@ -42,8 +43,13 @@ const COMMAND_HELP: Record<string, ReplHelpEntry> = {
   },
   ':sessions': {
     title: ':sessions',
-    detail: 'List live JavaScript sessions.',
+    detail: 'List live JavaScript sessions, including attached runtime-backed sessions.',
     usage: ':sessions',
+  },
+  ':attach': {
+    title: ':attach',
+    detail: 'Attach to a live runtime-backed JavaScript session.',
+    usage: ':attach <session-id>',
   },
   ':use': {
     title: ':use',
@@ -129,9 +135,33 @@ function currentToken(input: string): string {
   return match?.[1] ?? '';
 }
 
+type ActiveJsSessionRecord =
+  | {
+      kind: 'spawned';
+      sessionId: string;
+      title: string;
+      origin: 'spawned';
+      session: ReturnType<JsSessionBroker['getSession']> extends infer T ? Exclude<T, null> : never;
+    }
+  | {
+      kind: 'attached-runtime';
+      sessionId: string;
+      title: string;
+      origin: 'attached-runtime';
+      session: NonNullable<ReturnType<typeof getAttachedJsSession>>['handle'];
+    };
+
+function promptForSession(sessionId: string | null, origin: 'spawned' | 'attached-runtime' | null): string {
+  if (!sessionId || !origin) {
+    return 'js>';
+  }
+  return origin === 'attached-runtime' ? `js[runtime:${sessionId}]>` : `js[${sessionId}]>`;
+}
+
 export function createJsReplDriver(options: JsReplDriverOptions = {}): ReplDriver {
   const broker = options.broker ?? createJsSessionBroker();
   let activeSessionId: string | null = null;
+  let activeOrigin: 'spawned' | 'attached-runtime' | null = null;
   let sessionCounter = 1;
 
   function requireSession(sessionIdArg?: string) {
@@ -139,11 +169,27 @@ export function createJsReplDriver(options: JsReplDriverOptions = {}): ReplDrive
     if (!sessionId) {
       throw new Error('No active JS session. Use :spawn or :use <session-id> first.');
     }
-    const session = broker.getSession(sessionId);
-    if (!session) {
-      throw new Error(`Unknown JS session: ${sessionId}`);
+    const spawned = broker.getSession(sessionId);
+    if (spawned) {
+      return {
+        kind: 'spawned' as const,
+        sessionId,
+        title: broker.listSessions().find((summary) => summary.sessionId === sessionId)?.title ?? sessionId,
+        origin: 'spawned' as const,
+        session: spawned,
+      };
     }
-    return { sessionId, session };
+    const attached = getAttachedJsSession(sessionId);
+    if (attached) {
+      return {
+        kind: 'attached-runtime' as const,
+        sessionId,
+        title: attached.summary.title,
+        origin: 'attached-runtime' as const,
+        session: attached.handle,
+      };
+    }
+    throw new Error(`Unknown JS session: ${sessionId}`);
   }
 
   return {
@@ -160,31 +206,71 @@ export function createJsReplDriver(options: JsReplDriverOptions = {}): ReplDrive
             const sessionId = rest || nextGeneratedSessionId(sessionCounter++);
             await broker.spawnSession({ sessionId, title: `JavaScript ${sessionId}` });
             activeSessionId = sessionId;
+            activeOrigin = 'spawned';
             return {
               lines: [
                 { type: 'system', text: `Spawned JS session ${sessionId}` },
               ],
+              envVars: {
+                REPL_PROMPT: promptForSession(sessionId, 'spawned'),
+              },
             };
           }
           case ':sessions': {
-            const sessions = broker.listSessions();
+            const sessions = [
+              ...broker.listSessions().map((summary) => ({
+                sessionId: summary.sessionId,
+                title: summary.title,
+                origin: 'spawned' as const,
+              })),
+              ...listAttachedJsSessions().map((entry) => ({
+                sessionId: entry.summary.sessionId,
+                title: entry.summary.title,
+                origin: 'attached-runtime' as const,
+              })),
+            ].sort((left, right) => left.sessionId.localeCompare(right.sessionId));
             if (sessions.length === 0) {
               return { lines: [{ type: 'system', text: 'No JS sessions.' }] };
             }
             return {
               lines: sessions.map((summary) => ({
                 type: 'output',
-                text: `${summary.sessionId}${summary.sessionId === activeSessionId ? ' *' : ''} — ${summary.title}`,
+                text:
+                  `${summary.sessionId}${summary.sessionId === activeSessionId ? ' *' : ''} — ` +
+                  `${summary.title} [${summary.origin}]`,
               })),
+            };
+          }
+          case ':attach': {
+            if (!rest) {
+              throw new Error('Usage: :attach <session-id>');
+            }
+            const attached = getAttachedJsSession(rest);
+            if (!attached) {
+              throw new Error(`Unknown attached JS session: ${rest}`);
+            }
+            activeSessionId = rest;
+            activeOrigin = 'attached-runtime';
+            return {
+              lines: [{ type: 'system', text: `Attached JS console to runtime session ${rest}` }],
+              envVars: {
+                REPL_PROMPT: promptForSession(rest, 'attached-runtime'),
+              },
             };
           }
           case ':use': {
             if (!rest) {
               throw new Error('Usage: :use <session-id>');
             }
-            requireSession(rest);
+            const active = requireSession(rest);
             activeSessionId = rest;
-            return { lines: [{ type: 'system', text: `Active JS session: ${rest}` }] };
+            activeOrigin = active.origin;
+            return {
+              lines: [{ type: 'system', text: `Active JS session: ${rest} [${active.origin}]` }],
+              envVars: {
+                REPL_PROMPT: promptForSession(rest, active.origin),
+              },
+            };
           }
           case ':globals': {
             const { sessionId, session } = requireSession(rest || undefined);
@@ -196,7 +282,11 @@ export function createJsReplDriver(options: JsReplDriverOptions = {}): ReplDrive
             };
           }
           case ':reset': {
-            const { sessionId, session } = requireSession(rest || undefined);
+            const active = requireSession(rest || undefined);
+            if (active.kind !== 'spawned') {
+              throw new Error(`Attached JS session ${active.sessionId} cannot be reset`);
+            }
+            const { sessionId, session } = active;
             await session.reset();
             return {
               lines: [{ type: 'system', text: `Reset JS session ${sessionId}` }],
@@ -207,15 +297,22 @@ export function createJsReplDriver(options: JsReplDriverOptions = {}): ReplDrive
             if (!sessionId) {
               throw new Error('Usage: :dispose <session-id>');
             }
+            if (getAttachedJsSession(sessionId)) {
+              throw new Error(`Attached JS session ${sessionId} cannot be disposed from JavaScript REPL`);
+            }
             const disposed = broker.disposeSession(sessionId);
             if (!disposed) {
               throw new Error(`Unknown JS session: ${sessionId}`);
             }
             if (activeSessionId === sessionId) {
               activeSessionId = null;
+              activeOrigin = null;
             }
             return {
               lines: [{ type: 'system', text: `Disposed JS session ${sessionId}` }],
+              envVars: {
+                REPL_PROMPT: promptForSession(null, null),
+              },
             };
           }
           case ':help': {
@@ -237,14 +334,31 @@ export function createJsReplDriver(options: JsReplDriverOptions = {}): ReplDrive
 
       const { session } = requireSession();
       return {
-        lines: formatEvalLines(session.eval(trimmed)),
+        lines: formatEvalLines(
+          'eval' in session ? session.eval(trimmed) : session.evaluate(trimmed),
+        ),
       };
     },
     getCompletions(input) {
       const trimmed = input.trimStart();
       if (trimmed.startsWith(':')) {
         const token = currentToken(trimmed);
-        if (trimmed.startsWith(':use') || trimmed.startsWith(':dispose') || trimmed.startsWith(':globals') || trimmed.startsWith(':reset')) {
+        if (
+          trimmed.startsWith(':use') ||
+          trimmed.startsWith(':attach') ||
+          trimmed.startsWith(':globals')
+        ) {
+          const partial = trimmed.split(/\s+/)[1] ?? '';
+          return [
+            ...broker.listSessions().map((summary) => ({ value: summary.sessionId, detail: `${summary.title} [spawned]` })),
+            ...listAttachedJsSessions().map((entry) => ({
+              value: entry.summary.sessionId,
+              detail: `${entry.summary.title} [attached-runtime]`,
+            })),
+          ]
+            .filter((entry) => entry.value.startsWith(partial));
+        }
+        if (trimmed.startsWith(':dispose') || trimmed.startsWith(':reset')) {
           const partial = trimmed.split(/\s+/)[1] ?? '';
           return broker.listSessions()
             .filter((summary) => summary.sessionId.startsWith(partial))
@@ -256,9 +370,14 @@ export function createJsReplDriver(options: JsReplDriverOptions = {}): ReplDrive
       }
 
       const token = currentToken(input);
-      const globals = activeSessionId
-        ? broker.getSession(activeSessionId)?.inspectGlobals() ?? []
-        : [];
+      let globals: string[] = [];
+      if (activeSessionId) {
+        try {
+          globals = requireSession(activeSessionId).session.inspectGlobals();
+        } catch {
+          globals = [];
+        }
+      }
       return [
         ...JS_KEYWORDS.map((keyword) => ({ value: keyword, detail: 'js keyword' })),
         ...globals.map((name) => ({ value: name, detail: 'session global' })),

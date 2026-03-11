@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import {
+  clearAttachedJsSessions,
+  registerAttachedJsSession,
+} from './attachedJsSessionRegistry';
 import { createJsReplDriver } from './jsReplDriver';
 
 const CONTEXT = {
@@ -10,11 +14,18 @@ const CONTEXT = {
 };
 
 describe('jsReplDriver', () => {
+  afterEach(() => {
+    clearAttachedJsSessions();
+  });
+
   it('spawns a session and evaluates plain JavaScript', async () => {
     const driver = createJsReplDriver();
 
     await expect(driver.execute(':spawn js-1', CONTEXT)).resolves.toEqual({
       lines: [{ type: 'system', text: 'Spawned JS session js-1' }],
+      envVars: {
+        REPL_PROMPT: 'js[js-1]>',
+      },
     });
 
     await expect(driver.execute('1 + 2', CONTEXT)).resolves.toEqual({
@@ -37,7 +48,7 @@ describe('jsReplDriver', () => {
     await driver.execute('globalThis.answer = 41', CONTEXT);
 
     await expect(driver.execute(':sessions', CONTEXT)).resolves.toEqual({
-      lines: [{ type: 'output', text: 'js-1 * — JavaScript js-1' }],
+      lines: [{ type: 'output', text: 'js-1 * — JavaScript js-1 [spawned]' }],
     });
 
     const globals = await driver.execute(':globals', CONTEXT);
@@ -53,6 +64,9 @@ describe('jsReplDriver', () => {
 
     await expect(driver.execute(':dispose js-1', CONTEXT)).resolves.toEqual({
       lines: [{ type: 'system', text: 'Disposed JS session js-1' }],
+      envVars: {
+        REPL_PROMPT: 'js>',
+      },
     });
   });
 
@@ -92,5 +106,54 @@ describe('jsReplDriver', () => {
         usage: ':spawn [session-id]',
       },
     ]);
+  });
+
+  it('attaches to live runtime-backed JS sessions and blocks reset/dispose', async () => {
+    registerAttachedJsSession({
+      handle: {
+        sessionId: 'runtime-1',
+        stackId: 'inventory',
+        origin: 'attached-runtime',
+        writable: true,
+        evaluate: (code) => ({ value: code === 'answer + 1' ? 42 : 41, valueType: 'number', logs: [] }),
+        inspectGlobals: () => ['answer', 'console', 'ui'],
+      },
+      summary: {
+        sessionId: 'runtime-1',
+        stackId: 'inventory',
+        title: 'Inventory Runtime',
+        origin: 'attached-runtime',
+        writable: true,
+      },
+    });
+
+    const driver = createJsReplDriver();
+
+    await expect(driver.execute(':sessions', CONTEXT)).resolves.toEqual({
+      lines: [{ type: 'output', text: 'runtime-1 — Inventory Runtime [attached-runtime]' }],
+    });
+
+    await expect(driver.execute(':attach runtime-1', CONTEXT)).resolves.toEqual({
+      lines: [{ type: 'system', text: 'Attached JS console to runtime session runtime-1' }],
+      envVars: {
+        REPL_PROMPT: 'js[runtime:runtime-1]>',
+      },
+    });
+
+    await expect(driver.execute('answer + 1', CONTEXT)).resolves.toEqual({
+      lines: [{ type: 'output', text: '42' }],
+    });
+
+    await expect(driver.execute(':globals', CONTEXT)).resolves.toEqual({
+      lines: [
+        { type: 'system', text: 'Globals for runtime-1' },
+        { type: 'output', text: 'answer' },
+        { type: 'output', text: 'console' },
+        { type: 'output', text: 'ui' },
+      ],
+    });
+
+    await expect(driver.execute(':reset runtime-1', CONTEXT)).rejects.toThrow(/cannot be reset/i);
+    await expect(driver.execute(':dispose runtime-1', CONTEXT)).rejects.toThrow(/cannot be disposed/i);
   });
 });

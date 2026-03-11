@@ -1,6 +1,7 @@
 export * from './app';
 export * from './plugin-runtime';
 export * from './repl/hypercardReplDriver';
+export * from './repl/attachedJsSessionRegistry';
 export * from './repl/attachedRuntimeSessionRegistry';
 export * from './repl/jsReplDriver';
 export * from './repl/jsSessionBroker';

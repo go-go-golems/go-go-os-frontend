@@ -18,6 +18,12 @@ import {
   toJsLiteral,
   type QuickJsSessionVm,
 } from './quickJsSessionCore';
+import {
+  evaluateQuickJsSessionJs,
+  getQuickJsSessionGlobalNames,
+  installJsEvalBridge,
+} from './jsEvalSupport';
+import type { JsEvalResult } from './jsSessionService';
 
 type SessionVm = QuickJsSessionVm;
 
@@ -216,6 +222,28 @@ export class QuickJSRuntimeService {
   getRuntimeBundleMeta(sessionId: SessionId): RuntimeBundleMeta {
     const vm = this.getVmOrThrow(sessionId);
     return this.readRuntimeBundleMeta(vm);
+  }
+
+  evaluateSessionJs(sessionId: SessionId, code: string): JsEvalResult {
+    const vm = this.getVmOrThrow(sessionId);
+    installJsEvalBridge(vm, `${sessionId}.js-eval-bridge.js`, this.options.loadTimeoutMs);
+    return evaluateQuickJsSessionJs(
+      vm,
+      code,
+      `${sessionId}.session-eval.js`,
+      this.options.eventTimeoutMs,
+      this.options.loadTimeoutMs,
+    );
+  }
+
+  getSessionGlobalNames(sessionId: SessionId): string[] {
+    const vm = this.getVmOrThrow(sessionId);
+    installJsEvalBridge(vm, `${sessionId}.js-eval-bridge.js`, this.options.loadTimeoutMs);
+    return getQuickJsSessionGlobalNames(
+      vm,
+      `${sessionId}.session-globals.js`,
+      this.options.loadTimeoutMs,
+    );
   }
 
   renderRuntimeSurface(
