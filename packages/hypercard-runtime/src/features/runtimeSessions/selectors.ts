@@ -1,9 +1,9 @@
 import type { CapabilitySet } from './capabilityPolicy';
 import type {
-  PluginCardRuntimeState,
-  PluginCardRuntimeStateSlice,
-  PluginRuntimeSession,
-} from './pluginCardRuntimeSlice';
+  RuntimeSessionsState,
+  RuntimeSessionsStateSlice,
+  RuntimeSessionRecord,
+} from './runtimeSessionsSlice';
 
 const EMPTY_RUNTIME_OBJECT = Object.freeze({}) as Record<string, unknown>;
 const projectedDomainsCache = new WeakMap<object, Map<string, Record<string, unknown>>>();
@@ -13,35 +13,35 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-export const selectPluginCardRuntimeState = (state: PluginCardRuntimeStateSlice): PluginCardRuntimeState =>
-  state.pluginCardRuntime;
+export const selectRuntimeSessionsState = (state: RuntimeSessionsStateSlice): RuntimeSessionsState =>
+  state.runtimeSessions;
 
 export const selectRuntimeSession = (
-  state: PluginCardRuntimeStateSlice,
+  state: RuntimeSessionsStateSlice,
   sessionId: string
-): PluginRuntimeSession | undefined => state.pluginCardRuntime.sessions[sessionId];
+): RuntimeSessionRecord | undefined => state.runtimeSessions.sessions[sessionId];
 
 export const selectRuntimeSessionState = (
-  state: PluginCardRuntimeStateSlice,
+  state: RuntimeSessionsStateSlice,
   sessionId: string
-): Record<string, unknown> => state.pluginCardRuntime.sessions[sessionId]?.sessionState ?? EMPTY_RUNTIME_OBJECT;
+): Record<string, unknown> => state.runtimeSessions.sessions[sessionId]?.sessionState ?? EMPTY_RUNTIME_OBJECT;
 
-export const selectRuntimeCardState = (
-  state: PluginCardRuntimeStateSlice,
+export const selectRuntimeSurfaceState = (
+  state: RuntimeSessionsStateSlice,
   sessionId: string,
-  cardId: string
-): Record<string, unknown> => state.pluginCardRuntime.sessions[sessionId]?.cardState[cardId] ?? EMPTY_RUNTIME_OBJECT;
+  surfaceId: string
+): Record<string, unknown> => state.runtimeSessions.sessions[sessionId]?.surfaceState[surfaceId] ?? EMPTY_RUNTIME_OBJECT;
 
-export const selectRuntimeTimeline = (state: PluginCardRuntimeStateSlice) => state.pluginCardRuntime.timeline;
+export const selectRuntimeTimeline = (state: RuntimeSessionsStateSlice) => state.runtimeSessions.timeline;
 
-export const selectPendingDomainIntents = (state: PluginCardRuntimeStateSlice) =>
-  state.pluginCardRuntime.pendingDomainIntents;
+export const selectPendingDomainIntents = (state: RuntimeSessionsStateSlice) =>
+  state.runtimeSessions.pendingDomainIntents;
 
-export const selectPendingSystemIntents = (state: PluginCardRuntimeStateSlice) =>
-  state.pluginCardRuntime.pendingSystemIntents;
+export const selectPendingSystemIntents = (state: RuntimeSessionsStateSlice) =>
+  state.runtimeSessions.pendingSystemIntents;
 
-export const selectPendingNavIntents = (state: PluginCardRuntimeStateSlice) =>
-  state.pluginCardRuntime.pendingNavIntents;
+export const selectPendingNavIntents = (state: RuntimeSessionsStateSlice) =>
+  state.runtimeSessions.pendingNavIntents;
 
 /**
  * Returns the app slices that the runtime host currently projects into VM-facing state.

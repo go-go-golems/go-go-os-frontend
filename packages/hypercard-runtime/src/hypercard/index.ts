@@ -6,5 +6,5 @@ export * from './debug/runtimeDebugApp';
 export * from './debug/runtimeDebugRegistry';
 export * from './editor/CodeEditorWindow';
 export * from './editor/editorLaunch';
-export * from './editor/runtimeCardRef';
+export * from './editor/runtimeSurfaceRef';
 export * from './timeline/hypercardCard';

@@ -6,12 +6,12 @@ import {
   registerRuntimeSession,
   removeRuntimeSession,
   resolveCapabilityPolicy,
-  selectRuntimeCardState,
+  selectRuntimeSurfaceState,
   selectProjectedRuntimeDomains,
   selectRuntimeSession,
   selectRuntimeSessionState,
   setRuntimeSessionStatus,
-} from '../features/pluginCardRuntime';
+} from '../features/runtimeSessions';
 import { selectFocusedWindowId, selectSessionCurrentNav, selectSessionNavDepth } from '@hypercard/engine/desktop-core';
 import { markRuntimeSurfaceInjectionResults } from '../hypercard/artifacts/artifactsSlice';
 import type { RuntimeBundleMeta, RuntimeAction } from '../plugin-runtime/contracts';
@@ -123,7 +123,7 @@ export function RuntimeSurfaceSessionHost({
     : stack.homeCard;
   const runtimeSession = useSelector((state: StoreState) => selectRuntimeSession(state as any, sessionId));
   const sessionState = useSelector((state: StoreState) => selectRuntimeSessionState(state as any, sessionId));
-  const surfaceState = useSelector((state: StoreState) => selectRuntimeCardState(state as any, sessionId, currentSurfaceId));
+  const surfaceState = useSelector((state: StoreState) => selectRuntimeSurfaceState(state as any, sessionId, currentSurfaceId));
   const projectedDomainAccess = useMemo(
     () => runtimeSession?.capabilities.domain ?? resolveCapabilityPolicy(pluginConfig?.capabilities).domain,
     [pluginConfig, runtimeSession?.capabilities.domain],
@@ -215,14 +215,14 @@ export function RuntimeSurfaceSessionHost({
               dispatch: (action) => dispatch(action as never),
               getState: () => store.getState(),
               sessionId,
-              cardId: currentSurfaceId,
+              surfaceId: currentSurfaceId,
               windowId,
             }
           );
         }
 
         if (bundle.initialSurfaceState && typeof bundle.initialSurfaceState === 'object') {
-          for (const [cardId, value] of Object.entries(bundle.initialSurfaceState)) {
+          for (const [surfaceId, value] of Object.entries(bundle.initialSurfaceState)) {
             if (typeof value === 'object' && value !== null) {
               dispatchRuntimeAction(
                 {
@@ -233,7 +233,7 @@ export function RuntimeSurfaceSessionHost({
                   dispatch: (action) => dispatch(action as never),
                   getState: () => store.getState(),
                   sessionId,
-                  cardId,
+                  surfaceId,
                   windowId,
                 }
               );
@@ -397,7 +397,7 @@ export function RuntimeSurfaceSessionHost({
           dispatch: (action) => dispatch(action as never),
           getState: () => store.getState(),
           sessionId,
-          cardId: currentSurfaceId,
+          surfaceId: currentSurfaceId,
           windowId,
         });
       });

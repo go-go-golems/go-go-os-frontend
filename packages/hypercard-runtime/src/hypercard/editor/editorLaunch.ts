@@ -8,47 +8,47 @@
 import { type OpenWindowPayload, openWindow } from '@hypercard/engine/desktop-core';
 import { getPendingRuntimeSurfaces } from '../../plugin-runtime';
 import {
-  buildRuntimeCardEditorAppKey,
+  buildRuntimeSurfaceEditorAppKey,
   HYPERCARD_TOOLS_APP_ID,
-  type RuntimeCardRef,
-} from './runtimeCardRef';
+  type RuntimeSurfaceRef,
+} from './runtimeSurfaceRef';
 
 const pendingCode = new Map<string, string>();
 type WindowDispatch = (action: ReturnType<typeof openWindow>) => unknown;
 
-function codeKey(ref: RuntimeCardRef): string {
-  return `${ref.ownerAppId}::${ref.cardId}`;
+function codeKey(ref: RuntimeSurfaceRef): string {
+  return `${ref.ownerAppId}::${ref.surfaceId}`;
 }
 
-export function buildCodeEditorWindowPayload(ref: RuntimeCardRef): OpenWindowPayload {
+export function buildCodeEditorWindowPayload(ref: RuntimeSurfaceRef): OpenWindowPayload {
   const key = codeKey(ref);
-  const appKey = buildRuntimeCardEditorAppKey(ref);
+  const appKey = buildRuntimeSurfaceEditorAppKey(ref);
   return {
     id: `window:${HYPERCARD_TOOLS_APP_ID}:editor:${key}`,
-    title: `✏️ ${ref.cardId}`,
+    title: `✏️ ${ref.surfaceId}`,
     icon: '✏️',
     bounds: { x: 100, y: 40, w: 600, h: 500 },
     content: { kind: 'app', appKey },
-    dedupeKey: `runtime-card-editor:${key}`,
+    dedupeKey: `runtime-surface-editor:${key}`,
   };
 }
 
-/** Stash code for a card editor and open the window. */
-export function openCodeEditor(dispatch: WindowDispatch, ref: RuntimeCardRef, code: string): void {
+/** Stash code for a runtime surface editor and open the window. */
+export function openCodeEditor(dispatch: WindowDispatch, ref: RuntimeSurfaceRef, code: string): void {
   pendingCode.set(codeKey(ref), code);
   dispatch(openWindow(buildCodeEditorWindowPayload(ref)));
 }
 
-/** Get the initial code for a card editor. Falls back to registry. */
-export function getEditorInitialCode(ref: RuntimeCardRef): string {
+/** Get the initial code for a runtime surface editor. Falls back to registry. */
+export function getEditorInitialCode(ref: RuntimeSurfaceRef): string {
   const key = codeKey(ref);
   const stashed = pendingCode.get(key);
   if (stashed !== undefined) {
     pendingCode.delete(key);
     return stashed;
   }
-  // Fallback: look up from the runtime card registry
-  const cards = getPendingRuntimeSurfaces();
-  const found = cards.find((c) => c.cardId === ref.cardId);
-  return found?.code ?? `// No code found for card: ${ref.cardId}\n`;
+  // Fallback: look up from the runtime surface registry.
+  const surfaces = getPendingRuntimeSurfaces();
+  const found = surfaces.find((surface) => surface.cardId === ref.surfaceId);
+  return found?.code ?? `// No code found for surface: ${ref.surfaceId}\n`;
 }

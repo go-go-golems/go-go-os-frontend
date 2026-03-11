@@ -2,20 +2,20 @@ import { configureStore } from '@reduxjs/toolkit';
 import { describe, expect, it } from 'vitest';
 import {
   ingestRuntimeAction,
-  pluginCardRuntimeReducer,
+  runtimeSessionsReducer,
   registerRuntimeSession,
   removeRuntimeSession,
-} from '../features/pluginCardRuntime';
+} from '../features/runtimeSessions';
 
 function createStore() {
   return configureStore({
     reducer: {
-      pluginCardRuntime: pluginCardRuntimeReducer,
+      runtimeSessions: runtimeSessionsReducer,
     },
   });
 }
 
-describe('pluginCardRuntime reducer', () => {
+describe('runtimeSessions reducer', () => {
   it('tracks applied/denied/ignored outcomes and queues routed actions', () => {
     const store = createStore();
 
@@ -34,7 +34,7 @@ describe('pluginCardRuntime reducer', () => {
     store.dispatch(
       ingestRuntimeAction({
         sessionId: 'session-1',
-        cardId: 'lowStock',
+        surfaceId: 'lowStock',
         action: {
           type: 'draft.patch',
           payload: { count: 2 },
@@ -45,7 +45,7 @@ describe('pluginCardRuntime reducer', () => {
     store.dispatch(
       ingestRuntimeAction({
         sessionId: 'session-1',
-        cardId: 'lowStock',
+        surfaceId: 'lowStock',
         action: {
           type: 'draft.unknown-op',
           payload: {},
@@ -56,7 +56,7 @@ describe('pluginCardRuntime reducer', () => {
     store.dispatch(
       ingestRuntimeAction({
         sessionId: 'session-1',
-        cardId: 'lowStock',
+        surfaceId: 'lowStock',
         action: {
           type: 'billing/charge',
           payload: { id: 'ch_1' },
@@ -67,7 +67,7 @@ describe('pluginCardRuntime reducer', () => {
     store.dispatch(
       ingestRuntimeAction({
         sessionId: 'session-1',
-        cardId: 'lowStock',
+        surfaceId: 'lowStock',
         action: {
           type: 'inventory/reserve-item',
           payload: { sku: 'A-1' },
@@ -78,7 +78,7 @@ describe('pluginCardRuntime reducer', () => {
     store.dispatch(
       ingestRuntimeAction({
         sessionId: 'session-1',
-        cardId: 'lowStock',
+        surfaceId: 'lowStock',
         action: {
           type: 'notify.show',
           payload: { message: 'reserved' },
@@ -89,7 +89,7 @@ describe('pluginCardRuntime reducer', () => {
     store.dispatch(
       ingestRuntimeAction({
         sessionId: 'session-1',
-        cardId: 'lowStock',
+        surfaceId: 'lowStock',
         action: {
           type: 'nav.go',
           payload: { cardId: 'detail' },
@@ -97,9 +97,9 @@ describe('pluginCardRuntime reducer', () => {
       }),
     );
 
-    const state = store.getState().pluginCardRuntime;
+    const state = store.getState().runtimeSessions;
 
-    expect(state.sessions['session-1'].cardState.lowStock).toEqual({ count: 2 });
+    expect(state.sessions['session-1'].surfaceState.lowStock).toEqual({ count: 2 });
     expect(state.pendingDomainIntents).toHaveLength(1);
     expect(state.pendingSystemIntents).toHaveLength(1);
     expect(state.pendingNavIntents).toHaveLength(1);
@@ -140,7 +140,7 @@ describe('pluginCardRuntime reducer', () => {
     store.dispatch(
       ingestRuntimeAction({
         sessionId: 'session-cleanup',
-        cardId: 'home',
+        surfaceId: 'home',
         action: {
           type: 'inventory/reserve-item',
         },
@@ -150,7 +150,7 @@ describe('pluginCardRuntime reducer', () => {
     store.dispatch(
       ingestRuntimeAction({
         sessionId: 'session-cleanup',
-        cardId: 'home',
+        surfaceId: 'home',
         action: {
           type: 'nav.go',
           payload: { cardId: 'detail' },
@@ -158,13 +158,13 @@ describe('pluginCardRuntime reducer', () => {
       }),
     );
 
-    let state = store.getState().pluginCardRuntime;
+    let state = store.getState().runtimeSessions;
     expect(state.pendingDomainIntents).toHaveLength(1);
     expect(state.pendingSystemIntents).toHaveLength(1);
 
     store.dispatch(removeRuntimeSession({ sessionId: 'session-cleanup' }));
 
-    state = store.getState().pluginCardRuntime;
+    state = store.getState().runtimeSessions;
     expect(state.sessions['session-cleanup']).toBeUndefined();
     expect(state.pendingDomainIntents.find((intent) => intent.sessionId === 'session-cleanup')).toBeUndefined();
     expect(state.pendingSystemIntents.find((intent) => intent.sessionId === 'session-cleanup')).toBeUndefined();
@@ -187,7 +187,7 @@ describe('pluginCardRuntime reducer', () => {
     store.dispatch(
       ingestRuntimeAction({
         sessionId: 'session-nav',
-        cardId: 'home',
+        surfaceId: 'home',
         action: {
           type: 'nav.go',
           payload: { cardId: 'detail' },
@@ -198,7 +198,7 @@ describe('pluginCardRuntime reducer', () => {
     store.dispatch(
       ingestRuntimeAction({
         sessionId: 'session-nav',
-        cardId: 'home',
+        surfaceId: 'home',
         action: {
           type: 'window.close',
           payload: { windowId: 'w1' },
@@ -209,7 +209,7 @@ describe('pluginCardRuntime reducer', () => {
     store.dispatch(
       ingestRuntimeAction({
         sessionId: 'session-nav',
-        cardId: 'home',
+        surfaceId: 'home',
         action: {
           type: 'nav.back',
           payload: {},
@@ -217,7 +217,7 @@ describe('pluginCardRuntime reducer', () => {
       }),
     );
 
-    const state = store.getState().pluginCardRuntime;
+    const state = store.getState().runtimeSessions;
 
     expect(state.pendingSystemIntents.map((intent) => intent.type)).toEqual(['nav.go', 'window.close']);
     expect(state.pendingNavIntents.map((intent) => intent.type)).toEqual(['nav.go']);

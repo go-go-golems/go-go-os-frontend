@@ -58,26 +58,26 @@ const SAMPLE_CODE = `({ ui }) => ({
 
 export const Empty: Story = {
   args: {
-    cardId: 'newCard',
+    surfaceId: 'newSurface',
     initialCode: '({ ui }) => ({\\n  render() {\\n    return ui.panel([ui.text(\"Hello\")]);\\n  }\\n})',
   },
 };
 
 export const PrefilledCode: Story = {
   args: {
-    cardId: 'inventoryBrowser',
+    surfaceId: 'inventoryBrowser',
     initialCode: SAMPLE_CODE,
   },
 };
 
 export const AlreadyRegistered: Story = {
   args: {
-    cardId: 'registeredCard',
+    surfaceId: 'registeredSurface',
     initialCode: SAMPLE_CODE,
   },
   decorators: [
     (Story) => {
-      registerRuntimeSurface('registeredCard', SAMPLE_CODE);
+      registerRuntimeSurface('registeredSurface', SAMPLE_CODE);
       return <Story />;
     },
   ],

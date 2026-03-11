@@ -6,7 +6,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import type { CardStackDefinition } from '@hypercard/engine';
 import { openWindow } from '@hypercard/engine/desktop-core';
 import { createAppStore } from '../../app/createAppStore';
-import { registerRuntimeSession } from '../../features/pluginCardRuntime';
+import { registerRuntimeSession } from '../../features/runtimeSessions';
 import { RuntimeCardDebugWindow } from './RuntimeCardDebugWindow';
 
 const DEBUG_STACK: CardStackDefinition = {
@@ -71,7 +71,7 @@ describe('RuntimeCardDebugWindow', () => {
         sessionId: 'session-1',
         stackId: 'os-launcher',
         status: 'ready',
-        initialCardState: {
+        initialSurfaceState: {
           currentCard: { ready: true },
           cachedCard: { ready: false },
         },

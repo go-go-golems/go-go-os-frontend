@@ -1,8 +1,8 @@
 export const HYPERCARD_TOOLS_APP_ID = 'hypercard-tools';
 
-export interface RuntimeCardRef {
+export interface RuntimeSurfaceRef {
   ownerAppId: string;
-  cardId: string;
+  surfaceId: string;
 }
 
 const INSTANCE_KIND_EDITOR = 'editor';
@@ -23,27 +23,27 @@ function assertValidOwnerAppId(ownerAppId: string): void {
   }
 }
 
-function assertValidCardId(cardId: string): void {
-  if (cardId.trim().length === 0) {
-    throw new Error('Invalid runtime card id: expected a non-empty card id.');
+function assertValidSurfaceId(surfaceId: string): void {
+  if (surfaceId.trim().length === 0) {
+    throw new Error('Invalid runtime surface id: expected a non-empty surface id.');
   }
 }
 
-export function encodeRuntimeCardEditorInstanceId(ref: RuntimeCardRef): string {
+export function encodeRuntimeSurfaceEditorInstanceId(ref: RuntimeSurfaceRef): string {
   const ownerAppId = clean(ref.ownerAppId);
-  const cardId = clean(ref.cardId);
+  const surfaceId = clean(ref.surfaceId);
   if (!ownerAppId) {
     throw new Error('Invalid owner app id: expected a non-empty owner app id.');
   }
-  if (!cardId) {
-    throw new Error('Invalid runtime card id: expected a non-empty card id.');
+  if (!surfaceId) {
+    throw new Error('Invalid runtime surface id: expected a non-empty surface id.');
   }
   assertValidOwnerAppId(ownerAppId);
-  assertValidCardId(cardId);
-  return `${INSTANCE_KIND_EDITOR}${INSTANCE_DELIMITER}${encodeURIComponent(ownerAppId)}${INSTANCE_DELIMITER}${encodeURIComponent(cardId)}`;
+  assertValidSurfaceId(surfaceId);
+  return `${INSTANCE_KIND_EDITOR}${INSTANCE_DELIMITER}${encodeURIComponent(ownerAppId)}${INSTANCE_DELIMITER}${encodeURIComponent(surfaceId)}`;
 }
 
-export function decodeRuntimeCardEditorInstanceId(instanceId: string): RuntimeCardRef | null {
+export function decodeRuntimeSurfaceEditorInstanceId(instanceId: string): RuntimeSurfaceRef | null {
   const raw = clean(instanceId);
   if (!raw) {
     return null;
@@ -55,18 +55,18 @@ export function decodeRuntimeCardEditorInstanceId(instanceId: string): RuntimeCa
 
   try {
     const ownerAppId = clean(decodeURIComponent(parts[1] ?? ''));
-    const cardId = clean(decodeURIComponent(parts[2] ?? ''));
-    if (!ownerAppId || !cardId) {
+    const surfaceId = clean(decodeURIComponent(parts[2] ?? ''));
+    if (!ownerAppId || !surfaceId) {
       return null;
     }
     assertValidOwnerAppId(ownerAppId);
-    assertValidCardId(cardId);
-    return { ownerAppId, cardId };
+    assertValidSurfaceId(surfaceId);
+    return { ownerAppId, surfaceId };
   } catch {
     return null;
   }
 }
 
-export function buildRuntimeCardEditorAppKey(ref: RuntimeCardRef): string {
-  return `${HYPERCARD_TOOLS_APP_ID}:${encodeRuntimeCardEditorInstanceId(ref)}`;
+export function buildRuntimeSurfaceEditorAppKey(ref: RuntimeSurfaceRef): string {
+  return `${HYPERCARD_TOOLS_APP_ID}:${encodeRuntimeSurfaceEditorInstanceId(ref)}`;
 }

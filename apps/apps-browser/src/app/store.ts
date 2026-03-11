@@ -2,7 +2,7 @@ import {
   debugReducer,
   notificationsReducer,
 } from '@hypercard/engine';
-import { hypercardArtifactsReducer, pluginCardRuntimeReducer } from '@hypercard/hypercard-runtime';
+import { hypercardArtifactsReducer, runtimeSessionsReducer } from '@hypercard/hypercard-runtime';
 import { windowingReducer } from '@hypercard/engine/desktop-core';
 import { configureStore } from '@reduxjs/toolkit';
 import { appsApi } from '../api/appsApi';
@@ -12,7 +12,7 @@ function createAppsBrowserStore() {
   return configureStore({
     reducer: {
       // Engine built-ins (mirrors createAppStore)
-      pluginCardRuntime: pluginCardRuntimeReducer,
+      runtimeSessions: runtimeSessionsReducer,
       windowing: windowingReducer,
       notifications: notificationsReducer,
       debug: debugReducer,

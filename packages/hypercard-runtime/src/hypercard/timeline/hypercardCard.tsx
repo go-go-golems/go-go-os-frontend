@@ -94,7 +94,7 @@ export function HypercardCardRenderer({ e, ctx }: { e: RenderEntity; ctx?: Rende
     if (!hasRuntimeSurface || !hasCardCode) {
       return;
     }
-    openCodeEditor(dispatch, { ownerAppId: 'inventory', cardId }, cardCode);
+    openCodeEditor(dispatch, { ownerAppId: 'inventory', surfaceId: cardId }, cardCode);
   };
 
   return (

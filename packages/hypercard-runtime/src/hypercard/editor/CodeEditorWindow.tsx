@@ -9,12 +9,12 @@ import { classHighlighter } from '@lezer/highlight';
 import { hasRuntimeSurface, registerRuntimeSurface } from '../../plugin-runtime';
 
 export interface CodeEditorWindowProps {
-  cardId: string;
+  surfaceId: string;
   initialCode: string;
-  onSave?: (cardId: string, code: string) => void;
+  onSave?: (surfaceId: string, code: string) => void;
 }
 
-export function CodeEditorWindow({ cardId, initialCode, onSave }: CodeEditorWindowProps) {
+export function CodeEditorWindow({ surfaceId, initialCode, onSave }: CodeEditorWindowProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const [status, setStatus] = useState<{ type: 'idle' | 'saved' | 'error'; message?: string }>({ type: 'idle' });
@@ -90,14 +90,14 @@ export function CodeEditorWindow({ cardId, initialCode, onSave }: CodeEditorWind
 
     const code = view.state.doc.toString();
     try {
-      registerRuntimeSurface(cardId, code);
-      setStatus({ type: 'saved', message: `Injected ${cardId} — ${code.length} chars` });
+      registerRuntimeSurface(surfaceId, code);
+      setStatus({ type: 'saved', message: `Injected ${surfaceId} — ${code.length} chars` });
       setDirty(false);
-      onSave?.(cardId, code);
+      onSave?.(surfaceId, code);
     } catch (err) {
       setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
     }
-  }, [cardId, onSave]);
+  }, [surfaceId, onSave]);
 
   handleSaveRef.current = handleSave;
 
@@ -111,7 +111,7 @@ export function CodeEditorWindow({ cardId, initialCode, onSave }: CodeEditorWind
     setStatus({ type: 'idle' });
   }, [initialCode]);
 
-  const isRegistered = hasRuntimeSurface(cardId);
+  const isRegistered = hasRuntimeSurface(surfaceId);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#282c34' }}>
@@ -121,7 +121,7 @@ export function CodeEditorWindow({ cardId, initialCode, onSave }: CodeEditorWind
         padding: '6px 10px', borderBottom: '1px solid #444',
         fontSize: 12, color: '#abb2bf', fontFamily: 'monospace',
       }}>
-        <span style={{ fontWeight: 700, color: '#e5c07b' }}>{cardId}</span>
+        <span style={{ fontWeight: 700, color: '#e5c07b' }}>{surfaceId}</span>
         {isRegistered && (
           <span style={{
             fontSize: 10, padding: '1px 6px', borderRadius: 3,

@@ -15,12 +15,12 @@ import { useRegisteredRuntimeDebugStacks } from './runtimeDebugRegistry';
 
 interface StoreSlice {
   hypercardArtifacts?: { byId: Record<string, ArtifactRecord> };
-  pluginCardRuntime?: {
+  runtimeSessions?: {
     sessions: Record<string, {
       stackId: string;
       status: string;
       error?: string;
-      cardState: Record<string, Record<string, unknown>>;
+      surfaceState: Record<string, Record<string, unknown>>;
     }>;
   };
   windowing?: {
@@ -142,7 +142,7 @@ export function RuntimeCardDebugWindow({
   }, [availableStacks, initialStackId, selectedStackId]);
 
   const artifacts = useSelector((s: StoreSlice) => s.hypercardArtifacts?.byId ?? {});
-  const sessions = useSelector((s: StoreSlice) => s.pluginCardRuntime?.sessions ?? {});
+  const sessions = useSelector((s: StoreSlice) => s.runtimeSessions?.sessions ?? {});
   const windowingSessions = useSelector((s: StoreSlice) => s.windowing?.sessions ?? {});
   const stacksById = useMemo(
     () => new Map(availableStacks.map((stack) => [stack.id, stack])),
@@ -175,7 +175,7 @@ export function RuntimeCardDebugWindow({
         Array.isArray(nav) && nav.length > 0 && typeof nav[nav.length - 1]?.card === 'string'
           ? nav[nav.length - 1]?.card ?? null
           : null;
-      const fallbackCard = Object.keys(session.cardState ?? {})[0] ?? null;
+      const fallbackCard = Object.keys(session.surfaceState ?? {})[0] ?? null;
       return [sessionId, navCard ?? fallbackCard] as const;
     });
     return new Map(entries);
@@ -237,7 +237,7 @@ export function RuntimeCardDebugWindow({
                     </button>
                     {cardSource(c) ? (
                       <button
-                        onClick={() => openCodeEditor(dispatch, { ownerAppId, cardId: c.id }, cardSource(c) ?? '')}
+                        onClick={() => openCodeEditor(dispatch, { ownerAppId, surfaceId: c.id }, cardSource(c) ?? '')}
                         style={{
                           fontSize: 10,
                           padding: '1px 6px',
@@ -274,7 +274,7 @@ export function RuntimeCardDebugWindow({
                   {new Date(card.registeredAt).toLocaleTimeString()}
                 </span>
                 <button
-                  onClick={() => openCodeEditor(dispatch, { ownerAppId, cardId: card.cardId }, card.code)}
+                  onClick={() => openCodeEditor(dispatch, { ownerAppId, surfaceId: card.cardId }, card.code)}
                   style={{
                     fontSize: 10, padding: '1px 6px', borderRadius: 3,
                     border: '1px solid #999', background: '#f0f0f0', cursor: 'pointer',
@@ -386,7 +386,7 @@ export function RuntimeCardDebugWindow({
                           </button>
                           {source ? (
                             <button
-                              onClick={() => openCodeEditor(dispatch, { ownerAppId, cardId: currentCardId }, source)}
+                              onClick={() => openCodeEditor(dispatch, { ownerAppId, surfaceId: currentCardId }, source)}
                               style={{
                                 fontSize: 10,
                                 padding: '1px 6px',

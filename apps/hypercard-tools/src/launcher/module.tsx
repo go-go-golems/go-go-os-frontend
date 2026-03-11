@@ -1,5 +1,5 @@
 import { type LaunchableAppModule, type LauncherHostContext, type LaunchReason } from '@hypercard/desktop-os';
-import { CodeEditorWindow, decodeRuntimeCardEditorInstanceId, getEditorInitialCode, RuntimeSurfaceSessionHost } from '@hypercard/hypercard-runtime';
+import { CodeEditorWindow, decodeRuntimeSurfaceEditorInstanceId, getEditorInitialCode, RuntimeSurfaceSessionHost } from '@hypercard/hypercard-runtime';
 import type { OpenWindowPayload } from '@hypercard/engine/desktop-core';
 import type { DesktopCommandHandler, DesktopContribution, WindowContentAdapter } from '@hypercard/engine/desktop-react';
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
@@ -146,11 +146,11 @@ export const hypercardToolsLauncherModule: LaunchableAppModule = {
     },
   ],
   renderWindow: ({ instanceId }): ReactNode => {
-    const ref = decodeRuntimeCardEditorInstanceId(instanceId);
+    const ref = decodeRuntimeSurfaceEditorInstanceId(instanceId);
     if (!ref) {
       return renderUnknownInstance(instanceId);
     }
 
-    return <CodeEditorWindow cardId={ref.cardId} initialCode={getEditorInitialCode(ref)} />;
+    return <CodeEditorWindow surfaceId={ref.surfaceId} initialCode={getEditorInitialCode(ref)} />;
   },
 };

@@ -7,7 +7,7 @@ import {
   startFrameMonitor,
 } from '@hypercard/engine';
 import { windowingReducer } from '@hypercard/engine/desktop-core';
-import { pluginCardRuntimeReducer } from '../features/pluginCardRuntime/pluginCardRuntimeSlice';
+import { runtimeSessionsReducer } from '../features/runtimeSessions/runtimeSessionsSlice';
 import { createArtifactProjectionMiddleware } from '../hypercard/artifacts/artifactProjectionMiddleware';
 import { hypercardArtifactsReducer } from '../hypercard/artifacts/artifactsSlice';
 
@@ -21,7 +21,7 @@ export interface CreateAppStoreOptions {
 
 /**
  * Creates a Redux store factory pre-wired with all HyperCard engine reducers
- * (pluginCardRuntime, windowing, notifications, debug).
+ * (runtimeSessions, windowing, notifications, debug).
  *
  * Optionally enables Redux throughput/FPS diagnostics when
  * `options.enableReduxDiagnostics` is true (intended for dev-mode only).
@@ -54,7 +54,7 @@ export function createAppStore<T extends Record<string, Reducer>>(
   const enableDiag = options.enableReduxDiagnostics === true;
 
   const reducer = {
-    pluginCardRuntime: pluginCardRuntimeReducer,
+    runtimeSessions: runtimeSessionsReducer,
     windowing: windowingReducer,
     notifications: notificationsReducer,
     debug: debugReducer,

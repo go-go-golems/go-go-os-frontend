@@ -16,7 +16,7 @@ export interface RuntimeTimelineEntry {
   id: string;
   timestamp: string;
   sessionId: string;
-  cardId: string;
+  surfaceId: string;
   kind: RuntimeActionKind;
   actionType: string;
   payload?: unknown;
@@ -28,7 +28,7 @@ export interface DomainIntentEnvelope {
   id: string;
   timestamp: string;
   sessionId: string;
-  cardId: string;
+  surfaceId: string;
   domain: string;
   type: string;
   payload?: unknown;
@@ -38,37 +38,37 @@ export interface SystemIntentEnvelope {
   id: string;
   timestamp: string;
   sessionId: string;
-  cardId: string;
+  surfaceId: string;
   type: string;
   payload?: unknown;
 }
 
-export interface PluginRuntimeSession {
+export interface RuntimeSessionRecord {
   stackId: string;
   status: RuntimeSessionStatus;
   error: string | null;
   sessionState: Record<string, unknown>;
-  cardState: Record<string, Record<string, unknown>>;
+  surfaceState: Record<string, Record<string, unknown>>;
   capabilities: CapabilityPolicy;
 }
 
-export interface PluginCardRuntimeState {
-  sessions: Record<string, PluginRuntimeSession>;
+export interface RuntimeSessionsState {
+  sessions: Record<string, RuntimeSessionRecord>;
   timeline: RuntimeTimelineEntry[];
   pendingDomainIntents: DomainIntentEnvelope[];
   pendingSystemIntents: SystemIntentEnvelope[];
   pendingNavIntents: SystemIntentEnvelope[];
 }
 
-export interface PluginCardRuntimeStateSlice {
-  pluginCardRuntime: PluginCardRuntimeState;
+export interface RuntimeSessionsStateSlice {
+  runtimeSessions: RuntimeSessionsState;
 }
 
 interface RegisterSessionPayload {
   sessionId: string;
   stackId: string;
   initialSessionState?: Record<string, unknown>;
-  initialCardState?: Record<string, Record<string, unknown>>;
+  initialSurfaceState?: Record<string, Record<string, unknown>>;
   capabilities?: Partial<CapabilityPolicy>;
   status?: RuntimeSessionStatus;
 }
@@ -87,13 +87,13 @@ interface IngestActionPayload {
   id: string;
   timestamp: string;
   sessionId: string;
-  cardId: string;
+  surfaceId: string;
   action: RuntimeAction;
 }
 
 const MAX_TIMELINE_ENTRIES = 300;
 
-const initialState: PluginCardRuntimeState = {
+const initialState: RuntimeSessionsState = {
   sessions: {},
   timeline: [],
   pendingDomainIntents: [],
@@ -160,7 +160,7 @@ function applyLocalStateAction(
 }
 
 function appendTimeline(
-  state: PluginCardRuntimeState,
+  state: RuntimeSessionsState,
   payload: IngestActionPayload,
   kind: RuntimeActionKind,
   outcome: DispatchOutcome,
@@ -170,7 +170,7 @@ function appendTimeline(
     id: payload.id,
     timestamp: payload.timestamp,
     sessionId: payload.sessionId,
-    cardId: payload.cardId,
+    surfaceId: payload.surfaceId,
     kind,
     actionType: payload.action.type,
     payload: payload.action.payload,
@@ -183,8 +183,8 @@ function appendTimeline(
   }
 }
 
-const pluginCardRuntimeSlice = createSlice({
-  name: 'pluginCardRuntime',
+const runtimeSessionsSlice = createSlice({
+  name: 'runtimeSessions',
   initialState,
   reducers: {
     registerRuntimeSession(state, action: PayloadAction<RegisterSessionPayload>) {
@@ -195,7 +195,7 @@ const pluginCardRuntimeSlice = createSlice({
         status: payload.status ?? 'loading',
         error: null,
         sessionState: payload.initialSessionState ? { ...payload.initialSessionState } : {},
-        cardState: payload.initialCardState ? { ...payload.initialCardState } : {},
+        surfaceState: payload.initialSurfaceState ? { ...payload.initialSurfaceState } : {},
         capabilities: resolveCapabilityPolicy(payload.capabilities),
       };
     },
@@ -231,12 +231,12 @@ const pluginCardRuntimeSlice = createSlice({
         const kind = getRuntimeActionKind(payload.action.type);
 
         if (kind === 'draft') {
-          if (!session.cardState[payload.cardId]) {
-            session.cardState[payload.cardId] = {};
+          if (!session.surfaceState[payload.surfaceId]) {
+            session.surfaceState[payload.surfaceId] = {};
           }
 
           const result = applyLocalStateAction(
-            session.cardState[payload.cardId],
+            session.surfaceState[payload.surfaceId],
             getRuntimeActionOperation(payload.action.type),
             payload.action.payload,
           );
@@ -271,7 +271,7 @@ const pluginCardRuntimeSlice = createSlice({
             id: payload.id,
             timestamp: payload.timestamp,
             sessionId: payload.sessionId,
-            cardId: payload.cardId,
+            surfaceId: payload.surfaceId,
             domain,
             type: payload.action.type,
             payload: payload.action.payload,
@@ -291,7 +291,7 @@ const pluginCardRuntimeSlice = createSlice({
             id: payload.id,
             timestamp: payload.timestamp,
             sessionId: payload.sessionId,
-            cardId: payload.cardId,
+            surfaceId: payload.surfaceId,
             type: payload.action.type,
             payload: payload.action.payload,
           };
@@ -363,6 +363,6 @@ export const {
   registerRuntimeSession,
   removeRuntimeSession,
   setRuntimeSessionStatus,
-} = pluginCardRuntimeSlice.actions;
+} = runtimeSessionsSlice.actions;
 
-export const pluginCardRuntimeReducer = pluginCardRuntimeSlice.reducer;
+export const runtimeSessionsReducer = runtimeSessionsSlice.reducer;
