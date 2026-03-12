@@ -141,6 +141,9 @@ export function RuntimeSurfaceSessionHost({
   if (!runtimeServiceRef.current) {
     runtimeServiceRef.current = new QuickJSRuntimeService();
   }
+  const localRuntimeReady =
+    loadedBundleRef.current !== null ||
+    runtimeServiceRef.current.health().sessions.includes(sessionId);
 
   useEffect(() => {
     if (!pluginConfig) {
@@ -296,7 +299,7 @@ export function RuntimeSurfaceSessionHost({
 
   // Subscribe to the runtime surface registry and inject new surfaces as they arrive.
   useEffect(() => {
-    if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready') {
+    if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready' || !localRuntimeReady) {
       return;
     }
     const runtimeService = runtimeServiceRef.current;
@@ -320,10 +323,10 @@ export function RuntimeSurfaceSessionHost({
         );
       }
     });
-  }, [dispatch, pluginConfig, runtimeSession, sessionId]);
+  }, [dispatch, localRuntimeReady, pluginConfig, runtimeSession, sessionId]);
 
   useEffect(() => {
-    if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready' || isPreview) {
+    if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready' || isPreview || !localRuntimeReady) {
       return;
     }
 
@@ -401,7 +404,7 @@ export function RuntimeSurfaceSessionHost({
       unregisterAttachedJsSession(sessionId);
       unregisterAttachedRuntimeSession(sessionId);
     };
-  }, [bundle.id, isPreview, pluginConfig, runtimeSession, sessionId]);
+  }, [bundle.id, isPreview, localRuntimeReady, pluginConfig, runtimeSession, sessionId]);
 
   useEffect(() => {
     return () => {
@@ -442,7 +445,7 @@ export function RuntimeSurfaceSessionHost({
   );
 
   const renderOutcome = useMemo<{ tree: unknown | null; error: string | null }>(() => {
-    if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready') {
+    if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready' || !localRuntimeReady) {
       return { tree: null, error: null };
     }
 
@@ -464,7 +467,7 @@ export function RuntimeSurfaceSessionHost({
         error: error instanceof Error ? error.message : String(error),
       };
     }
-  }, [currentSurfaceId, pluginConfig, projectState, runtimeSession, sessionId]);
+  }, [currentSurfaceId, localRuntimeReady, pluginConfig, projectState, runtimeSession, sessionId]);
 
   const tree = renderOutcome.tree;
   const renderError = renderOutcome.error;
@@ -486,7 +489,7 @@ export function RuntimeSurfaceSessionHost({
 
   const emitRuntimeEvent = useCallback(
     (handler: string, args?: unknown) => {
-      if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready') {
+      if (!pluginConfig || !runtimeSession || runtimeSession.status !== 'ready' || !localRuntimeReady) {
         return;
       }
 
@@ -518,6 +521,7 @@ export function RuntimeSurfaceSessionHost({
     [
       currentSurfaceId,
       dispatch,
+      localRuntimeReady,
       pluginConfig,
       projectState,
       runtimeSession,
@@ -531,7 +535,7 @@ export function RuntimeSurfaceSessionHost({
     return <div style={{ padding: 12, color: '#9f1d1d' }}>Plugin bundle configuration is required for this host.</div>;
   }
 
-  if (!runtimeSession || runtimeSession.status === 'loading') {
+  if (!runtimeSession || runtimeSession.status === 'loading' || (runtimeSession.status === 'ready' && !localRuntimeReady)) {
     return <div style={{ padding: 12 }}>{isPreview ? 'Loading plugin preview…' : 'Loading plugin runtime…'}</div>;
   }
 
