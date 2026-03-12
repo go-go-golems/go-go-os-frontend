@@ -224,4 +224,52 @@ describe('RuntimeSurfaceSessionHost rerender invalidation', () => {
     expect(attachedJs?.summary.origin).toBe('attached-runtime');
     expect(attachedJs?.handle.inspectGlobals()).toContain('console');
   });
+
+  it('does not dispose the runtime session when the bundle prop is recreated with equivalent plugin config', async () => {
+    registerRuntimePackage(TEST_UI_RUNTIME_PACKAGE);
+    registerRuntimeSurfaceType(TEST_UI_CARD_V1_RUNTIME_SURFACE_TYPE);
+
+    const { createStore } = createAppStore({ inventory: inventoryReducer });
+    const store = createStore();
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const root = createRoot(container);
+    roots.push(root);
+
+    const firstBundle = createTestStack();
+
+    await act(async () => {
+      root.render(
+        <Provider store={store}>
+          <RuntimeSurfaceSessionHost windowId="window:runtime-rerender" sessionId="session-stable" bundle={firstBundle} />
+        </Provider>,
+      );
+    });
+
+    await waitForText(container, 'Count: 0');
+
+    const secondBundle: RuntimeBundleDefinition = {
+      ...createTestStack(),
+      plugin: { ...firstBundle.plugin! },
+      surfaces: { ...firstBundle.surfaces },
+    };
+
+    await act(async () => {
+      root.render(
+        <Provider store={store}>
+          <RuntimeSurfaceSessionHost windowId="window:runtime-rerender" sessionId="session-stable" bundle={secondBundle} />
+        </Provider>,
+      );
+    });
+
+    await waitForText(container, 'Count: 0');
+
+    const attached = getAttachedRuntimeSession('session-stable');
+    expect(attached).toBeTruthy();
+    expect(() => attached?.handle.getBundleMeta()).not.toThrow();
+    expect(attached?.summary.title).toBe('Mock Plugin');
+  });
 });

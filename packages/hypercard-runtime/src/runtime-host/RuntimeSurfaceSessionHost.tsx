@@ -298,7 +298,7 @@ export function RuntimeSurfaceSessionHost({
       return;
     }
 
-    const getMeta = () => runtimeService.getRuntimeBundleMeta(sessionId);
+    const meta = loadedBundleRef.current ?? runtimeService.getRuntimeBundleMeta(sessionId);
 
     registerAttachedRuntimeSession({
       handle: {
@@ -306,7 +306,9 @@ export function RuntimeSurfaceSessionHost({
         stackId: bundle.id,
         origin: 'attached',
         writable: false,
-        getBundleMeta: getMeta,
+        getBundleMeta() {
+          return loadedBundleRef.current ?? runtimeService.getRuntimeBundleMeta(sessionId);
+        },
         renderSurface(surfaceId, state) {
           return runtimeService.renderRuntimeSurface(sessionId, surfaceId, state);
         },
@@ -329,11 +331,11 @@ export function RuntimeSurfaceSessionHost({
       summary: {
         sessionId,
         stackId: bundle.id,
-        packageIds: [...getMeta().packageIds],
-        surfaces: [...getMeta().surfaces],
-        surfaceTypes: getMeta().surfaceTypes ? { ...getMeta().surfaceTypes } : undefined,
-        title: getMeta().title,
-        description: getMeta().description,
+        packageIds: [...meta.packageIds],
+        surfaces: [...meta.surfaces],
+        surfaceTypes: meta.surfaceTypes ? { ...meta.surfaceTypes } : undefined,
+        title: meta.title,
+        description: meta.description,
         origin: 'attached',
         writable: false,
       },
@@ -355,7 +357,7 @@ export function RuntimeSurfaceSessionHost({
       summary: {
         sessionId,
         stackId: bundle.id,
-        title: getMeta().title,
+        title: meta.title,
         origin: 'attached-runtime',
         writable: true,
       },
@@ -368,17 +370,13 @@ export function RuntimeSurfaceSessionHost({
   }, [bundle.id, isPreview, pluginConfig, runtimeSession, sessionId]);
 
   useEffect(() => {
-    if (!pluginConfig) {
-      return;
-    }
-
     return () => {
       const runtimeService = runtimeServiceRef.current;
       runtimeService?.disposeSession(sessionId);
       loadedBundleRef.current = null;
       dispatch(removeRuntimeSession({ sessionId }));
     };
-  }, [dispatch, pluginConfig, sessionId]);
+  }, [dispatch, sessionId]);
 
   const projectState = useCallback(
     () =>
