@@ -43,6 +43,8 @@ const DEFAULT_OPTIONS: Required<QuickJSRuntimeServiceOptions> = {
   eventTimeoutMs: 100,
 };
 
+let runtimeServiceInstanceCounter = 1;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -115,11 +117,19 @@ export class QuickJSRuntimeService {
 
   private readonly vms = new Map<SessionId, SessionVm>();
 
+  private readonly instanceId: string;
+
   constructor(options: QuickJSRuntimeServiceOptions = {}) {
+    this.instanceId = `runtime-service-${runtimeServiceInstanceCounter++}`;
     this.options = {
       ...DEFAULT_OPTIONS,
       ...options,
     };
+
+    console.log('[QuickJSRuntimeService] Created service instance', {
+      instanceId: this.instanceId,
+      options: this.options,
+    });
   }
 
   private async createSessionVm(stackId: StackId, sessionId: SessionId): Promise<SessionVm> {
@@ -139,6 +149,7 @@ export class QuickJSRuntimeService {
     const vm = this.vms.get(sessionId);
     if (!vm) {
       console.error('[QuickJSRuntimeService] Runtime session not found', {
+        instanceId: this.instanceId,
         sessionId,
         availableSessions: Array.from(this.vms.keys()),
       });
@@ -163,8 +174,23 @@ export class QuickJSRuntimeService {
 
   async loadRuntimeBundle(stackId: StackId, sessionId: SessionId, packageIds: string[], code: string): Promise<RuntimeBundleMeta> {
     if (this.vms.has(sessionId)) {
+      console.warn('[QuickJSRuntimeService] Refusing to load duplicate runtime session', {
+        instanceId: this.instanceId,
+        stackId,
+        sessionId,
+        availableSessions: Array.from(this.vms.keys()),
+      });
       throw new Error(`Runtime session already exists: ${sessionId}`);
     }
+
+    console.log('[QuickJSRuntimeService] Loading runtime bundle', {
+      instanceId: this.instanceId,
+      stackId,
+      sessionId,
+      packageIds,
+      codeLength: code.length,
+      beforeSessions: Array.from(this.vms.keys()),
+    });
 
     const vm = await this.createSessionVm(stackId, sessionId);
 
@@ -180,8 +206,23 @@ export class QuickJSRuntimeService {
         );
       }
       this.vms.set(sessionId, vm);
+      console.log('[QuickJSRuntimeService] Loaded runtime bundle', {
+        instanceId: this.instanceId,
+        stackId,
+        sessionId,
+        declaredPackageIds: bundle.packageIds,
+        surfaces: bundle.surfaces,
+        afterSessions: Array.from(this.vms.keys()),
+      });
       return bundle;
     } catch (error) {
+      console.error('[QuickJSRuntimeService] Failed to load runtime bundle', {
+        instanceId: this.instanceId,
+        stackId,
+        sessionId,
+        packageIds,
+        message: error instanceof Error ? error.message : String(error),
+      });
       disposeQuickJsSessionVm(vm);
       throw error;
     }
@@ -287,11 +328,21 @@ export class QuickJSRuntimeService {
   disposeSession(sessionId: SessionId): boolean {
     const vm = this.vms.get(sessionId);
     if (!vm) {
+      console.warn('[QuickJSRuntimeService] disposeSession missed', {
+        instanceId: this.instanceId,
+        sessionId,
+        availableSessions: Array.from(this.vms.keys()),
+      });
       return false;
     }
 
     this.vms.delete(sessionId);
     disposeQuickJsSessionVm(vm);
+    console.log('[QuickJSRuntimeService] Disposed runtime session', {
+      instanceId: this.instanceId,
+      sessionId,
+      remainingSessions: Array.from(this.vms.keys()),
+    });
     return true;
   }
 
