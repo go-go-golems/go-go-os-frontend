@@ -10,22 +10,8 @@ import type {
   StackId,
 } from './contracts';
 import stackBootstrapSource from './stack-bootstrap.vm.js?raw';
-import {
-  createQuickJsSessionVm,
-  disposeQuickJsSessionVm,
-  evalQuickJsCodeOrThrow,
-  evalQuickJsToNative,
-  toJsLiteral,
-  type QuickJsSessionVm,
-} from './quickJsSessionCore';
-import {
-  evaluateQuickJsSessionJs,
-  getQuickJsSessionGlobalNames,
-  installJsEvalBridge,
-} from './jsEvalSupport';
-import type { JsEvalResult } from './jsSessionService';
-
-type SessionVm = QuickJsSessionVm;
+import { toJsLiteral } from './quickJsSessionCore';
+import { JsSessionService, type JsEvalResult, type JsSessionServiceOptions } from './jsSessionService';
 
 export interface QuickJSRuntimeServiceOptions {
   memoryLimitBytes?: number;
@@ -115,7 +101,9 @@ export function toRuntimeError(error: unknown): RuntimeErrorPayload {
 export class QuickJSRuntimeService {
   private readonly options: Required<QuickJSRuntimeServiceOptions>;
 
-  private readonly vms = new Map<SessionId, SessionVm>();
+  private readonly sessionService: JsSessionService;
+
+  private readonly bundles = new Map<SessionId, RuntimeBundleMeta>();
 
   private readonly instanceId: string;
 
@@ -125,6 +113,13 @@ export class QuickJSRuntimeService {
       ...DEFAULT_OPTIONS,
       ...options,
     };
+    this.sessionService = new JsSessionService({
+      memoryLimitBytes: this.options.memoryLimitBytes,
+      stackLimitBytes: this.options.stackLimitBytes,
+      loadTimeoutMs: this.options.loadTimeoutMs,
+      evalTimeoutMs: this.options.eventTimeoutMs,
+      inspectTimeoutMs: this.options.loadTimeoutMs,
+    } satisfies JsSessionServiceOptions);
 
     console.log('[QuickJSRuntimeService] Created service instance', {
       instanceId: this.instanceId,
@@ -132,53 +127,45 @@ export class QuickJSRuntimeService {
     });
   }
 
-  private async createSessionVm(stackId: StackId, sessionId: SessionId): Promise<SessionVm> {
-    return await createQuickJsSessionVm(
-      stackId,
-      sessionId,
-      {
-        memoryLimitBytes: this.options.memoryLimitBytes,
-        stackLimitBytes: this.options.stackLimitBytes,
-        loadTimeoutMs: this.options.loadTimeoutMs,
-      },
-      [{ code: stackBootstrapSource, filename: 'stack-bootstrap.js' }],
-    );
-  }
-
-  private getVmOrThrow(sessionId: SessionId): SessionVm {
-    const vm = this.vms.get(sessionId);
-    if (!vm) {
+  private getBundleOrThrow(sessionId: SessionId): RuntimeBundleMeta {
+    const bundle = this.bundles.get(sessionId);
+    if (!bundle) {
       console.error('[QuickJSRuntimeService] Runtime session not found', {
         instanceId: this.instanceId,
         sessionId,
-        availableSessions: Array.from(this.vms.keys()),
+        availableSessions: Array.from(this.bundles.keys()),
       });
       throw new Error(`Runtime session not found: ${sessionId}`);
     }
-    return vm;
+    return bundle;
   }
 
-  private readRuntimeBundleMeta(vm: SessionVm): RuntimeBundleMeta {
-    const meta = evalQuickJsToNative<unknown>(vm, 'globalThis.__runtimeBundleHost.getMeta()', 'runtime-bundle-meta.js', this.options.loadTimeoutMs);
-    return validateRuntimeBundleMeta(vm.scopeId, vm.sessionId, meta);
+  private readRuntimeBundleMeta(stackId: StackId, sessionId: SessionId): RuntimeBundleMeta {
+    const meta = this.sessionService.evaluateToNative<unknown>(
+      sessionId,
+      'globalThis.__runtimeBundleHost.getMeta()',
+      'runtime-bundle-meta.js',
+      this.options.loadTimeoutMs,
+    );
+    return validateRuntimeBundleMeta(stackId, sessionId, meta);
   }
 
-  private installRuntimePackages(vm: SessionVm, packageIds: string[]): string[] {
+  private installRuntimePackages(sessionId: SessionId, packageIds: string[]): string[] {
     const orderedPackageIds = resolveRuntimePackageInstallOrder(packageIds);
     for (const packageId of orderedPackageIds) {
       const runtimePackage = getRuntimePackageOrThrow(packageId);
-      evalQuickJsCodeOrThrow(vm, runtimePackage.installPrelude, `${packageId}.runtime-package.js`, this.options.loadTimeoutMs);
+      this.sessionService.installPrelude(sessionId, runtimePackage.installPrelude);
     }
     return orderedPackageIds;
   }
 
   async loadRuntimeBundle(stackId: StackId, sessionId: SessionId, packageIds: string[], code: string): Promise<RuntimeBundleMeta> {
-    if (this.vms.has(sessionId)) {
+    if (this.bundles.has(sessionId)) {
       console.warn('[QuickJSRuntimeService] Refusing to load duplicate runtime session', {
         instanceId: this.instanceId,
         stackId,
         sessionId,
-        availableSessions: Array.from(this.vms.keys()),
+        availableSessions: Array.from(this.bundles.keys()),
       });
       throw new Error(`Runtime session already exists: ${sessionId}`);
     }
@@ -189,15 +176,19 @@ export class QuickJSRuntimeService {
       sessionId,
       packageIds,
       codeLength: code.length,
-      beforeSessions: Array.from(this.vms.keys()),
+      beforeSessions: Array.from(this.bundles.keys()),
     });
 
-    const vm = await this.createSessionVm(stackId, sessionId);
-
     try {
-      const installedPackageIds = this.installRuntimePackages(vm, packageIds);
-      evalQuickJsCodeOrThrow(vm, code, `${sessionId}.runtime-bundle.js`, this.options.loadTimeoutMs);
-      const bundle = this.readRuntimeBundleMeta(vm);
+      await this.sessionService.createSession({
+        sessionId,
+        title: stackId,
+        scopeId: stackId,
+        bootstrapSources: [{ code: stackBootstrapSource, filename: 'stack-bootstrap.js' }],
+      });
+      const installedPackageIds = this.installRuntimePackages(sessionId, packageIds);
+      this.sessionService.runCode(sessionId, code, `${sessionId}.runtime-bundle.js`, this.options.loadTimeoutMs);
+      const bundle = this.readRuntimeBundleMeta(stackId, sessionId);
       const declared = Array.from(new Set(bundle.packageIds)).sort();
       const installed = Array.from(new Set(installedPackageIds)).sort();
       if (declared.length !== installed.length || declared.some((packageId, index) => packageId !== installed[index])) {
@@ -205,14 +196,14 @@ export class QuickJSRuntimeService {
           `Runtime bundle packageIds mismatch. Declared: ${declared.join(', ') || '(none)'}; installed: ${installed.join(', ') || '(none)'}`
         );
       }
-      this.vms.set(sessionId, vm);
+      this.bundles.set(sessionId, bundle);
       console.log('[QuickJSRuntimeService] Loaded runtime bundle', {
         instanceId: this.instanceId,
         stackId,
         sessionId,
         declaredPackageIds: bundle.packageIds,
         surfaces: bundle.surfaces,
-        afterSessions: Array.from(this.vms.keys()),
+        afterSessions: Array.from(this.bundles.keys()),
       });
       return bundle;
     } catch (error) {
@@ -223,72 +214,69 @@ export class QuickJSRuntimeService {
         packageIds,
         message: error instanceof Error ? error.message : String(error),
       });
-      disposeQuickJsSessionVm(vm);
+      this.sessionService.disposeSession(sessionId);
+      this.bundles.delete(sessionId);
       throw error;
     }
   }
 
   defineRuntimeSurface(sessionId: SessionId, surfaceId: RuntimeSurfaceId, code: string, packId?: string): RuntimeBundleMeta {
-    const vm = this.getVmOrThrow(sessionId);
+    const bundle = this.getBundleOrThrow(sessionId);
     if (typeof packId === 'string' && packId.trim().length > 0) {
       getRuntimeSurfaceTypeOrThrow(packId);
     }
-    evalQuickJsCodeOrThrow(
-      vm,
+    this.sessionService.runCode(
+      sessionId,
       `globalThis.__runtimeBundleHost.defineRuntimeSurface(${toJsLiteral(surfaceId)}, (${code}), ${toJsLiteral(packId)})`,
       `${sessionId}.define-runtime-surface.js`,
       this.options.loadTimeoutMs
     );
-    return this.readRuntimeBundleMeta(vm);
+    const next = this.readRuntimeBundleMeta(bundle.stackId, sessionId);
+    this.bundles.set(sessionId, next);
+    return next;
   }
 
   defineRuntimeSurfaceRender(sessionId: SessionId, surfaceId: RuntimeSurfaceId, code: string): RuntimeBundleMeta {
-    const vm = this.getVmOrThrow(sessionId);
-    evalQuickJsCodeOrThrow(
-      vm,
+    const bundle = this.getBundleOrThrow(sessionId);
+    this.sessionService.runCode(
+      sessionId,
       `globalThis.__runtimeBundleHost.defineRuntimeSurfaceRender(${toJsLiteral(surfaceId)}, (${code}))`,
       `${sessionId}.define-runtime-surface-render.js`,
       this.options.loadTimeoutMs
     );
-    return this.readRuntimeBundleMeta(vm);
+    const next = this.readRuntimeBundleMeta(bundle.stackId, sessionId);
+    this.bundles.set(sessionId, next);
+    return next;
   }
 
   defineRuntimeSurfaceHandler(sessionId: SessionId, surfaceId: RuntimeSurfaceId, handler: string, code: string): RuntimeBundleMeta {
-    const vm = this.getVmOrThrow(sessionId);
-    evalQuickJsCodeOrThrow(
-      vm,
+    const bundle = this.getBundleOrThrow(sessionId);
+    this.sessionService.runCode(
+      sessionId,
       `globalThis.__runtimeBundleHost.defineRuntimeSurfaceHandler(${toJsLiteral(surfaceId)}, ${toJsLiteral(handler)}, (${code}))`,
       `${sessionId}.define-runtime-surface-handler.js`,
       this.options.loadTimeoutMs
     );
-    return this.readRuntimeBundleMeta(vm);
+    const next = this.readRuntimeBundleMeta(bundle.stackId, sessionId);
+    this.bundles.set(sessionId, next);
+    return next;
   }
 
   getRuntimeBundleMeta(sessionId: SessionId): RuntimeBundleMeta {
-    const vm = this.getVmOrThrow(sessionId);
-    return this.readRuntimeBundleMeta(vm);
+    const bundle = this.getBundleOrThrow(sessionId);
+    const next = this.readRuntimeBundleMeta(bundle.stackId, sessionId);
+    this.bundles.set(sessionId, next);
+    return next;
   }
 
   evaluateSessionJs(sessionId: SessionId, code: string): JsEvalResult {
-    const vm = this.getVmOrThrow(sessionId);
-    installJsEvalBridge(vm, `${sessionId}.js-eval-bridge.js`, this.options.loadTimeoutMs);
-    return evaluateQuickJsSessionJs(
-      vm,
-      code,
-      `${sessionId}.session-eval.js`,
-      this.options.eventTimeoutMs,
-      this.options.loadTimeoutMs,
-    );
+    this.getBundleOrThrow(sessionId);
+    return this.sessionService.evaluate(sessionId, code);
   }
 
   getSessionGlobalNames(sessionId: SessionId): string[] {
-    const vm = this.getVmOrThrow(sessionId);
-    installJsEvalBridge(vm, `${sessionId}.js-eval-bridge.js`, this.options.loadTimeoutMs);
-    return getQuickJsSessionGlobalNames(
-      vm,
-      `${sessionId}.session-globals.js`,
-      this.options.loadTimeoutMs,
-    );
+    this.getBundleOrThrow(sessionId);
+    return this.sessionService.getGlobalNames(sessionId);
   }
 
   renderRuntimeSurface(
@@ -296,9 +284,9 @@ export class QuickJSRuntimeService {
     surfaceId: RuntimeSurfaceId,
     state: unknown
   ): unknown {
-    const vm = this.getVmOrThrow(sessionId);
-    return evalQuickJsToNative<unknown>(
-      vm,
+    this.getBundleOrThrow(sessionId);
+    return this.sessionService.evaluateToNative<unknown>(
+      sessionId,
       `globalThis.__runtimeBundleHost.renderRuntimeSurface(${toJsLiteral(surfaceId)}, ${toJsLiteral(state)})`,
       `${sessionId}.render-runtime-surface.js`,
       this.options.renderTimeoutMs
@@ -312,9 +300,9 @@ export class QuickJSRuntimeService {
     args: unknown,
     state: unknown
   ): RuntimeAction[] {
-    const vm = this.getVmOrThrow(sessionId);
-    const actions = evalQuickJsToNative<unknown>(
-      vm,
+    this.getBundleOrThrow(sessionId);
+    const actions = this.sessionService.evaluateToNative<unknown>(
+      sessionId,
       `globalThis.__runtimeBundleHost.eventRuntimeSurface(${toJsLiteral(surfaceId)}, ${toJsLiteral(handler)}, ${toJsLiteral(
         args
       )}, ${toJsLiteral(state)})`,
@@ -326,22 +314,21 @@ export class QuickJSRuntimeService {
   }
 
   disposeSession(sessionId: SessionId): boolean {
-    const vm = this.vms.get(sessionId);
-    if (!vm) {
+    if (!this.bundles.has(sessionId)) {
       console.warn('[QuickJSRuntimeService] disposeSession missed', {
         instanceId: this.instanceId,
         sessionId,
-        availableSessions: Array.from(this.vms.keys()),
+        availableSessions: Array.from(this.bundles.keys()),
       });
       return false;
     }
 
-    this.vms.delete(sessionId);
-    disposeQuickJsSessionVm(vm);
+    this.bundles.delete(sessionId);
+    this.sessionService.disposeSession(sessionId);
     console.log('[QuickJSRuntimeService] Disposed runtime session', {
       instanceId: this.instanceId,
       sessionId,
-      remainingSessions: Array.from(this.vms.keys()),
+      remainingSessions: Array.from(this.bundles.keys()),
     });
     return true;
   }
@@ -349,7 +336,7 @@ export class QuickJSRuntimeService {
   health() {
     return {
       ready: true as const,
-      sessions: Array.from(this.vms.keys()),
+      sessions: Array.from(this.bundles.keys()),
     };
   }
 }

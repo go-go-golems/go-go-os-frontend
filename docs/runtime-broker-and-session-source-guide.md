@@ -84,13 +84,14 @@ Main files:
 - [runtimeService.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/plugin-runtime/runtimeService.ts)
 - [runtimeSessionsSlice.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/features/runtimeSessions/runtimeSessionsSlice.ts)
 
-In this older system:
+In the current system:
 
 - the low-level execution service is `QuickJSRuntimeService`
-- the live operator-facing session record is projected into Redux
-- the UI reads that Redux state directly
+- `QuickJSRuntimeService` now composes over `JsSessionService`
+- runtime-process existence is owned by `RuntimeSessionManager`
+- serializable semantic runtime state is still projected into Redux
 
-This path predates the newer broker/source pattern, so it is slightly more store-centric.
+This path is still more store-centric than the plain JS stack, but the service layering is now explicit instead of only implied.
 
 ### Runtime session manager
 

@@ -2,6 +2,7 @@ import {
   createQuickJsSessionVm,
   disposeQuickJsSessionVm,
   evalQuickJsCodeOrThrow,
+  evalQuickJsToNative,
   type QuickJsSessionCoreOptions,
   type QuickJsSessionVm,
 } from './quickJsSessionCore';
@@ -22,7 +23,12 @@ export interface JsSessionServiceOptions {
 export interface CreateJsSessionRequest {
   sessionId: string;
   title?: string;
+  scopeId?: string;
   preludeCode?: string;
+  bootstrapSources?: Array<{
+    code: string;
+    filename: string;
+  }>;
 }
 
 export interface JsSessionSummary {
@@ -48,7 +54,12 @@ interface JsSessionRecord {
   vm: QuickJsSessionVm;
   title: string;
   createdAt: string;
+  scopeId: string;
   preludeCode?: string;
+  bootstrapSources: Array<{
+    code: string;
+    filename: string;
+  }>;
 }
 
 const DEFAULT_OPTIONS: Required<JsSessionServiceOptions> = {
@@ -92,7 +103,9 @@ export class JsSessionService {
   }
 
   private async createRecord(request: CreateJsSessionRequest): Promise<JsSessionRecord> {
-    const bootstrapSources: Array<{ code: string; filename: string }> = [];
+    const bootstrapSources: Array<{ code: string; filename: string }> = [
+      ...(request.bootstrapSources ?? []),
+    ];
     if (request.preludeCode && request.preludeCode.trim().length > 0) {
       bootstrapSources.push({
         code: request.preludeCode,
@@ -101,7 +114,7 @@ export class JsSessionService {
     }
 
     const vm = await createQuickJsSessionVm(
-      'js-repl',
+      request.scopeId?.trim() || 'js-repl',
       request.sessionId,
       toCoreOptions(this.options),
       bootstrapSources,
@@ -113,7 +126,9 @@ export class JsSessionService {
       vm,
       title: request.title?.trim() || request.sessionId,
       createdAt: new Date().toISOString(),
+      scopeId: request.scopeId?.trim() || 'js-repl',
       preludeCode: request.preludeCode,
+      bootstrapSources: [...(request.bootstrapSources ?? [])],
     };
   }
 
@@ -154,6 +169,26 @@ export class JsSessionService {
     );
   }
 
+  evaluateToNative<T>(
+    sessionId: string,
+    code: string,
+    filename: string,
+    timeoutMs: number,
+  ): T {
+    const record = this.getRecordOrThrow(sessionId);
+    return evalQuickJsToNative<T>(record.vm, code, filename, timeoutMs);
+  }
+
+  runCode(
+    sessionId: string,
+    code: string,
+    filename: string,
+    timeoutMs: number,
+  ): void {
+    const record = this.getRecordOrThrow(sessionId);
+    evalQuickJsCodeOrThrow(record.vm, code, filename, timeoutMs);
+  }
+
   getGlobalNames(sessionId: string): string[] {
     const record = this.getRecordOrThrow(sessionId);
     return getQuickJsSessionGlobalNames(
@@ -169,7 +204,9 @@ export class JsSessionService {
     const nextRecord = await this.createRecord({
       sessionId,
       title: record.title,
+      scopeId: record.scopeId,
       preludeCode: record.preludeCode,
+      bootstrapSources: record.bootstrapSources,
     });
     this.sessions.set(sessionId, {
       ...nextRecord,
@@ -201,6 +238,7 @@ export class JsSessionService {
       sessions: Array.from(this.sessions.keys()).sort(),
     };
   }
+
   installPrelude(sessionId: string, code: string): void {
     const record = this.getRecordOrThrow(sessionId);
     evalQuickJsCodeOrThrow(

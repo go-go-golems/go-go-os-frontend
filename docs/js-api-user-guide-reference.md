@@ -708,6 +708,9 @@ Core class:
 
 - `QuickJSRuntimeService`
 
+This is still the public runtime-specific service class, but it now sits on top of
+`JsSessionService` rather than owning a completely separate low-level QuickJS session layer.
+
 Important methods:
 
 - `loadRuntimeBundle(stackId, sessionId, packageIds, code)`
@@ -745,6 +748,19 @@ const meta = await runtime.loadRuntimeBundle(
 
 const tree = runtime.renderRuntimeSurface('session-1', 'home', state);
 const actions = runtime.eventRuntimeSurface('session-1', 'home', 'save', args, state);
+```
+
+Service layering:
+
+```text
+quickJsSessionCore
+  engine bootstrap/eval helpers
+
+JsSessionService
+  generic QuickJS sessions
+
+QuickJSRuntimeService
+  runtime bundle/package/surface semantics
 ```
 
 ### 7.3 VM Bootstrap Contract

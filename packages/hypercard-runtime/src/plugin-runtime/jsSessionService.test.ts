@@ -119,4 +119,36 @@ describe('JsSessionService', () => {
       logs: [],
     });
   });
+
+  it('supports bootstrap sources plus generic code/native eval helpers', async () => {
+    const service = new JsSessionService();
+    services.push(service);
+
+    await service.createSession({
+      sessionId: 'js-bootstrap',
+      scopeId: 'runtime-test',
+      bootstrapSources: [
+        {
+          filename: 'bootstrap.js',
+          code: 'globalThis.seed = 12',
+        },
+      ],
+    });
+
+    expect(service.evaluateToNative<number>('js-bootstrap', 'seed + 1', 'native.js', 50)).toBe(13);
+
+    service.runCode('js-bootstrap', 'globalThis.answer = seed * 2', 'run.js', 50);
+    expect(service.evaluate('js-bootstrap', 'answer')).toEqual({
+      value: 24,
+      valueType: 'number',
+      logs: [],
+    });
+
+    await service.resetSession('js-bootstrap');
+    expect(service.evaluate('js-bootstrap', 'seed')).toEqual({
+      value: 12,
+      valueType: 'number',
+      logs: [],
+    });
+  });
 });

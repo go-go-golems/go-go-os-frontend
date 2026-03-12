@@ -214,10 +214,17 @@ A `RuntimeSession` is one running runtime instance.
 Current implementation:
 
 - `packages/hypercard-runtime/src/plugin-runtime/runtimeService.ts`
+- `packages/hypercard-runtime/src/plugin-runtime/jsSessionService.ts`
 
 Current class:
 
 - `QuickJSRuntimeService`
+
+As of APP-26, this runtime service is no longer a parallel VM owner beside the plain JS layer.
+It now composes over `JsSessionService`:
+
+- `JsSessionService` owns the generic QuickJS session map
+- `QuickJSRuntimeService` owns runtime-specific metadata, package installation, bundle load, and surface semantics
 
 Responsibilities:
 
@@ -229,6 +236,19 @@ Responsibilities:
 - render a runtime surface
 - call a runtime surface handler
 - dispose the session cleanly
+
+That means the current service stack is:
+
+```text
+quickJsSessionCore
+  low-level engine helpers
+
+JsSessionService
+  generic persistent QuickJS sessions
+
+QuickJSRuntimeService
+  runtime-specific bundle/surface service built on top of JsSessionService
+```
 
 Important options:
 
