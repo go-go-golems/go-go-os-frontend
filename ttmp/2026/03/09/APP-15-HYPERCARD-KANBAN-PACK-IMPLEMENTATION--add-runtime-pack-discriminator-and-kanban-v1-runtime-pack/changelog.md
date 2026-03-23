@@ -1,0 +1,75 @@
+# Changelog
+
+## 2026-03-09
+
+- Initial workspace created
+- Scoped APP-15 as the implementation follow-through for APP-14:
+  - keep `hypercard.card.v2`
+  - add `runtime.pack`
+  - register `kanban.v1`
+  - refactor Kanban view pieces for pack rendering
+  - add Storybook coverage for widget extraction work
+- Landed slice 1 in `go-go-os-frontend` as `2eba055` (`hypercard: store runtime pack metadata in artifacts`):
+  - `artifactRuntime` now extracts `runtime.pack`
+  - artifact state now persists `packId`
+  - artifact projection registers runtime cards with `packId`
+  - runtime card registry stores pack metadata for later host selection work
+  - targeted runtime artifact tests and `packages/hypercard-runtime` typecheck passed
+- Added the APP-15 runtime-pack implementation playbook:
+  - documents the pack contract, implementation order, VM helper injection rules, and Kanban extraction target
+  - records current implementation guidance and can be revised as slices prove details out in code
+- Landed slice 2 in `go-go-os-frontend` as `d91838c` (`hypercard: add runtime pack registry and kanban v1 path`):
+  - added a runtime-pack registry with explicit `ui.card.v1` and `kanban.v1` pack entries
+  - changed VM `defineCard(...)` injection to choose helper surfaces by `packId`
+  - added `widgets.kanban.board(...)` as the first pack-specific VM helper
+  - changed runtime host selection to validate and render by pack instead of assuming the base `ui.*` tree
+  - added a narrow `@hypercard/rich-widgets/kanban-runtime` export so `hypercard-runtime` can consume the Kanban runtime surface without importing the entire rich-widget barrel
+  - added runtime tests covering pack registry selection, unknown-pack failures, and a concrete `kanban.v1` dynamic card path
+- Landed slice 3 in `go-go-os-frontend` as `7f53467` (`rich-widgets: extract kanban view parts for runtime pack`):
+  - extracted `KanbanTaskCard`, `KanbanTaskModal`, and `KanbanBoardView` from the monolithic `KanbanBoard.tsx` implementation
+  - changed `KanbanBoard.tsx` into a thin controller wrapper that maps Redux/local-state actions onto semantic Kanban callbacks
+  - changed `kanbanV1Pack.tsx` to render `KanbanBoardView` directly instead of adapting rich-widget Redux action creators
+  - added Storybook stories for all extracted Kanban pieces and regrouped them under `RichWidgets/Kanban/*`
+  - added a Storybook alias for `@hypercard/rich-widgets/kanban-runtime` so the pack-specific runtime surface resolves in Storybook/Vite just like the app build
+  - re-ran `packages/hypercard-runtime` typecheck, targeted runtime-pack tests, Storybook taxonomy validation, and Playwright smoke checks against the grouped Kanban stories
+- Landed slice 4 across the inventory authoring path and the frontend parser fix:
+  - `4295697` in `go-go-app-inventory` (`inventory: preserve kanban runtime pack metadata`)
+    - updated `runtime-card-policy.md` with explicit Kanban pack rules and a concrete `runtime.pack: kanban.v1` example
+    - preserved `runtime.pack` through the backend runtime-card extractor so authored YAML no longer drops pack metadata
+    - added extractor, timeline, and inventory projection tests covering `data.runtime.pack`
+  - `6ac6510` in `go-go-os-frontend` (`hypercard: read runtime pack metadata from card payload`)
+    - fixed `artifactRuntime.ts` to read `runtime.pack` from `data.runtime`, which is where the inventory backend actually emits it
+    - updated runtime artifact tests to match the real payload shape
+  - validation:
+    - `go test ./pkg/pinoweb -run 'TestRuntimeCardExtractor|TestHypercardTimelineHandlers_CardUpdateProjectsStreamingCardResult'` passed
+    - `npx vitest run apps/inventory/src/launcher/renderInventoryApp.chat.test.tsx` passed
+    - `node node_modules/typescript/bin/tsc --build workspace-links/go-go-app-inventory/apps/inventory/tsconfig.json` passed from the `wesen-os` root
+    - `npm run typecheck -w packages/hypercard-runtime` passed
+    - `npx vitest run src/hypercard/artifacts/artifactRuntime.test.ts src/hypercard/artifacts/artifactProjectionMiddleware.test.ts` passed
+    - `npm run storybook:check` passed
+    - `npm run typecheck -w packages/rich-widgets` still fails with the existing linked-workspace `TS6059` / `TS6307` rootDir project-boundary problem; this slice did not introduce those errors
+- Landed slice 5 across `wesen-os` and the runtime host:
+  - `c41e1b2` in `go-go-os-frontend` (`hypercard-runtime: preserve built-in card pack metadata`)
+    - `stack-bootstrap.vm.js` now reports `cardPacks` for built-in cards defined with `defineCard(..., packId)`
+    - `runtimeService` now preserves `cardPacks` in loaded bundle metadata
+    - `PluginCardSessionHost` now falls back to loaded bundle `cardPacks` when the current card is built into the stack instead of coming from the runtime card registry
+    - added a runtime integration test proving built-in `kanban.v1` cards keep their pack metadata
+  - `4591e19` in `wesen-os` (`os-launcher: add kanban vm shortcut app`)
+    - `os-launcher` stack now includes three concrete built-in `kanban.v1` demo cards:
+      - `kanbanSprintBoard`
+      - `kanbanBugTriage`
+      - `kanbanPersonalPlanner`
+    - added a `Kanban VM` launcher app that opens those cards as real runtime sessions through `PluginCardSessionHost`
+    - added targeted tests for the launcher module and the raw QuickJS plugin bundle behavior
+  - validation:
+    - `npx vitest run apps/os-launcher/src/app/kanbanVmModule.test.tsx apps/os-launcher/src/domain/pluginBundle.test.ts` passed
+    - `npx vitest run src/plugin-runtime/runtimeService.integration.test.ts` passed
+    - `npm run typecheck -w packages/hypercard-runtime` passed
+    - browser smoke pass in Playwright against `http://127.0.0.1:4173/`:
+      - opened desktop icon `Kanban VM`
+      - launched `Sprint Board`
+      - confirmed the `kanban.v1` board rendered
+      - confirmed `+ New` opened the task modal
+    - `npm run typecheck --workspace apps/os-launcher` is still blocked by the pre-existing linked `rich-widgets` type errors in this workspace
+  - implementation note:
+    - the browser smoke path in this mixed-source workspace still needed local untracked `hypercard-runtime` JS siblings to be kept in sync with the tracked TS source so Vite used the current runtime-host logic

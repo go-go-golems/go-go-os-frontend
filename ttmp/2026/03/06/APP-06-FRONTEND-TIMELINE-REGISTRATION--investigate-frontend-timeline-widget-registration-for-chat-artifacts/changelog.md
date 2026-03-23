@@ -1,0 +1,56 @@
+# Changelog
+
+## 2026-03-06
+
+- Initial workspace created
+- Implemented Phase 1 of the card cutover in `go-go-os-frontend` with commit `8e5324e` (`feat: allow chat window renderer overrides`).
+- `ChatConversationWindow` now accepts host-provided `timelineRenderers` overrides, merged on top of the builtin/global renderer registry.
+- Validated the slice with:
+  - `npm exec vitest -- packages/chat-runtime/src/chat/runtime/registerChatModules.test.ts packages/chat-runtime/src/chat/sem/timelineMapper.test.ts --run`
+- Implemented Phase 2 of the card cutover in `go-go-app-inventory` with commit `67d0bed` (`refactor: inject inventory card renderer explicitly`).
+- Inventory no longer registers `registerHypercardTimelineModule()` in the live launcher path; it now passes `HypercardCardRenderer` directly to `ChatConversationWindow`.
+- Attempted inventory validation with:
+  - `npm run typecheck`
+  - `node /home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/node_modules/typescript/bin/tsc -p /home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-app-inventory/apps/inventory/tsconfig.json --noEmit`
+- Both inventory validation commands were blocked by pre-existing workspace/project-reference issues (`TS6305` dist-output errors and unrelated implicit-`any` errors outside this slice).
+- Implemented the main first-class card cutover in `go-go-os-frontend` with commit `c43e40b` (`refactor: cut over chat timeline to first-class hypercard cards`).
+- The main frontend behavior changes are now:
+  - `timelineMapper.ts` preserves `hypercard.card.v2` instead of remapping to `hypercard_card`
+  - `HypercardCardRenderer` reads first-class card payloads directly
+  - artifact/runtime-card extraction operates on `hypercard.card.v2`
+  - widget renderer/bootstrap files were removed from the live package surface
+  - debug coloring now uses `hypercard.card.v2`
+  - end-state chat-runtime and hypercard-runtime tests were added/updated
+- Added the inventory host-level chat test in `go-go-app-inventory` with commit `c8a618e` (`test: cover inventory chat card rendering`).
+- Ran the final card-only automated validation with:
+  - `npm exec vitest -- workspace-links/go-go-os-frontend/packages/chat-runtime/src/chat/components/ChatConversationWindow.test.tsx workspace-links/go-go-os-frontend/packages/chat-runtime/src/chat/runtime/registerChatModules.test.ts workspace-links/go-go-os-frontend/packages/chat-runtime/src/chat/sem/timelineMapper.test.ts workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/hypercard/artifacts/artifactRuntime.test.ts workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/hypercard/artifacts/artifactProjectionMiddleware.test.ts workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/hypercard/timeline/hypercardCard.test.ts workspace-links/go-go-app-inventory/apps/inventory/src/launcher/renderInventoryApp.chat.test.tsx --run`
+- Result: 7 test files passed, 20 tests passed.
+- Attempted live manual validation by starting `wesen-os` and using Playwright, but Playwright was blocked by a browser-lock issue in this environment (`Browser is already in use for /home/manuel/.cache/ms-playwright/mcp-chrome`).
+- Completed the first investigation pass across `pinocchio`, inventory frontend/backend, `chat-runtime`, `hypercard-runtime`, and `apps-browser`.
+- Added a detailed design and implementation guide explaining the end-to-end artifact path from backend projection to frontend renderer dispatch.
+- Narrowed the target from generic widget/card coverage to a card-first cutover. Widget paths are now treated as legacy evidence rather than target functionality.
+- Recorded the main architectural findings:
+  - backend HyperCard projection appears healthy
+  - generic tool rendering is separate from HyperCard renderer registration
+  - generic chat-runtime currently contains HyperCard-specific entity remap logic
+  - host-store wiring is inconsistent between inventory and apps-browser
+  - package tests pass, but host-level chat integration coverage is missing
+- Updated the migration guidance to avoid hardening legacy intermediate seams; tests should target the final card contract, not every current implementation detail.
+- Added user-provided runtime evidence showing that:
+  - `timeline.upsert` arrives correctly
+  - the payload contains `entity.kind = hypercard.card.v2`
+  - the frontend timeline state already contains the remapped card entity
+  - the remaining live failure is renderer resolution, not backend projection or timeline state
+- Added a new handoff-ready cutover plan in `design-doc/02-card-cutover-fix-handoff-plan.md`.
+- Reframed the implementation direction around a direct fix:
+  - keep `hypercard.card.v2` first-class end to end
+  - remove widget scope from the live contract
+  - stop depending on global HyperCard renderer registration
+  - inject `HypercardCardRenderer` explicitly from the inventory host
+- Ran focused frontend tests with `npm exec vitest` for:
+  - `packages/chat-runtime/src/chat/runtime/registerChatModules.test.ts`
+  - `packages/hypercard-runtime/src/hypercard/timeline/hypercardWidget.test.ts`
+  - `packages/hypercard-runtime/src/hypercard/timeline/hypercardCard.test.ts`
+  - `apps/apps-browser/src/launcher/module.test.tsx`
+- Added `design-doc/03-repository-setup-and-vite-workspace-resolution.md` to explain the merged `wesen-os` development environment, `workspace-links`, why browser module URLs can show nested `node_modules`, and how the current Vite alias strategy preserves real-path HMR after removing `preserveSymlinks`.
+- Added `design-doc/04-postmortem-card-rendering-and-malformed-structured-block-debugging.md` to capture the full incident timeline from frontend renderer failure through malformed structured-block diagnosis, including the inventory payload-enrichment change, the `structuredsink` diagnostics change, and the prompt update requiring `</hypercard:card:v2>`.
