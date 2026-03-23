@@ -1,4 +1,4 @@
-import type { CardStackDefinition } from '../../../cards';
+import type { RuntimeBundleDefinition } from '../../../cards';
 import type { OpenWindowPayload } from '../../../desktop/core/state/types';
 import type {
   DesktopActionSection,
@@ -12,7 +12,7 @@ export interface DesktopCommandContext {
   dispatch: (action: any) => unknown;
   getState?: () => unknown;
   focusedWindowId: string | null;
-  openCardWindow: (cardId: string, options?: { dedupe?: boolean }) => void;
+  openSurfaceWindow: (surfaceId: string, options?: { dedupe?: boolean }) => void;
   closeWindow: (windowId: string) => void;
 }
 
@@ -24,7 +24,7 @@ export interface DesktopCommandHandler {
 }
 
 export interface StartupWindowContext {
-  stack: CardStackDefinition;
+  bundle: RuntimeBundleDefinition;
   homeParam?: string;
 }
 

@@ -2,14 +2,13 @@ import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
 import { type ReactNode, useMemo } from 'react';
 import { windowingReducer, openWindow, type OpenWindowPayload } from '@hypercard/engine/desktop-core';
-import { notificationsReducer, type CardStackDefinition } from '@hypercard/engine';
+import { notificationsReducer, type RuntimeBundleDefinition } from '@hypercard/engine';
 import { DesktopShell, type DesktopIconDef, type DesktopContribution, type DesktopCommandHandler } from '@hypercard/engine/desktop-react';
 
 import { LogViewer } from '../log-viewer/LogViewer';
 import { ChartView } from '../chart-view/ChartView';
 import { MacWrite } from '../mac-write/MacWrite';
-import { KanbanBoard } from '../kanban/KanbanBoard';
-import { MacRepl } from '../repl/MacRepl';
+import { MacRepl } from '@hypercard/repl';
 import { NodeEditor } from '../node-editor/NodeEditor';
 import { Oscilloscope } from '../oscilloscope/Oscilloscope';
 import { LogicAnalyzer } from '../logic-analyzer/LogicAnalyzer';
@@ -25,7 +24,6 @@ import { YouTubeRetro } from '../youtube-retro/YouTubeRetro';
 import { ChatBrowser } from '../chat-browser/ChatBrowser';
 import { SystemModeler } from '../system-modeler/SystemModeler';
 import { ControlRoom } from '../control-room/ControlRoom';
-import { KANBAN_EXAMPLE_BOARDS } from '../kanban/exampleBoards';
 import {
   SeededStoreProvider,
   composeSeedStores,
@@ -49,15 +47,6 @@ const WIDGETS: WidgetDef[] = [
   { id: 'log-viewer', name: 'Log Viewer', icon: '\uD83D\uDCCB', w: 900, h: 600, render: () => <LogViewer /> },
   { id: 'chart-view', name: 'Chart View', icon: '\uD83D\uDCC8', w: 800, h: 560, render: () => <ChartView /> },
   { id: 'mac-write', name: 'MacWrite', icon: '\u270D\uFE0F', w: 800, h: 620, render: () => <MacWrite /> },
-  { id: 'kanban-board', name: 'Kanban Board', icon: '\uD83D\uDCCB', w: 960, h: 640, render: () => <KanbanBoard /> },
-  ...KANBAN_EXAMPLE_BOARDS.map((board) => ({
-    id: board.id,
-    name: board.name,
-    icon: board.icon,
-    w: 960,
-    h: 640,
-    render: () => <KanbanBoard {...board.props} />,
-  })),
   { id: 'mac-repl', name: 'MacRepl', icon: '\uD83D\uDCBB', w: 720, h: 480, render: () => <MacRepl /> },
   { id: 'node-editor', name: 'Node Editor', icon: '\uD83D\uDD17', w: 900, h: 600, render: () => <NodeEditor /> },
   { id: 'oscilloscope', name: 'Oscilloscope', icon: '\uD83D\uDCDF', w: 800, h: 560, render: () => <Oscilloscope /> },
@@ -133,15 +122,15 @@ const ICON_OPEN_COMMANDS: DesktopCommandHandler[] = WIDGETS.map((wDef): DesktopC
 }));
 
 // ---------------------------------------------------------------------------
-// Minimal stack (the shell requires one, even if we don't use cards)
+// Minimal bundle (the shell requires one, even if we don't use cards)
 // ---------------------------------------------------------------------------
 
-const SHELL_STACK: CardStackDefinition = {
+const SHELL_BUNDLE: RuntimeBundleDefinition = {
   id: 'rich-widgets-desktop',
   name: 'Rich Widgets Desktop',
   icon: '\uD83D\uDDA5\uFE0F',
-  homeCard: 'empty',
-  cards: {
+  homeSurface: 'empty',
+  surfaces: {
     empty: {
       id: 'empty',
       type: 'report',
@@ -229,7 +218,7 @@ function RichWidgetsDesktopFrame({
     <SeededStoreProvider createStore={createStore} seedStore={seedStore}>
       <div style={{ width: 1200, height: 800 }}>
         <DesktopShell
-          stack={SHELL_STACK}
+          bundle={SHELL_BUNDLE}
           icons={DESKTOP_ICONS}
           renderAppWindow={renderAppWindow}
           contributions={contributions}

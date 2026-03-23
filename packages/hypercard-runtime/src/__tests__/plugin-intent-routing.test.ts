@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { describe, expect, it } from 'vitest';
 import { notificationsReducer } from '@hypercard/engine';
-import { pluginCardRuntimeReducer, registerRuntimeSession } from '../features/pluginCardRuntime';
+import { runtimeSessionsReducer, registerRuntimeSession } from '../features/runtimeSessions';
 import { openWindow, windowingReducer } from '@hypercard/engine/desktop-core';
 import { dispatchRuntimeAction } from '../runtime-host/pluginIntentRouting';
 
@@ -23,7 +23,7 @@ describe('dispatchRuntimeAction', () => {
 
     const store = configureStore({
       reducer: {
-        pluginCardRuntime: pluginCardRuntimeReducer,
+        runtimeSessions: runtimeSessionsReducer,
         windowing: windowingReducer,
         notifications: notificationsReducer,
         inventory: inventoryReducer,
@@ -36,11 +36,11 @@ describe('dispatchRuntimeAction', () => {
         title: 'Home',
         bounds: { x: 100, y: 30, w: 420, h: 340 },
         content: {
-          kind: 'card',
-          card: {
-            stackId: 'inventory',
-            cardId: 'home',
-            cardSessionId: sessionId,
+          kind: 'surface',
+          surface: {
+            bundleId: 'inventory',
+            surfaceId: 'home',
+            surfaceSessionId: sessionId,
           },
         },
       }),
@@ -49,7 +49,7 @@ describe('dispatchRuntimeAction', () => {
     store.dispatch(
       registerRuntimeSession({
         sessionId,
-        stackId: 'inventory',
+        bundleId: 'inventory',
         status: 'ready',
         capabilities: {
           domain: ['inventory'],
@@ -67,7 +67,7 @@ describe('dispatchRuntimeAction', () => {
         dispatch: (action) => store.dispatch(action as never),
         getState: () => store.getState(),
         sessionId,
-        cardId: 'home',
+        surfaceId: 'home',
         windowId,
       },
     );
@@ -75,13 +75,13 @@ describe('dispatchRuntimeAction', () => {
     dispatchRuntimeAction(
       {
         type: 'nav.go',
-        payload: { cardId: 'detail', param: 'A-1' },
+        payload: { surfaceId: 'detail', param: 'A-1' },
       },
       {
         dispatch: (action) => store.dispatch(action as never),
         getState: () => store.getState(),
         sessionId,
-        cardId: 'home',
+        surfaceId: 'home',
         windowId,
       },
     );
@@ -92,7 +92,7 @@ describe('dispatchRuntimeAction', () => {
         dispatch: (action) => store.dispatch(action as never),
         getState: () => store.getState(),
         sessionId,
-        cardId: 'detail',
+        surfaceId: 'detail',
         windowId,
       },
     );
@@ -106,7 +106,7 @@ describe('dispatchRuntimeAction', () => {
         dispatch: (action) => store.dispatch(action as never),
         getState: () => store.getState(),
         sessionId,
-        cardId: 'home',
+        surfaceId: 'home',
         windowId,
       },
     );
@@ -114,7 +114,7 @@ describe('dispatchRuntimeAction', () => {
     let state = store.getState();
 
     expect(state.inventory.events).toEqual([{ sku: 'A-1' }]);
-    expect(state.windowing.sessions[sessionId].nav).toEqual([{ card: 'home' }]);
+    expect(state.windowing.sessions[sessionId].nav).toEqual([{ surface: 'home', param: undefined }]);
     expect(state.notifications.toast).toBe('Reserved A-1');
 
     dispatchRuntimeAction(
@@ -123,7 +123,7 @@ describe('dispatchRuntimeAction', () => {
         dispatch: (action) => store.dispatch(action as never),
         getState: () => store.getState(),
         sessionId,
-        cardId: 'home',
+        surfaceId: 'home',
         windowId,
       },
     );
@@ -140,7 +140,7 @@ describe('dispatchRuntimeAction', () => {
 
     const store = configureStore({
       reducer: {
-        pluginCardRuntime: pluginCardRuntimeReducer,
+        runtimeSessions: runtimeSessionsReducer,
         windowing: windowingReducer,
         notifications: notificationsReducer,
         inventory: inventoryReducer,
@@ -153,11 +153,11 @@ describe('dispatchRuntimeAction', () => {
         title: 'Home',
         bounds: { x: 100, y: 30, w: 420, h: 340 },
         content: {
-          kind: 'card',
-          card: {
-            stackId: 'inventory',
-            cardId: 'home',
-            cardSessionId: sessionId,
+          kind: 'surface',
+          surface: {
+            bundleId: 'inventory',
+            surfaceId: 'home',
+            surfaceSessionId: sessionId,
           },
         },
       }),
@@ -166,7 +166,7 @@ describe('dispatchRuntimeAction', () => {
     store.dispatch(
       registerRuntimeSession({
         sessionId,
-        stackId: 'inventory',
+        bundleId: 'inventory',
         status: 'ready',
         capabilities: {
           system: ['nav.go'],
@@ -180,7 +180,7 @@ describe('dispatchRuntimeAction', () => {
         dispatch: (action) => store.dispatch(action as never),
         getState: () => store.getState(),
         sessionId,
-        cardId: 'home',
+        surfaceId: 'home',
         windowId,
       },
     );
@@ -188,7 +188,7 @@ describe('dispatchRuntimeAction', () => {
     const state = store.getState();
 
     expect(state.windowing.windows[windowId]).toBeDefined();
-    const deniedEntry = state.pluginCardRuntime.timeline.find((entry) => entry.actionType === 'window.close');
+    const deniedEntry = state.runtimeSessions.timeline.find((entry) => entry.actionType === 'window.close');
     expect(deniedEntry?.outcome).toBe('denied');
   });
 
@@ -199,7 +199,7 @@ describe('dispatchRuntimeAction', () => {
 
     const store = configureStore({
       reducer: {
-        pluginCardRuntime: pluginCardRuntimeReducer,
+        runtimeSessions: runtimeSessionsReducer,
         windowing: windowingReducer,
         notifications: notificationsReducer,
         inventory: inventoryReducer,
@@ -216,7 +216,7 @@ describe('dispatchRuntimeAction', () => {
     store.dispatch(
       registerRuntimeSession({
         sessionId,
-        stackId: 'domain-demo',
+        bundleId: 'domain-demo',
         status: 'ready',
         capabilities: {
           domain: ['domain-demo'],
@@ -237,12 +237,12 @@ describe('dispatchRuntimeAction', () => {
         dispatch: (action) => store.dispatch(action as never),
         getState: () => store.getState(),
         sessionId,
-        cardId: 'home',
+        surfaceId: 'home',
         windowId,
       },
     );
 
-    const actions = store.getState().pluginCardRuntime.timeline;
+    const actions = store.getState().runtimeSessions.timeline;
     const applied = actions.find((entry) => entry.actionType === 'domain-demo/command.request');
     expect(applied?.outcome).toBe('applied');
 
@@ -252,7 +252,7 @@ describe('dispatchRuntimeAction', () => {
         source: 'plugin-runtime',
         sessionId,
         runtimeSessionId: sessionId,
-        cardId: 'home',
+        surfaceId: 'home',
         windowId,
       }),
     );

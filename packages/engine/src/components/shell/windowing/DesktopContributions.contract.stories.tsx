@@ -63,7 +63,7 @@ function evaluateContributions(commandId: string) {
   const ctx: DesktopCommandContext = {
     dispatch: () => undefined,
     focusedWindowId: 'window:focused',
-    openCardWindow: (cardId) => trace.push(`openCardWindow(${cardId})`),
+    openSurfaceWindow: (cardId) => trace.push(`openSurfaceWindow(${cardId})`),
     closeWindow: (windowId) => trace.push(`closeWindow(${windowId})`),
   };
   const handled = routeContributionCommand(commandId, composed.commandHandlers, ctx);

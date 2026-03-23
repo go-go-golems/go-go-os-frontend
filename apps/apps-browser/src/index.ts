@@ -10,8 +10,8 @@ export { docsRegistry, DocsRegistry } from './domain/docsRegistry';
 export {
   createHelpDocsMount,
   createModuleDocsMount,
-  createVmmetaCardDocsMount,
-  createVmmetaPackDocsMount,
+  createVmmetaSurfaceDocsMount,
+  createVmmetaSurfaceTypeDocsMount,
   registerDefaultDocsMounts,
 } from './domain/docsMountAdapters';
 export { createDocsCatalogStore, docsCatalogStore, serializeDocsSearchQuery, useDocsCatalogSnapshot } from './domain/docsCatalogStore';

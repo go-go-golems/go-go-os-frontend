@@ -1,9 +1,11 @@
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   return {
     id: 'report-demo',
     title: 'Report Demo',
-    cards: {
+    packageIds: ["ui"],
+    surfaces: {
       report: {
+        packId: 'ui.card.v1',
         render() {
           return ui.panel([
             ui.text('Monthly Report'),

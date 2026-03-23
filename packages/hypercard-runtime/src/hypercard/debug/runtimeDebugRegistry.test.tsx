@@ -1,4 +1,4 @@
-import type { CardStackDefinition } from '@hypercard/engine';
+import type { RuntimeBundleDefinition } from '@hypercard/engine';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   buildRuntimeDebugWindowPayload,
@@ -11,13 +11,13 @@ import {
   registerRuntimeDebugStacks,
 } from './runtimeDebugRegistry';
 
-const STACK_A: CardStackDefinition = {
+const STACK_A: RuntimeBundleDefinition = {
   id: 'inventory',
   name: 'Inventory',
   icon: '📦',
-  homeCard: 'home',
-  plugin: { bundleCode: '' },
-  cards: {
+  homeSurface: 'home',
+  plugin: { packageIds: [], bundleCode: '' },
+  surfaces: {
     home: {
       id: 'home',
       type: 'report',
@@ -28,13 +28,13 @@ const STACK_A: CardStackDefinition = {
   },
 };
 
-const STACK_B: CardStackDefinition = {
+const STACK_B: RuntimeBundleDefinition = {
   id: 'os-launcher',
   name: 'go-go-os Launcher',
   icon: '🖥️',
-  homeCard: 'home',
-  plugin: { bundleCode: '' },
-  cards: {
+  homeSurface: 'home',
+  plugin: { packageIds: [], bundleCode: '' },
+  surfaces: {
     home: {
       id: 'home',
       type: 'report',
@@ -50,11 +50,11 @@ describe('runtime debug registry', () => {
     clearRegisteredRuntimeDebugStacks();
   });
 
-  it('registers stacks by id without duplicating them', () => {
+  it('registers bundles by id without duplicating them', () => {
     registerRuntimeDebugStacks([STACK_A, STACK_B]);
     registerRuntimeDebugStacks([STACK_A]);
 
-    expect(getRegisteredRuntimeDebugStacks().map((stack) => stack.id)).toEqual(['inventory', 'os-launcher']);
+    expect(getRegisteredRuntimeDebugStacks().map((bundle) => bundle.id)).toEqual(['inventory', 'os-launcher']);
   });
 
   it('builds the shared runtime debug window payload', () => {

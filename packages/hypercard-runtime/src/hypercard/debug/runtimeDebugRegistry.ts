@@ -1,9 +1,9 @@
 import { useSyncExternalStore } from 'react';
-import type { CardStackDefinition } from '@hypercard/engine';
+import type { RuntimeBundleDefinition } from '@hypercard/engine';
 
-const registeredStacks = new Map<string, CardStackDefinition>();
+const registeredStacks = new Map<string, RuntimeBundleDefinition>();
 const listeners = new Set<() => void>();
-let registeredStacksSnapshot: CardStackDefinition[] = [];
+let registeredStacksSnapshot: RuntimeBundleDefinition[] = [];
 
 function refreshSnapshot() {
   registeredStacksSnapshot = Array.from(registeredStacks.values());
@@ -15,16 +15,16 @@ function emitChange() {
   }
 }
 
-export function registerRuntimeDebugStacks(stacks: readonly CardStackDefinition[]): void {
+export function registerRuntimeDebugStacks(stacks: readonly RuntimeBundleDefinition[]): void {
   let changed = false;
-  for (const stack of stacks) {
-    if (!stack?.id) {
+  for (const bundle of stacks) {
+    if (!bundle?.id) {
       continue;
     }
-    if (registeredStacks.get(stack.id) === stack) {
+    if (registeredStacks.get(bundle.id) === bundle) {
       continue;
     }
-    registeredStacks.set(stack.id, stack);
+    registeredStacks.set(bundle.id, bundle);
     changed = true;
   }
   if (changed) {
@@ -33,7 +33,7 @@ export function registerRuntimeDebugStacks(stacks: readonly CardStackDefinition[
   }
 }
 
-export function getRegisteredRuntimeDebugStacks(): CardStackDefinition[] {
+export function getRegisteredRuntimeDebugStacks(): RuntimeBundleDefinition[] {
   return registeredStacksSnapshot;
 }
 
@@ -53,7 +53,7 @@ export function subscribeRuntimeDebugStacks(listener: () => void): () => void {
   };
 }
 
-export function useRegisteredRuntimeDebugStacks(): CardStackDefinition[] {
+export function useRegisteredRuntimeDebugStacks(): RuntimeBundleDefinition[] {
   return useSyncExternalStore(
     subscribeRuntimeDebugStacks,
     getRegisteredRuntimeDebugStacks,

@@ -5,8 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type ContentMinSize, useContentMinSize } from './useContentMinSize';
 
 // jsdom does not perform real layout, so scrollWidth/scrollHeight are always 0.
-// We test the hook's callback mechanics and dedup logic using mocked scrollWidth.
-// ResizeObserver is not available in jsdom; the hook guards itself with typeof check.
+// We test the hook's one-shot mount measurement and dedup behavior with mocked values.
 
 const roots: Root[] = [];
 const containers: HTMLElement[] = [];
@@ -64,23 +63,25 @@ describe('useContentMinSize', () => {
     expect(onMinSize).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onMinSize again when scrollWidth changes', () => {
+  it('does not call onMinSize again when content mutates after mount', async () => {
     const onMinSize = vi.fn();
     const { container } = mount(<TestComponent onMinSize={onMinSize} />);
 
     expect(onMinSize).toHaveBeenCalledTimes(1);
 
-    // Mock scrollWidth changing (simulate content change)
     const body = container.querySelector('[data-testid="body"]') as HTMLElement;
     Object.defineProperty(body, 'scrollWidth', { value: 354, configurable: true });
     Object.defineProperty(body, 'scrollHeight', { value: 200, configurable: true });
 
-    // Force re-render
-    const root = roots[0];
-    act(() => root.render(<TestComponent onMinSize={onMinSize} />));
+    act(() => {
+      body.appendChild(document.createElement('span'));
+    });
 
-    expect(onMinSize).toHaveBeenCalledTimes(2);
-    expect(onMinSize).toHaveBeenLastCalledWith({ minW: 354, minH: 200 });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(onMinSize).toHaveBeenCalledTimes(1);
   });
 
   it('does not call onMinSize when callback is undefined', () => {

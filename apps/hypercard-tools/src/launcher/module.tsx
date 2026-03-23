@@ -1,5 +1,5 @@
 import { type LaunchableAppModule, type LauncherHostContext, type LaunchReason } from '@hypercard/desktop-os';
-import { CodeEditorWindow, decodeRuntimeCardEditorInstanceId, getEditorInitialCode, PluginCardSessionHost } from '@hypercard/hypercard-runtime';
+import { CodeEditorWindow, decodeRuntimeSurfaceEditorInstanceId, getEditorInitialCode, getEditorInitialPackId, RuntimeSurfaceSessionHost } from '@hypercard/hypercard-runtime';
 import type { OpenWindowPayload } from '@hypercard/engine/desktop-core';
 import type { DesktopCommandHandler, DesktopContribution, WindowContentAdapter } from '@hypercard/engine/desktop-react';
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
@@ -76,11 +76,11 @@ function buildWorkspaceWindowPayload(reason: LaunchReason): OpenWindowPayload {
     icon: '🛠️',
     bounds: { x: 210, y: 72, w: 980, h: 700 },
     content: {
-      kind: 'card',
-      card: {
-        stackId: STACK.id,
-        cardId: STACK.homeCard,
-        cardSessionId: `${SESSION_PREFIX}${instanceId}`,
+      kind: 'surface',
+      surface: {
+        bundleId: STACK.id,
+        surfaceId: STACK.homeSurface,
+        surfaceSessionId: `${SESSION_PREFIX}${instanceId}`,
       },
     },
     dedupeKey: reason === 'startup' ? `${APP_ID}:startup` : undefined,
@@ -90,13 +90,13 @@ function buildWorkspaceWindowPayload(reason: LaunchReason): OpenWindowPayload {
 function createHypercardToolsCardAdapter(): WindowContentAdapter {
   return {
     id: 'hypercard-tools.card-window',
-    canRender: (window) => window.content.kind === 'card' && window.content.card?.stackId === STACK.id,
+    canRender: (window) => window.content.kind === 'surface' && window.content.surface?.bundleId === STACK.id,
     render: (window) => {
-      const cardRef = window.content.card;
-      if (window.content.kind !== 'card' || !cardRef || cardRef.stackId !== STACK.id) {
+      const cardRef = window.content.surface;
+      if (window.content.kind !== 'surface' || !cardRef || cardRef.bundleId !== STACK.id) {
         return null;
       }
-      return <PluginCardSessionHost windowId={window.id} sessionId={cardRef.cardSessionId} stack={STACK} />;
+      return <RuntimeSurfaceSessionHost windowId={window.id} sessionId={cardRef.surfaceSessionId} bundle={STACK} />;
     },
   };
 }
@@ -146,11 +146,11 @@ export const hypercardToolsLauncherModule: LaunchableAppModule = {
     },
   ],
   renderWindow: ({ instanceId }): ReactNode => {
-    const ref = decodeRuntimeCardEditorInstanceId(instanceId);
+    const ref = decodeRuntimeSurfaceEditorInstanceId(instanceId);
     if (!ref) {
       return renderUnknownInstance(instanceId);
     }
 
-    return <CodeEditorWindow cardId={ref.cardId} initialCode={getEditorInitialCode(ref)} />;
+    return <CodeEditorWindow surfaceId={ref.surfaceId} initialCode={getEditorInitialCode(ref)} packId={getEditorInitialPackId(ref)} />;
   },
 };

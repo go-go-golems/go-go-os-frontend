@@ -71,51 +71,32 @@ export { type ViewMode, type FormatAction, type WordCount } from './mac-write/ty
 export { parseMarkdown } from './mac-write/markdown';
 export { SAMPLE_DOCUMENT } from './mac-write/sampleData';
 
-// KanbanBoard
-export { KanbanBoard, KanbanBoardFrame, type KanbanBoardProps } from './kanban/KanbanBoard';
-export { KanbanBoardView, type KanbanBoardViewProps } from './kanban/KanbanBoardView';
-export { KanbanHighlights, type KanbanHighlightsProps } from './kanban/KanbanHighlights';
-export { KanbanHeaderBar, type KanbanHeaderBarProps } from './kanban/KanbanHeaderBar';
-export { KanbanFilterBar, type KanbanFilterBarProps } from './kanban/KanbanFilterBar';
-export { KanbanLaneView, type KanbanLaneViewProps } from './kanban/KanbanLaneView';
-export { KanbanStatusBar, type KanbanStatusBarProps, type KanbanStatusMetric } from './kanban/KanbanStatusBar';
-export { KanbanTaskCard, type KanbanTaskCardProps } from './kanban/KanbanTaskCard';
-export { KanbanTaskModal, type KanbanTaskModalProps } from './kanban/KanbanTaskModal';
-export {
-  KANBAN_STATE_KEY,
-  createKanbanStateSeed,
-  kanbanActions,
-  kanbanReducer,
-  selectKanbanState,
-  type KanbanAction,
-  type KanbanState,
-} from './kanban/kanbanState';
-export {
-  type Task,
-  type Column,
-  type KanbanIssueTypeId,
-  type KanbanPriorityId,
-  type KanbanLabelId,
-  type KanbanTaxonomy,
-  type KanbanOptionDescriptor,
-  type KanbanHighlight,
-  DEFAULT_KANBAN_TAXONOMY,
-  formatKanbanOption,
-  findKanbanOption,
-} from './kanban/types';
-export { INITIAL_COLUMNS, INITIAL_TASKS } from './kanban/sampleData';
-
 // MacRepl
-export { MacRepl, type MacReplProps } from './repl/MacRepl';
 export {
+  MacRepl,
+  type MacReplProps,
   MAC_REPL_STATE_KEY,
   createMacReplStateSeed,
   macReplActions,
   macReplReducer,
   selectMacReplState,
-} from './repl/replState';
-export { type TerminalLine, type LineType, type CommandInfo } from './repl/types';
-export { BUILT_IN_COMMANDS, FORTUNES, INITIAL_LINES } from './repl/sampleData';
+  type TerminalLine,
+  type LineType,
+  type CommandInfo,
+  type ReplCompletionItem,
+  type ReplDriver,
+  type ReplDriverContext,
+  type ReplEffect,
+  type ReplExecutionResult,
+  type ReplHelpEntry,
+  type MaybePromise,
+  resolveReplCompletionState,
+  executeReplSubmission,
+  BUILTIN_DEMO_REPL_DRIVER,
+  BUILT_IN_COMMANDS,
+  FORTUNES,
+  INITIAL_LINES,
+} from '@hypercard/repl';
 
 // NodeEditor
 export { NodeEditor, type NodeEditorProps } from './node-editor/NodeEditor';
@@ -384,12 +365,14 @@ export {
 // YouTubeRetro
 export { YouTubeRetro } from './youtube-retro/YouTubeRetro';
 export {
-  type YouTubeRetroProps,
   YOUTUBE_RETRO_STATE_KEY,
   createYouTubeRetroStateSeed,
   selectYouTubeRetroState,
   youTubeRetroActions,
   youTubeRetroReducer,
+} from './youtube-retro/youTubeRetroState';
+export {
+  type YouTubeRetroProps,
   type YtChannel,
   type YtVideo,
   type YtComment,

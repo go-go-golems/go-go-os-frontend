@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import type { CardStackDefinition } from '../../../cards/types';
+import type { RuntimeBundleDefinition } from '../../../cards/types';
 import { debugReducer } from '../../../debug/debugSlice';
 import { focusWindow, openWindow } from '../../../desktop/core/state/windowingSlice';
 import { windowingReducer } from '../../../desktop/core/state/windowingSlice';
@@ -27,15 +27,16 @@ import type {
 const roots: Root[] = [];
 const containers: HTMLElement[] = [];
 
-const TEST_STACK: CardStackDefinition = {
+const TEST_STACK: RuntimeBundleDefinition = {
   id: 'context-menu-runtime-stack',
   name: 'Context Menu Runtime',
   icon: '🧪',
-  homeCard: 'missing-home-card',
+  homeSurface: 'missing-home-card',
   plugin: {
+    packageIds: [],
     bundleCode: '',
   },
-  cards: {},
+  surfaces: {},
 };
 
 const APP_CONTEXT_ACTIONS: DesktopActionEntry[] = [
@@ -249,7 +250,7 @@ describe('desktop shell context-menu invocation metadata', () => {
       root.render(
         <Provider store={store}>
           <DesktopShell
-            stack={TEST_STACK}
+            bundle={TEST_STACK}
             renderAppWindow={(appKey) => (appKey === 'runtime-tools:one' ? <RuntimeWindow /> : null)}
             onCommand={onCommand}
           />
@@ -319,7 +320,7 @@ describe('desktop shell context-menu invocation metadata', () => {
       root.render(
         <Provider store={store}>
           <DesktopShell
-            stack={TEST_STACK}
+            bundle={TEST_STACK}
             renderAppWindow={(appKey) => {
               if (appKey === 'runtime-tools:menu') {
                 return <RuntimeMenuWindow />;
@@ -387,7 +388,7 @@ describe('desktop shell context-menu invocation metadata', () => {
       root.render(
         <Provider store={store}>
           <DesktopShell
-            stack={TEST_STACK}
+            bundle={TEST_STACK}
             renderAppWindow={(appKey) => (appKey === 'runtime-tools:message' ? <RuntimeMessageWindow /> : null)}
             onCommand={onCommand}
           />
@@ -470,7 +471,7 @@ describe('desktop shell context-menu invocation metadata', () => {
       root.render(
         <Provider store={store}>
           <DesktopShell
-            stack={TEST_STACK}
+            bundle={TEST_STACK}
             renderAppWindow={(appKey) => (appKey === 'runtime-tools:policy' ? <RuntimePolicyWindow /> : null)}
             visibilityContextResolver={visibilityContextResolver}
             onCommand={onCommand}

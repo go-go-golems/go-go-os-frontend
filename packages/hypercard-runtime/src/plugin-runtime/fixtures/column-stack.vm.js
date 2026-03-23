@@ -1,9 +1,11 @@
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   return {
     id: 'column-demo',
     title: 'Column Demo',
-    cards: {
+    packageIds: ["ui"],
+    surfaces: {
       main: {
+        packId: 'ui.card.v1',
         render() {
           return ui.column([
             ui.text('top'),

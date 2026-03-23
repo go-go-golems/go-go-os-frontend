@@ -224,15 +224,9 @@ async function main() {
   const profiles = await client.listProfiles();
   console.log(\`Found \${profiles.length} profiles\`);
 
-  // Create a new profile
-  const newProfile: Profile = {
-    id: 'custom-1',
-    name: 'Custom Profile',
-    model: 'claude-sonnet-4-20250514',
-    temperature: 0.7,
-    systemPrompt: 'You are a helpful assistant.',
-  };
-  await client.createProfile(newProfile);
+  // Select one of the server-provided profiles at runtime.
+  const activeProfile = profiles.find((profile) => profile.id === 'inventory-default');
+  console.log(\`Active profile: \${activeProfile?.name ?? 'none'}\`);
 }
 
 main().catch(console.error);

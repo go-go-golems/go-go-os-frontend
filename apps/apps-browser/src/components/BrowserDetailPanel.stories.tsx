@@ -22,7 +22,7 @@ const inventoryDocs: DocObject[] = [
 ];
 
 const arcModuleMountPath = buildDocsMountPath('module', 'arc-agi');
-const arcCardMountPath = buildDocsMountPath('card', 'arc-agi');
+const arcSurfaceMountPath = buildDocsMountPath('surface', 'arc-agi');
 const arcDocs: DocObject[] = [
   {
     path: buildDocObjectPath('module', 'arc-agi', 'runtime-modes'),
@@ -37,13 +37,13 @@ const arcDocs: DocObject[] = [
     order: 1,
   },
   {
-    path: buildDocObjectPath('card', 'arc-agi', 'incident-command'),
-    mountPath: arcCardMountPath,
-    kind: 'card',
+    path: buildDocObjectPath('surface', 'arc-agi', 'incident-command'),
+    mountPath: arcSurfaceMountPath,
+    kind: 'surface',
     owner: 'arc-agi',
     slug: 'incident-command',
     title: 'Incident Command',
-    summary: 'Mounted runtime-card example for the selected owner.',
+    summary: 'Mounted runtime-surface example for the selected owner.',
     docType: 'example',
     content: '# Incident Command',
     order: 2,
@@ -70,10 +70,10 @@ function DocsDecorator(Story: React.ComponentType) {
   useEffect(() => {
     const unregisterInventory = docsRegistry.register(createStaticMount(inventoryMountPath, inventoryDocs));
     const unregisterArcModule = docsRegistry.register(createStaticMount(arcModuleMountPath, arcDocs.filter((doc) => doc.kind === 'module')));
-    const unregisterArcCard = docsRegistry.register(createStaticMount(arcCardMountPath, arcDocs.filter((doc) => doc.kind === 'card')));
+    const unregisterArcSurface = docsRegistry.register(createStaticMount(arcSurfaceMountPath, arcDocs.filter((doc) => doc.kind === 'surface')));
     void docsCatalogStore.ensureAllMountsLoaded();
     return () => {
-      unregisterArcCard();
+      unregisterArcSurface();
       unregisterArcModule();
       unregisterInventory();
     };

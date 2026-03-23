@@ -3,7 +3,10 @@
   "references": [
     { "path": "packages/engine" },
     { "path": "packages/chat-runtime" },
+    { "path": "packages/repl" },
     { "path": "packages/hypercard-runtime" },
+    { "path": "packages/ui-runtime" },
+    { "path": "packages/kanban-runtime" },
     { "path": "packages/confirm-runtime" },
     { "path": "packages/desktop-os" },
     { "path": "apps/book-tracker-debug" },

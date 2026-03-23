@@ -139,7 +139,7 @@ describe('routeContributionCommand', () => {
       {
         dispatch: vi.fn(),
         focusedWindowId: null,
-        openCardWindow: vi.fn(),
+        openSurfaceWindow: vi.fn(),
         closeWindow: vi.fn(),
       },
     );
@@ -157,7 +157,7 @@ describe('routeContributionCommand', () => {
       {
         dispatch: vi.fn(),
         focusedWindowId: 'window-1',
-        openCardWindow: vi.fn(),
+        openSurfaceWindow: vi.fn(),
         closeWindow: vi.fn(),
       },
       { source: 'context-menu', menuId: 'window', windowId: 'window-1', widgetId: 'title-bar' },

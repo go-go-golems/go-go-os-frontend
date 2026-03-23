@@ -1,4 +1,4 @@
-import type { CardDefinition, CardStackDefinition } from '@hypercard/engine';
+import type { RuntimeSurfaceMeta, RuntimeBundleDefinition } from '@hypercard/engine';
 import { BOOK_TRACKER_PLUGIN_BUNDLE } from './pluginBundle';
 
 interface PluginCardMeta {
@@ -16,7 +16,7 @@ const BOOK_CARD_META: PluginCardMeta[] = [
   { id: 'readingReport', title: 'Reading Report', icon: '📊' },
 ];
 
-function toPluginCard(card: PluginCardMeta): CardDefinition {
+function toPluginCard(card: PluginCardMeta): RuntimeSurfaceMeta {
   return {
     id: card.id,
     type: 'plugin',
@@ -29,17 +29,18 @@ function toPluginCard(card: PluginCardMeta): CardDefinition {
   };
 }
 
-export const STACK: CardStackDefinition = {
+export const STACK: RuntimeBundleDefinition = {
   id: 'bookTrackerDebug',
   name: 'Book Tracker',
   icon: '📚',
-  homeCard: 'home',
+  homeSurface: 'home',
   plugin: {
+    packageIds: ['ui'],
     bundleCode: BOOK_TRACKER_PLUGIN_BUNDLE,
     capabilities: {
       domain: ['books'],
       system: ['nav.go', 'nav.back', 'notify.show'],
     },
   },
-  cards: Object.fromEntries(BOOK_CARD_META.map((card) => [card.id, toPluginCard(card)])),
+  surfaces: Object.fromEntries(BOOK_CARD_META.map((card) => [card.id, toPluginCard(card)])),
 };

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import type { CardStackDefinition } from '../../../cards';
+import type { RuntimeBundleDefinition } from '../../../cards';
 import type { WindowInstance } from '../../../desktop/core/state/types';
 import {
   renderWindowContentWithAdapters,
@@ -11,13 +11,13 @@ interface AdapterContractStoryProps {
   contentKind: 'app' | 'card';
 }
 
-const STACK: CardStackDefinition = {
+const STACK: RuntimeBundleDefinition = {
   id: 'contract',
   name: 'Contract Stack',
   icon: '🧪',
-  homeCard: 'home',
-  plugin: { bundleCode: '' },
-  cards: {
+  homeSurface: 'home',
+  plugin: { packageIds: [], bundleCode: '' },
+  surfaces: {
     home: {
       id: 'home',
       type: 'plugin',
@@ -40,11 +40,11 @@ function buildWindow(contentKind: 'app' | 'card'): WindowInstance {
       contentKind === 'app'
         ? { kind: 'app', appKey: 'contract-app' }
         : {
-            kind: 'card',
-            card: {
-              stackId: 'contract',
-              cardId: 'home',
-              cardSessionId: 'session:contract',
+            kind: 'surface',
+            surface: {
+              bundleId: 'contract',
+              surfaceId: 'home',
+              surfaceSessionId: 'session:contract',
             },
           },
   };
@@ -54,7 +54,7 @@ function runAdapterFixture(contentKind: 'app' | 'card') {
   const trace: string[] = [];
   const window = buildWindow(contentKind);
   const ctx: WindowAdapterContext = {
-    stack: STACK,
+    bundle: STACK,
     mode: 'interactive',
   };
 
@@ -69,7 +69,7 @@ function runAdapterFixture(contentKind: 'app' | 'card') {
     },
     {
       id: 'card-primary',
-      canRender: (w) => w.content.kind === 'card',
+      canRender: (w) => w.content.kind === 'surface',
       render: () => {
         trace.push('card-primary(handled)');
         return <span>card-primary</span>;

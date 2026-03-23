@@ -9,8 +9,8 @@ export interface ArtifactRecord {
   data: Record<string, unknown>;
   source: ArtifactSource;
   updatedAt: number;
-  runtimeCardId?: string;
-  runtimeCardCode?: string;
+  runtimeSurfaceId?: string;
+  runtimeSurfaceCode?: string;
   packId?: string;
   injectionStatus?: 'pending' | 'injected' | 'failed';
   injectionError?: string;
@@ -52,9 +52,10 @@ const artifactsSlice = createSlice({
         data?: Record<string, unknown>;
         source: ArtifactSource;
         updatedAt?: number;
-        runtimeCardId?: string;
-        runtimeCardCode?: string;
+        runtimeSurfaceId?: string;
+        runtimeSurfaceCode?: string;
         packId?: string;
+        queueForInjection?: boolean;
       }>,
     ) {
       const id = cleanString(action.payload.id);
@@ -70,9 +71,10 @@ const artifactsSlice = createSlice({
           : existing?.data ?? {};
       const source = action.payload.source ?? existing?.source ?? 'widget';
       const updatedAt = action.payload.updatedAt ?? Date.now();
-      const runtimeCardId = cleanString(action.payload.runtimeCardId) ?? existing?.runtimeCardId;
-      const runtimeCardCode = cleanString(action.payload.runtimeCardCode) ?? existing?.runtimeCardCode;
+      const runtimeSurfaceId = cleanString(action.payload.runtimeSurfaceId) ?? existing?.runtimeSurfaceId;
+      const runtimeSurfaceCode = cleanString(action.payload.runtimeSurfaceCode) ?? existing?.runtimeSurfaceCode;
       const packId = cleanString(action.payload.packId) ?? existing?.packId;
+      const queueForInjection = action.payload.queueForInjection === true;
       state.byId[id] = {
         id,
         title,
@@ -80,31 +82,34 @@ const artifactsSlice = createSlice({
         data,
         source,
         updatedAt,
-        runtimeCardId,
-        runtimeCardCode,
+        runtimeSurfaceId,
+        runtimeSurfaceCode,
         packId,
-        injectionStatus: runtimeCardCode ? (existing?.injectionStatus ?? 'pending') : existing?.injectionStatus,
+        injectionStatus:
+          runtimeSurfaceCode && queueForInjection
+            ? (existing?.injectionStatus ?? 'pending')
+            : existing?.injectionStatus,
         injectionError: existing?.injectionError,
       };
     },
-    markRuntimeCardInjectionResults(
+    markRuntimeSurfaceInjectionResults(
       state,
       action: PayloadAction<{
-        injectedCardIds?: string[];
-        failed?: Array<{ cardId: string; error?: string }>;
+        injectedSurfaceIds?: string[];
+        failed?: Array<{ surfaceId: string; error?: string }>;
         updatedAt?: number;
       }>,
     ) {
       const injected = new Set(
-        (action.payload.injectedCardIds ?? [])
+        (action.payload.injectedSurfaceIds ?? [])
           .map((id) => cleanString(id))
           .filter((id): id is string => typeof id === 'string'),
       );
       const failed = new Map<string, string | undefined>();
       for (const item of action.payload.failed ?? []) {
-        const cardId = cleanString(item.cardId);
-        if (!cardId) continue;
-        failed.set(cardId, cleanString(item.error));
+        const surfaceId = cleanString(item.surfaceId);
+        if (!surfaceId) continue;
+        failed.set(surfaceId, cleanString(item.error));
       }
       if (injected.size === 0 && failed.size === 0) {
         return;
@@ -112,17 +117,17 @@ const artifactsSlice = createSlice({
 
       const updatedAt = action.payload.updatedAt ?? Date.now();
       for (const artifact of Object.values(state.byId)) {
-        const runtimeCardId = cleanString(artifact.runtimeCardId);
-        if (!runtimeCardId) continue;
-        if (injected.has(runtimeCardId)) {
+        const runtimeSurfaceId = cleanString(artifact.runtimeSurfaceId);
+        if (!runtimeSurfaceId) continue;
+        if (injected.has(runtimeSurfaceId)) {
           artifact.injectionStatus = 'injected';
           artifact.injectionError = undefined;
           artifact.updatedAt = updatedAt;
           continue;
         }
-        if (failed.has(runtimeCardId)) {
+        if (failed.has(runtimeSurfaceId)) {
           artifact.injectionStatus = 'failed';
-          artifact.injectionError = failed.get(runtimeCardId);
+          artifact.injectionError = failed.get(runtimeSurfaceId);
           artifact.updatedAt = updatedAt;
         }
       }
@@ -133,6 +138,6 @@ const artifactsSlice = createSlice({
   },
 });
 
-export const { upsertArtifact, markRuntimeCardInjectionResults, clearArtifacts } = artifactsSlice.actions;
+export const { upsertArtifact, markRuntimeSurfaceInjectionResults, clearArtifacts } = artifactsSlice.actions;
 export const artifactsReducer = artifactsSlice.reducer;
 export const hypercardArtifactsReducer = artifactsSlice.reducer;

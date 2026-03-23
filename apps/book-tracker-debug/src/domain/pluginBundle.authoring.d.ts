@@ -57,14 +57,15 @@ interface PluginCardDef {
 interface PluginBundle {
   id: string;
   title: string;
+  packageIds: string[];
   description?: string;
   initialSessionState?: Record<string, unknown>;
-  initialCardState?: Record<string, Record<string, unknown>>;
-  cards: Record<string, PluginCardDef>;
+  initialSurfaceState?: Record<string, Record<string, unknown>>;
+  surfaces: Record<string, PluginCardDef>;
 }
 
 declare global {
-  function defineStackBundle(factory: (args: { ui: PluginUiFactory }) => PluginBundle): void;
+  function defineRuntimeBundle(factory: (args: { ui: PluginUiFactory }) => PluginBundle): void;
 }
 
 export {};

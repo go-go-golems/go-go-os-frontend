@@ -1,8 +1,17 @@
 import { createListenerMiddleware, type PayloadAction } from '@reduxjs/toolkit';
 import { timelineSlice, type TimelineEntity } from '@hypercard/chat-runtime';
-import { registerRuntimeCard } from '../../plugin-runtime';
+import { registerRuntimeSurface } from '../../plugin-runtime';
 import { extractArtifactUpsertFromTimelineEntity } from './artifactRuntime';
 import { upsertArtifact } from './artifactsSlice';
+
+function runtimeSurfaceEntityIsFinal(entity: TimelineEntity): boolean {
+  const rawStatus = entity.props?.status;
+  if (typeof rawStatus !== 'string') {
+    return true;
+  }
+  const status = rawStatus.trim().toLowerCase();
+  return status !== 'streaming' && status !== 'pending';
+}
 
 function projectArtifactFromEntity(dispatch: (action: unknown) => unknown, entity: TimelineEntity | undefined) {
   if (!entity) {
@@ -14,15 +23,20 @@ function projectArtifactFromEntity(dispatch: (action: unknown) => unknown, entit
     return;
   }
 
+  const queueForInjection =
+    runtimeSurfaceEntityIsFinal(entity) &&
+    Boolean(upsert.runtimeSurfaceId && upsert.runtimeSurfaceCode && upsert.packId);
+
   dispatch(
     upsertArtifact({
       ...upsert,
       updatedAt: Date.now(),
+      queueForInjection,
     }),
   );
 
-  if (upsert.runtimeCardId && upsert.runtimeCardCode) {
-    registerRuntimeCard(upsert.runtimeCardId, upsert.runtimeCardCode, upsert.packId);
+  if (queueForInjection && upsert.runtimeSurfaceId && upsert.runtimeSurfaceCode && upsert.packId) {
+    registerRuntimeSurface(upsert.runtimeSurfaceId, upsert.runtimeSurfaceCode, upsert.packId);
   }
 }
 

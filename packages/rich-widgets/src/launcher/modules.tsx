@@ -28,17 +28,11 @@ import {
   MAC_WRITE_STATE_KEY,
   macWriteReducer,
 } from '../mac-write/macWriteState';
-import { KanbanBoard } from '../kanban/KanbanBoard';
-import {
-  KANBAN_STATE_KEY,
-  kanbanReducer,
-} from '../kanban/kanbanState';
-import { KANBAN_EXAMPLE_BOARDS } from '../kanban/exampleBoards';
-import { MacRepl } from '../repl/MacRepl';
+import { MacRepl } from '@hypercard/repl';
 import {
   MAC_REPL_STATE_KEY,
   macReplReducer,
-} from '../repl/replState';
+} from '@hypercard/repl';
 import { NodeEditor } from '../node-editor/NodeEditor';
 import {
   NODE_EDITOR_STATE_KEY,
@@ -132,8 +126,6 @@ import {
 
 type LaunchReason = 'icon' | 'menu' | 'command' | 'startup';
 type RichWidgetsInstanceId = 'folder' | `widget~${string}`;
-type RichWidgetsFolderId = 'root' | 'kanban';
-
 interface RichWidgetDef {
   id: string;
   name: string;
@@ -148,16 +140,6 @@ export const RICH_WIDGETS: readonly RichWidgetDef[] = [
   { id: 'log-viewer', name: 'Log Viewer', icon: '\uD83D\uDCCB', order: 100, w: 900, h: 600, render: () => <LogViewer /> },
   { id: 'chart-view', name: 'Chart View', icon: '\uD83D\uDCC8', order: 101, w: 800, h: 560, render: () => <ChartView /> },
   { id: 'mac-write', name: 'MacWrite', icon: '\u270D\uFE0F', order: 102, w: 800, h: 620, render: () => <MacWrite /> },
-  { id: 'kanban-board', name: 'Kanban Board', icon: '\uD83D\uDCCB', order: 103, w: 960, h: 640, render: () => <KanbanBoard /> },
-  ...KANBAN_EXAMPLE_BOARDS.map((board, index) => ({
-    id: board.id,
-    name: board.name,
-    icon: board.icon,
-    order: 103.1 + (index / 10),
-    w: 960,
-    h: 640,
-    render: () => <KanbanBoard {...board.props} />,
-  })),
   { id: 'mac-repl', name: 'MacRepl', icon: '\uD83D\uDCBB', order: 104, w: 720, h: 480, render: () => <MacRepl /> },
   { id: 'node-editor', name: 'Node Editor', icon: '\uD83D\uDD17', order: 105, w: 900, h: 600, render: () => <NodeEditor /> },
   { id: 'oscilloscope', name: 'Oscilloscope', icon: '\uD83D\uDCDF', order: 106, w: 800, h: 560, render: () => <Oscilloscope /> },
@@ -180,11 +162,6 @@ export const RICH_WIDGETS: readonly RichWidgetDef[] = [
 ];
 
 const RICH_WIDGETS_BY_ID = new Map(RICH_WIDGETS.map((widget) => [widget.id, widget]));
-const KANBAN_FOLDER_ICON_ID = 'folder.kanban';
-const KANBAN_WIDGET_IDS = new Set<string>([
-  'kanban-board',
-  ...KANBAN_EXAMPLE_BOARDS.map((board) => board.id),
-]);
 
 function buildWidgetWindow(widget: RichWidgetDef, reason: LaunchReason): OpenWindowPayload {
   return {
@@ -240,66 +217,26 @@ function RichWidgetsFolderWindow({
   dispatchWindowAction: (action: unknown) => unknown;
 }) {
   const [selectedIconId, setSelectedIconId] = useState<string | null>(null);
-  const [currentFolder, setCurrentFolder] = useState<RichWidgetsFolderId>('root');
   const icons = useMemo<DesktopIconDef[]>(
-    () => {
-      if (currentFolder === 'kanban') {
-        return RICH_WIDGETS
-          .filter((widgetDef) => KANBAN_WIDGET_IDS.has(widgetDef.id))
-          .map((widgetDef) => ({
-            id: widgetDef.id,
-            label: widgetDef.name,
-            icon: widgetDef.icon,
-            kind: 'app',
-            appId: 'rich-widgets',
-          }));
-      }
-
-      const rootIcons = RICH_WIDGETS
-        .filter((widgetDef) => !KANBAN_WIDGET_IDS.has(widgetDef.id))
-        .map((widgetDef) => ({
-          id: widgetDef.id,
-          label: widgetDef.name,
-          icon: widgetDef.icon,
-          kind: 'app',
-          appId: 'rich-widgets',
-        }));
-
-      rootIcons.splice(3, 0, {
-        id: KANBAN_FOLDER_ICON_ID,
-        label: 'Kanban',
-        icon: '\uD83D\uDCC1',
-        kind: 'folder',
+    () =>
+      RICH_WIDGETS.map((widgetDef) => ({
+        id: widgetDef.id,
+        label: widgetDef.name,
+        icon: widgetDef.icon,
+        kind: 'app',
         appId: 'rich-widgets',
-      });
-
-      return rootIcons;
-    },
-    [currentFolder],
+      })),
+    [],
   );
 
   return (
     <section data-part={RICH_PARTS.rwLauncher}>
       <header data-part={RICH_PARTS.rwLauncherHeader}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {currentFolder !== 'root' ? (
-            <button
-              type="button"
-              onClick={() => {
-                setCurrentFolder('root');
-                setSelectedIconId(null);
-              }}
-              style={{ fontSize: 11 }}
-            >
-              Back
-            </button>
-          ) : null}
-          <strong>{currentFolder === 'root' ? 'Rich Widgets' : 'Rich Widgets / Kanban'}</strong>
+          <strong>Rich Widgets</strong>
         </div>
         <span data-part={RICH_PARTS.rwLauncherHint}>
-          {currentFolder === 'root'
-            ? 'Double-click an icon to open the widget in its own launcher window.'
-            : 'Open a concrete Kanban board preset or the base Kanban board.'}
+          Double-click an icon to open the widget in its own launcher window.
         </span>
       </header>
       <DesktopIconLayer
@@ -307,11 +244,6 @@ function RichWidgetsFolderWindow({
         selectedIconId={selectedIconId}
         onSelectIcon={setSelectedIconId}
         onOpenIcon={(iconId: string) => {
-          if (iconId === KANBAN_FOLDER_ICON_ID) {
-            setCurrentFolder('kanban');
-            setSelectedIconId(null);
-            return;
-          }
           const widgetDef = RICH_WIDGETS_BY_ID.get(iconId);
           if (!widgetDef) {
             return;
@@ -392,14 +324,6 @@ export const macWriteModule: LaunchableAppModule = {
   state: {
     stateKey: MAC_WRITE_STATE_KEY,
     reducer: macWriteReducer,
-  },
-};
-
-export const kanbanBoardModule: LaunchableAppModule = {
-  ...widgetModule(RICH_WIDGETS_BY_ID.get('kanban-board')!),
-  state: {
-    stateKey: KANBAN_STATE_KEY,
-    reducer: kanbanReducer,
   },
 };
 
@@ -560,7 +484,6 @@ export const RICH_WIDGET_MODULES: readonly LaunchableAppModule[] = [
   logViewerModule,
   chartViewModule,
   macWriteModule,
-  kanbanBoardModule,
   macReplModule,
   nodeEditorModule,
   oscilloscopeModule,

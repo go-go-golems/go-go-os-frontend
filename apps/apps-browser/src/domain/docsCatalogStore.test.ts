@@ -58,14 +58,14 @@ describe('docsCatalogStore', () => {
 
   it('loads individual doc objects by canonical path', async () => {
     const registry = new DocsRegistry();
-    registry.register(createMount('card', 'os-launcher', 'kanbanIncidentCommand'));
+    registry.register(createMount('surface', 'os-launcher', 'kanbanIncidentCommand'));
     const store = createDocsCatalogStore(registry);
 
-    await store.ensureObjectLoaded('/docs/objects/card/os-launcher/kanbanIncidentCommand');
+    await store.ensureObjectLoaded('/docs/objects/surface/os-launcher/kanbanIncidentCommand');
     const snapshot = store.getSnapshot();
 
-    expect(snapshot.objects['/docs/objects/card/os-launcher/kanbanIncidentCommand']?.status).toBe('ready');
-    expect(snapshot.objects['/docs/objects/card/os-launcher/kanbanIncidentCommand']?.value?.content).toBe(
+    expect(snapshot.objects['/docs/objects/surface/os-launcher/kanbanIncidentCommand']?.status).toBe('ready');
+    expect(snapshot.objects['/docs/objects/surface/os-launcher/kanbanIncidentCommand']?.value?.content).toBe(
       'doc content',
     );
   });
@@ -73,7 +73,7 @@ describe('docsCatalogStore', () => {
   it('stores search result paths without Redux', async () => {
     const registry = new DocsRegistry();
     registry.register(createMount('module', 'inventory'));
-    registry.register(createMount('card', 'os-launcher', 'kanbanIncidentCommand'));
+    registry.register(createMount('surface', 'os-launcher', 'kanbanIncidentCommand'));
     const store = createDocsCatalogStore(registry);
 
     await store.runSearch({ query: 'kanban' });
@@ -81,7 +81,7 @@ describe('docsCatalogStore', () => {
     const key = JSON.stringify({ query: 'kanban', kinds: [], owners: [], topics: [], docTypes: [] });
 
     expect(snapshot.searches[key]?.status).toBe('ready');
-    expect(snapshot.searches[key]?.resultPaths).toEqual(['/docs/objects/card/os-launcher/kanbanIncidentCommand']);
+    expect(snapshot.searches[key]?.resultPaths).toEqual(['/docs/objects/surface/os-launcher/kanbanIncidentCommand']);
   });
 
   it('reloads mount summaries when a mount is replaced at the same path', async () => {

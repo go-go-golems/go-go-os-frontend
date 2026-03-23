@@ -65,7 +65,7 @@ function createDesktopCommandContext() {
     dispatch: vi.fn(),
     getState: vi.fn(),
     focusedWindowId: null,
-    openCardWindow: vi.fn(),
+    openSurfaceWindow: vi.fn(),
     closeWindow: vi.fn(),
   };
 }

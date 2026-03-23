@@ -1,9 +1,9 @@
 import { showToast } from '@hypercard/engine';
-import { authorizeDomainIntent, authorizeSystemIntent } from '../features/pluginCardRuntime';
-import { ingestRuntimeAction } from '../features/pluginCardRuntime';
+import { authorizeDomainIntent, authorizeSystemIntent } from '../features/runtimeSessions';
+import { ingestRuntimeAction } from '../features/runtimeSessions';
 import { closeWindow, sessionNavBack, sessionNavGo } from '@hypercard/engine/desktop-core';
 import type { RuntimeAction } from '../plugin-runtime/contracts';
-import type { CapabilityPolicy } from '../features/pluginCardRuntime';
+import type { CapabilityPolicy } from '../features/runtimeSessions';
 import { getRuntimeActionDomain, getRuntimeActionKind } from '../plugin-runtime/contracts';
 
 interface DispatchLike {
@@ -14,12 +14,12 @@ interface ActionDispatchContext {
   dispatch: DispatchLike;
   getState?: () => unknown;
   sessionId: string;
-  cardId: string;
+  surfaceId: string;
   windowId: string;
 }
 
 interface RuntimeStateLike {
-  pluginCardRuntime?: {
+  runtimeSessions?: {
     sessions?: Record<string, { capabilities?: CapabilityPolicy }>;
   };
 }
@@ -38,13 +38,13 @@ function toSystemAction(action: RuntimeAction, context: ActionDispatchContext): 
       return null;
     }
 
-    const card = action.payload.cardId;
-    if (typeof card !== 'string' || card.length === 0) {
+    const surface = action.payload.surfaceId;
+    if (typeof surface !== 'string' || surface.length === 0) {
       return null;
     }
 
     const param = typeof action.payload.param === 'string' ? action.payload.param : undefined;
-    return sessionNavGo({ sessionId: context.sessionId, card, param });
+    return sessionNavGo({ sessionId: context.sessionId, surface, param });
   }
 
   if (action.type === 'notify.show') {
@@ -75,7 +75,7 @@ function toDomainAction(action: RuntimeAction, context: ActionDispatchContext) {
       source: 'plugin-runtime',
       sessionId: context.sessionId,
       runtimeSessionId: context.sessionId,
-      cardId: context.cardId,
+      surfaceId: context.surfaceId,
       windowId: context.windowId,
     },
   };
@@ -85,12 +85,12 @@ export function dispatchRuntimeAction(action: RuntimeAction, context: ActionDisp
   context.dispatch(
     ingestRuntimeAction({
       sessionId: context.sessionId,
-      cardId: context.cardId,
+      surfaceId: context.surfaceId,
       action,
     }),
   );
 
-  const runtimeSession = (context.getState?.() as RuntimeStateLike | undefined)?.pluginCardRuntime?.sessions?.[
+  const runtimeSession = (context.getState?.() as RuntimeStateLike | undefined)?.runtimeSessions?.sessions?.[
     context.sessionId
   ];
   const kind = getRuntimeActionKind(action.type);

@@ -12,13 +12,14 @@ const baseWindow = {
 };
 
 const ctx = {
-  stack: {
+  bundle: {
     id: 's1',
     name: 'Stack',
     icon: '🧪',
-    cards: {},
-    homeCard: 'home',
+    surfaces: {},
+    homeSurface: 'home',
     plugin: {
+      packageIds: [],
       bundleCode: '',
       capabilities: {},
     },

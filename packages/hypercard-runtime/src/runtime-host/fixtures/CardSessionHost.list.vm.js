@@ -1,4 +1,4 @@
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   const ITEMS = [
     ['W-1001', 'Widget A', 'Widgets', '$12.00', '45'],
     ['G-2001', 'Gadget B', 'Gadgets', '$25.50', '38'],
@@ -11,8 +11,10 @@ defineStackBundle(({ ui }) => {
   return {
     id: 'list-demo',
     title: 'List Demo',
-    cards: {
+    packageIds: ["ui"],
+    surfaces: {
       browse: {
+        packId: 'ui.card.v1',
         render() {
           return ui.panel([
             ui.text('Browse Items'),

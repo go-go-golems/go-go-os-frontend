@@ -13,7 +13,7 @@ export {
   type WindowingStateSlice,
 } from './selectors';
 export type {
-  CardSessionRef,
+  RuntimeSurfaceSessionRef,
   DesktopContextMenuActionItem,
   DesktopContextMenuIconKind,
   DesktopContextMenuItem,

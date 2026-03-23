@@ -1,18 +1,18 @@
 import { type ComponentType, useRef } from 'react';
 import { Provider } from 'react-redux';
-import type { CardStackDefinition } from '../cards/types';
+import type { RuntimeBundleDefinition } from '../cards/types';
 import type { DesktopIconDef } from '../components/shell/windowing/types';
 import { DesktopShell } from '../components/shell/windowing/DesktopShell';
 
 export interface CardStoriesConfig {
-  /** The card stack definition */
-  stack: CardStackDefinition;
+  /** The runtime bundle definition */
+  bundle: RuntimeBundleDefinition;
   /** Factory to create a fresh store (for story isolation). Use createAppStore().createStore. */
   createStore: () => any; // eslint-disable-line -- Store type varies per app; typed at call site
   /** Optional desktop icon overrides for DesktopShell stories */
   icons?: DesktopIconDef[];
-  /** Map of card → structured params value for detail/param cards in stories */
-  cardParams?: Record<string, unknown>;
+  /** Map of surface id -> structured params value for detail/param surfaces in stories */
+  surfaceParams?: Record<string, unknown>;
   /** Optional store seeding hook for deterministic story runtime state. */
   seedStore?: (store: any) => void;
 }
@@ -31,7 +31,7 @@ export function toStoryParam(value: unknown): string | undefined {
 }
 
 /**
- * Creates a Storybook store decorator and per-card story objects from a stack definition.
+ * Creates a Storybook store decorator and per-card story objects from a bundle definition.
  *
  * The `meta` object (title, component, etc.) must be defined in the story file itself
  * because Storybook's CSF parser requires a statically-visible `export default`.
@@ -56,7 +56,7 @@ export function toStoryParam(value: unknown): string | undefined {
  * ```
  */
 export function createStoryHelpers(config: CardStoriesConfig) {
-  const { stack, createStore, icons, cardParams = {}, seedStore } = config;
+  const { bundle, createStore, icons, surfaceParams = {}, seedStore } = config;
 
   function StoryStoreProvider({ Story }: { Story: ComponentType }) {
     const storeRef = useRef<any>(null);
@@ -81,16 +81,16 @@ export function createStoryHelpers(config: CardStoriesConfig) {
     return <StoryStoreProvider Story={Story} />;
   }
 
-  // Shell-at-card component for navigating to a specific card
-  function ShellAtCard({ card, params }: { card: string; params?: unknown }) {
-    const stackAtCard = {
-      ...stack,
-      homeCard: card,
+  // Shell-at-surface component for navigating to a specific runtime surface
+  function ShellAtSurface({ surfaceId, params }: { surfaceId: string; params?: unknown }) {
+    const bundleAtSurface = {
+      ...bundle,
+      homeSurface: surfaceId,
     };
 
     return (
       <DesktopShell
-        stack={stackAtCard}
+        bundle={bundleAtSurface}
         icons={icons}
         homeParam={toStoryParam(params)}
       />
@@ -99,18 +99,18 @@ export function createStoryHelpers(config: CardStoriesConfig) {
 
   // Full app component (for default story / meta.component)
   function FullApp() {
-    return <DesktopShell stack={stack} icons={icons} />;
+    return <DesktopShell bundle={bundle} icons={icons} />;
   }
 
   /**
-   * Creates a story object for a specific card.
-   * @param card — card ID from the stack
+   * Creates a story object for a specific runtime surface.
+   * @param surfaceId - surface ID from the bundle
    * @param params — optional structured params payload (encoded for nav storage)
    */
-  function createStory(card: string, params?: unknown) {
-    const resolvedParams = params ?? cardParams[card];
+  function createStory(surfaceId: string, params?: unknown) {
+    const resolvedParams = params ?? surfaceParams[surfaceId];
     return {
-      render: () => <ShellAtCard card={card} params={resolvedParams} />,
+      render: () => <ShellAtSurface surfaceId={surfaceId} params={resolvedParams} />,
     };
   }
 

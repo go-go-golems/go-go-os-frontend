@@ -1,6 +1,6 @@
 // @ts-check
 /// <reference path="./pluginBundle.authoring.d.ts" />
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   function asRecord(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   }
@@ -84,8 +84,8 @@ defineStackBundle(({ ui }) => {
     context.dispatch({ type: 'draft.set', payload: { path, value } });
   }
 
-  function navigate(context, cardId, param) {
-    const payload = param ? { cardId, param: toText(param) } : { cardId };
+  function navigate(context, surfaceId, param) {
+    const payload = param ? { surfaceId, param: toText(param) } : { surfaceId };
     context.dispatch({ type: 'nav.go', payload });
   }
 
@@ -110,8 +110,8 @@ defineStackBundle(({ ui }) => {
       items.length === 0 ? ui.badge(emptyMessage) : ui.text('Quick open:'),
       ui.column(quickOpen),
       ui.row([
-        ui.button('➕ New Task', { onClick: { handler: 'go', args: { cardId: 'newTask' } } }),
-        ui.button('🏠 Home', { onClick: { handler: 'go', args: { cardId: 'home' } } }),
+        ui.button('➕ New Task', { onClick: { handler: 'go', args: { surfaceId: 'newTask' } } }),
+        ui.button('🏠 Home', { onClick: { handler: 'go', args: { surfaceId: 'home' } } }),
       ]),
     ]);
   }
@@ -119,28 +119,29 @@ defineStackBundle(({ ui }) => {
   return {
     id: 'todo',
     title: 'My Tasks',
+    packageIds: ["ui"],
     initialSessionState: {
       defaultPriority: 'medium',
     },
-    initialCardState: {
+    initialSurfaceState: {
       taskDetail: { edits: {} },
       newTask: { form: { title: '', priority: 'medium', due: '' }, submitResult: '' },
     },
-    cards: {
+    surfaces: {
       home: {
         render() {
           return ui.panel([
             ui.text('My Tasks'),
             ui.text('Plugin DSL runtime'),
-            ui.button('📋 All Tasks', { onClick: { handler: 'go', args: { cardId: 'browse' } } }),
-            ui.button('🔥 In Progress', { onClick: { handler: 'go', args: { cardId: 'inProgress' } } }),
-            ui.button('✅ Completed', { onClick: { handler: 'go', args: { cardId: 'completed' } } }),
-            ui.button('➕ New Task', { onClick: { handler: 'go', args: { cardId: 'newTask' } } }),
+            ui.button('📋 All Tasks', { onClick: { handler: 'go', args: { surfaceId: 'browse' } } }),
+            ui.button('🔥 In Progress', { onClick: { handler: 'go', args: { surfaceId: 'inProgress' } } }),
+            ui.button('✅ Completed', { onClick: { handler: 'go', args: { surfaceId: 'completed' } } }),
+            ui.button('➕ New Task', { onClick: { handler: 'go', args: { surfaceId: 'newTask' } } }),
           ]);
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
         },
       },
@@ -151,7 +152,7 @@ defineStackBundle(({ ui }) => {
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
           openTask(context, args) {
             navigate(context, 'taskDetail', toText(asRecord(args).id));
@@ -166,7 +167,7 @@ defineStackBundle(({ ui }) => {
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
           openTask(context, args) {
             navigate(context, 'taskDetail', toText(asRecord(args).id));
@@ -181,7 +182,7 @@ defineStackBundle(({ ui }) => {
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
           openTask(context, args) {
             navigate(context, 'taskDetail', toText(asRecord(args).id));

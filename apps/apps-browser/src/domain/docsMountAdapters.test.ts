@@ -3,8 +3,8 @@ import type { FetchLike } from './docsMountAdapters';
 import {
   createHelpDocsMount,
   createModuleDocsMount,
-  createVmmetaCardDocsMount,
-  createVmmetaPackDocsMount,
+  createVmmetaSurfaceDocsMount,
+  createVmmetaSurfaceTypeDocsMount,
   registerDefaultDocsMounts,
 } from './docsMountAdapters';
 
@@ -78,19 +78,19 @@ describe('docsMountAdapters', () => {
     ]);
   });
 
-  it('maps vmmeta package and card docs into mounts', async () => {
+  it('maps vmmeta surface-type and surface docs into mounts', async () => {
     const metadata = {
       packId: 'kanban.v1',
       cards: [
-        { id: 'kanbanIncidentCommand', packId: 'kanban.v1', title: 'Incident Command', source: 'defineCard(...)' },
+        { id: 'kanbanIncidentCommand', packId: 'kanban.v1', title: 'Incident Command', source: 'defineRuntimeSurface(...)' },
       ],
       docs: {
         files: [
           {
             package: {
               name: 'kanban.v1',
-              title: 'Kanban Runtime Pack',
-              category: 'runtime-pack',
+              title: 'Kanban Runtime Surface Type',
+              category: 'runtime-surface-type',
               description: 'Pack docs',
               prose: 'Package prose',
             },
@@ -107,18 +107,18 @@ describe('docsMountAdapters', () => {
       },
     };
 
-    const packMount = createVmmetaPackDocsMount(metadata);
-    const cardMount = createVmmetaCardDocsMount('os-launcher', metadata);
+    const surfaceTypeMount = createVmmetaSurfaceTypeDocsMount(metadata);
+    const surfaceMount = createVmmetaSurfaceDocsMount('os-launcher', metadata);
 
-    const packDocs = await packMount.list();
-    const cardDoc = await cardMount.read(['kanbanIncidentCommand']);
+    const surfaceTypeDocs = await surfaceTypeMount.list();
+    const surfaceDoc = await surfaceMount.read(['kanbanIncidentCommand']);
 
-    expect(packDocs.map((doc) => doc.path)).toEqual([
-      '/docs/objects/pack/kanban.v1/overview',
-      '/docs/objects/pack/kanban.v1/widgets.kanban.page',
+    expect(surfaceTypeDocs.map((doc) => doc.path)).toEqual([
+      '/docs/objects/surface-type/kanban.v1/overview',
+      '/docs/objects/surface-type/kanban.v1/widgets.kanban.page',
     ]);
-    expect(cardDoc?.path).toBe('/docs/objects/card/os-launcher/kanbanIncidentCommand');
-    expect(cardDoc?.content).toContain('Card prose');
-    expect(cardDoc?.content).toContain('defineCard(...)');
+    expect(surfaceDoc?.path).toBe('/docs/objects/surface/os-launcher/kanbanIncidentCommand');
+    expect(surfaceDoc?.content).toContain('Card prose');
+    expect(surfaceDoc?.content).toContain('defineRuntimeSurface(...)');
   });
 });

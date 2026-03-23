@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import type { CardStackDefinition } from '../../../cards';
+import type { RuntimeBundleDefinition } from '../../../cards';
 import type { WindowInstance } from '../../../desktop/core/state/types';
 
 export interface WindowAdapterContext {
-  stack: CardStackDefinition;
+  bundle: RuntimeBundleDefinition;
   mode: 'interactive' | 'preview';
   renderAppWindow?: (appKey: string, windowId: string) => ReactNode;
 }

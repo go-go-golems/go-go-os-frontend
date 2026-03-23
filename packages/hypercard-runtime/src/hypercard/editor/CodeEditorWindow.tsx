@@ -6,15 +6,16 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { bracketMatching, foldGutter, indentOnInput, syntaxHighlighting } from '@codemirror/language';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { classHighlighter } from '@lezer/highlight';
-import { hasRuntimeCard, registerRuntimeCard } from '../../plugin-runtime';
+import { hasRuntimeSurface, registerRuntimeSurface } from '../../plugin-runtime';
 
 export interface CodeEditorWindowProps {
-  cardId: string;
+  surfaceId: string;
   initialCode: string;
-  onSave?: (cardId: string, code: string) => void;
+  packId?: string;
+  onSave?: (surfaceId: string, code: string) => void;
 }
 
-export function CodeEditorWindow({ cardId, initialCode, onSave }: CodeEditorWindowProps) {
+export function CodeEditorWindow({ surfaceId, initialCode, packId, onSave }: CodeEditorWindowProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const [status, setStatus] = useState<{ type: 'idle' | 'saved' | 'error'; message?: string }>({ type: 'idle' });
@@ -90,14 +91,18 @@ export function CodeEditorWindow({ cardId, initialCode, onSave }: CodeEditorWind
 
     const code = view.state.doc.toString();
     try {
-      registerRuntimeCard(cardId, code);
-      setStatus({ type: 'saved', message: `Injected ${cardId} — ${code.length} chars` });
+      const normalizedPackId = typeof packId === 'string' ? packId.trim() : '';
+      if (!normalizedPackId) {
+        throw new Error(`Runtime surface packId is required for ${surfaceId}`);
+      }
+      registerRuntimeSurface(surfaceId, code, normalizedPackId);
+      setStatus({ type: 'saved', message: `Injected ${surfaceId} — ${code.length} chars` });
       setDirty(false);
-      onSave?.(cardId, code);
+      onSave?.(surfaceId, code);
     } catch (err) {
       setStatus({ type: 'error', message: err instanceof Error ? err.message : String(err) });
     }
-  }, [cardId, onSave]);
+  }, [packId, surfaceId, onSave]);
 
   handleSaveRef.current = handleSave;
 
@@ -111,7 +116,7 @@ export function CodeEditorWindow({ cardId, initialCode, onSave }: CodeEditorWind
     setStatus({ type: 'idle' });
   }, [initialCode]);
 
-  const isRegistered = hasRuntimeCard(cardId);
+  const isRegistered = hasRuntimeSurface(surfaceId);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#282c34' }}>
@@ -121,7 +126,7 @@ export function CodeEditorWindow({ cardId, initialCode, onSave }: CodeEditorWind
         padding: '6px 10px', borderBottom: '1px solid #444',
         fontSize: 12, color: '#abb2bf', fontFamily: 'monospace',
       }}>
-        <span style={{ fontWeight: 700, color: '#e5c07b' }}>{cardId}</span>
+        <span style={{ fontWeight: 700, color: '#e5c07b' }}>{surfaceId}</span>
         {isRegistered && (
           <span style={{
             fontSize: 10, padding: '1px 6px', borderRadius: 3,
@@ -152,7 +157,7 @@ export function CodeEditorWindow({ cardId, initialCode, onSave }: CodeEditorWind
             <span style={{ color: '#e06c75' }}>✗ {status.message}</span>
           )}
           {status.type === 'idle' && (
-            <span style={{ color: '#666' }}>Ctrl+S to save & inject</span>
+            <span style={{ color: '#666' }}>{packId ? 'Ctrl+S to save & inject' : 'Runtime surface packId required before injection'}</span>
           )}
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
@@ -169,10 +174,11 @@ export function CodeEditorWindow({ cardId, initialCode, onSave }: CodeEditorWind
           </button>
           <button
             onClick={handleSave}
+            disabled={!packId}
             style={{
               padding: '3px 10px', fontSize: 11, borderRadius: 3,
               border: '1px solid #2d6a4f', background: '#2d6a4f', color: '#fff',
-              cursor: 'pointer', fontWeight: 600,
+              cursor: packId ? 'pointer' : 'default', fontWeight: 600, opacity: packId ? 1 : 0.5,
             }}
           >
             💾 Save &amp; Inject

@@ -4,9 +4,9 @@ import { createBookStore } from '../store';
 import { STACK } from '../../domain/stack';
 
 const { storeDecorator, createStory, FullApp } = createStoryHelpers({
-  stack: STACK,
+  bundle: STACK,
   createStore: createBookStore,
-  cardParams: { bookDetail: 'b1' },
+  surfaceParams: { bookDetail: 'b1' },
 });
 
 const meta = {

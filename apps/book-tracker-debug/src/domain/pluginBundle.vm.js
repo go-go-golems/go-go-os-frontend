@@ -1,6 +1,6 @@
 // @ts-check
 /// <reference path="./pluginBundle.authoring.d.ts" />
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   function asRecord(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   }
@@ -113,8 +113,8 @@ defineStackBundle(({ ui }) => {
     context.dispatch({ type: 'draft.set', payload: { path, value } });
   }
 
-  function navigate(context, cardId, param) {
-    const payload = param ? { cardId, param: toText(param) } : { cardId };
+  function navigate(context, surfaceId, param) {
+    const payload = param ? { surfaceId, param: toText(param) } : { surfaceId };
     context.dispatch({ type: 'nav.go', payload });
   }
 
@@ -138,23 +138,24 @@ defineStackBundle(({ ui }) => {
   return {
     id: 'bookTrackerDebug',
     title: 'Book Tracker',
-    initialCardState: {
+    packageIds: ["ui"],
+    initialSurfaceState: {
       bookDetail: { edits: {} },
       addBook: {
         formValues: { title: '', author: '', status: 'to-read', rating: 0 },
         submitResult: '',
       },
     },
-    cards: {
+    surfaces: {
       home: {
         render() {
           return ui.panel([
             ui.text('Book Tracker'),
             ui.text('Plugin runtime'),
-            ui.button('📋 Browse Books', { onClick: { handler: 'go', args: { cardId: 'browse' } } }),
-            ui.button('🔥 Reading Now', { onClick: { handler: 'go', args: { cardId: 'readingNow' } } }),
-            ui.button('📊 Reading Report', { onClick: { handler: 'go', args: { cardId: 'readingReport' } } }),
-            ui.button('➕ Add Book', { onClick: { handler: 'go', args: { cardId: 'addBook' } } }),
+            ui.button('📋 Browse Books', { onClick: { handler: 'go', args: { surfaceId: 'browse' } } }),
+            ui.button('🔥 Reading Now', { onClick: { handler: 'go', args: { surfaceId: 'readingNow' } } }),
+            ui.button('📊 Reading Report', { onClick: { handler: 'go', args: { surfaceId: 'readingReport' } } }),
+            ui.button('➕ Add Book', { onClick: { handler: 'go', args: { surfaceId: 'addBook' } } }),
             ui.row([
               ui.button('✅ Mark All Read', { onClick: { handler: 'markAllRead' } }),
               ui.button('🔄 Reset Demo Data', { onClick: { handler: 'resetDemo' } }),
@@ -163,7 +164,7 @@ defineStackBundle(({ ui }) => {
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
           markAllRead(context) {
             dispatchDomain(context, 'markAllRead');
@@ -187,16 +188,16 @@ defineStackBundle(({ ui }) => {
             items.length ? ui.text('Quick open:') : ui.badge('No books found.'),
             ui.column(quickOpenButtons(items)),
             ui.row([
-              ui.button('➕ Add', { onClick: { handler: 'go', args: { cardId: 'addBook' } } }),
+              ui.button('➕ Add', { onClick: { handler: 'go', args: { surfaceId: 'addBook' } } }),
               ui.button('✅ Mark All Read', { onClick: { handler: 'markAllRead' } }),
               ui.button('🔄 Reset', { onClick: { handler: 'resetDemo' } }),
-              ui.button('🏠 Home', { onClick: { handler: 'go', args: { cardId: 'home' } } }),
+              ui.button('🏠 Home', { onClick: { handler: 'go', args: { surfaceId: 'home' } } }),
             ]),
           ]);
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
           openBook(context, args) {
             navigate(context, 'bookDetail', toText(asRecord(args).id));
@@ -221,14 +222,14 @@ defineStackBundle(({ ui }) => {
             items.length ? ui.text('Quick open:') : ui.badge('No active reading books right now.'),
             ui.column(quickOpenButtons(items)),
             ui.row([
-              ui.button('📋 Browse All', { onClick: { handler: 'go', args: { cardId: 'browse' } } }),
+              ui.button('📋 Browse All', { onClick: { handler: 'go', args: { surfaceId: 'browse' } } }),
               ui.button('✅ Mark All Read', { onClick: { handler: 'markAllRead' } }),
             ]),
           ]);
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
           openBook(context, args) {
             navigate(context, 'bookDetail', toText(asRecord(args).id));
@@ -396,7 +397,7 @@ defineStackBundle(({ ui }) => {
             ui.text('Reading Report'),
             ui.table(reportRows(state), { headers: ['Metric', 'Value'] }),
             ui.row([
-              ui.button('📋 Browse', { onClick: { handler: 'go', args: { cardId: 'browse' } } }),
+              ui.button('📋 Browse', { onClick: { handler: 'go', args: { surfaceId: 'browse' } } }),
               ui.button('✅ Mark All Read', { onClick: { handler: 'markAllRead' } }),
               ui.button('🔄 Reset Demo', { onClick: { handler: 'resetDemo' } }),
             ]),
@@ -404,7 +405,7 @@ defineStackBundle(({ ui }) => {
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
           markAllRead(context) {
             dispatchDomain(context, 'markAllRead');

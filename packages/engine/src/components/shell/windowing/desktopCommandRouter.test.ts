@@ -3,9 +3,9 @@ import { routeDesktopCommand, type DesktopCommandRouteContext } from './desktopC
 
 function makeContext(overrides: Partial<DesktopCommandRouteContext> = {}): DesktopCommandRouteContext {
   return {
-    homeCardId: 'home',
+    homeSurfaceId: 'home',
     focusedWindowId: 'window-1',
-    openCardWindow: vi.fn(),
+    openSurfaceWindow: vi.fn(),
     closeWindow: vi.fn(),
     tileWindows: vi.fn(),
     cascadeWindows: vi.fn(),
@@ -19,7 +19,7 @@ describe('routeDesktopCommand', () => {
     const handled = routeDesktopCommand('window.open.home', ctx);
 
     expect(handled).toBe(true);
-    expect(ctx.openCardWindow).toHaveBeenCalledWith('home', { dedupe: false });
+    expect(ctx.openSurfaceWindow).toHaveBeenCalledWith('home', { dedupe: false });
   });
 
   it('closes focused window for window.close-focused when focus exists', () => {
@@ -38,12 +38,12 @@ describe('routeDesktopCommand', () => {
     expect(ctx.closeWindow).not.toHaveBeenCalled();
   });
 
-  it('opens specific card for window.open.card.*', () => {
+  it('opens a specific surface for window.open.surface.*', () => {
     const ctx = makeContext();
-    const handled = routeDesktopCommand('window.open.card.report', ctx);
+    const handled = routeDesktopCommand('window.open.surface.report', ctx);
 
     expect(handled).toBe(true);
-    expect(ctx.openCardWindow).toHaveBeenCalledWith('report', { dedupe: false });
+    expect(ctx.openSurfaceWindow).toHaveBeenCalledWith('report', { dedupe: false });
   });
 
   it('routes tile and cascade commands', () => {
@@ -60,7 +60,7 @@ describe('routeDesktopCommand', () => {
     const handled = routeDesktopCommand('chat.new', ctx);
 
     expect(handled).toBe(false);
-    expect(ctx.openCardWindow).not.toHaveBeenCalled();
+    expect(ctx.openSurfaceWindow).not.toHaveBeenCalled();
     expect(ctx.closeWindow).not.toHaveBeenCalled();
     expect(ctx.tileWindows).not.toHaveBeenCalled();
     expect(ctx.cascadeWindows).not.toHaveBeenCalled();

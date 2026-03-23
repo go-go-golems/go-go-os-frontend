@@ -34,7 +34,7 @@ describe('createLauncherStore', () => {
 
     const state = launcher.store.getState() as Record<string, unknown>;
     expect(state).toHaveProperty('windowing');
-    expect(state).toHaveProperty('pluginCardRuntime');
+    expect(state).toHaveProperty('runtimeSessions');
     expect(state).toHaveProperty('notifications');
     expect(state).toHaveProperty('debug');
     expect(state).toHaveProperty('hypercardArtifacts');
@@ -96,7 +96,17 @@ describe('createLauncherStore', () => {
     expect(() =>
       createLauncherStore([], {
         sharedReducers: {
-          windowing: inventoryReducer,
+          runtimeSessions: inventoryReducer,
+        },
+      }),
+    ).toThrow(/reserved by engine core reducers/);
+  });
+
+  it('keeps the legacy pluginCardRuntime key reserved', () => {
+    expect(() =>
+      createLauncherStore([], {
+        sharedReducers: {
+          pluginCardRuntime: inventoryReducer,
         },
       }),
     ).toThrow(/reserved by engine core reducers/);

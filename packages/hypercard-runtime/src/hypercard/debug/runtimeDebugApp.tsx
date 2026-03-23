@@ -1,6 +1,6 @@
-import type { CardStackDefinition } from '@hypercard/engine';
+import type { RuntimeBundleDefinition } from '@hypercard/engine';
 import type { OpenWindowPayload } from '@hypercard/engine/desktop-core';
-import { RuntimeCardDebugWindow } from './RuntimeCardDebugWindow';
+import { RuntimeSurfaceDebugWindow } from './RuntimeSurfaceDebugWindow';
 
 export const HYPERCARD_RUNTIME_DEBUG_APP_ID = 'hypercard-runtime-debug';
 export const HYPERCARD_RUNTIME_DEBUG_INSTANCE_ID = 'stacks';
@@ -17,7 +17,7 @@ export interface BuildRuntimeDebugWindowPayloadOptions {
 export interface RuntimeDebugAppWindowProps {
   ownerAppId: string;
   instanceId: string;
-  stacks?: CardStackDefinition[];
+  bundles?: RuntimeBundleDefinition[];
 }
 
 export function buildRuntimeDebugWindowPayload(options: BuildRuntimeDebugWindowPayloadOptions = {}): OpenWindowPayload {
@@ -36,7 +36,7 @@ export function buildRuntimeDebugWindowPayload(options: BuildRuntimeDebugWindowP
   };
 }
 
-export function RuntimeDebugAppWindow({ ownerAppId, instanceId, stacks }: RuntimeDebugAppWindowProps) {
+export function RuntimeDebugAppWindow({ ownerAppId, instanceId, bundles }: RuntimeDebugAppWindowProps) {
   if (instanceId !== HYPERCARD_RUNTIME_DEBUG_INSTANCE_ID) {
     return (
       <section style={{ padding: 12, display: 'grid', gap: 8 }}>
@@ -46,5 +46,5 @@ export function RuntimeDebugAppWindow({ ownerAppId, instanceId, stacks }: Runtim
     );
   }
 
-  return <RuntimeCardDebugWindow ownerAppId={ownerAppId} stacks={stacks} />;
+  return <RuntimeSurfaceDebugWindow ownerAppId={ownerAppId} bundles={bundles} />;
 }

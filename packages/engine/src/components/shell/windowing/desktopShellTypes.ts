@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { CardStackDefinition } from '../../../cards';
+import type { RuntimeBundleDefinition } from '../../../cards';
 import type { DesktopContribution } from './desktopContributions';
 import type {
   DesktopCommandInvocation,
@@ -9,17 +9,17 @@ import type {
 } from './types';
 
 export interface DesktopShellProps {
-  stack: CardStackDefinition;
+  bundle: RuntimeBundleDefinition;
   mode?: 'interactive' | 'preview';
   themeClass?: string;
-  /** Optional initial param injected into the first auto-opened home-card window. */
+  /** Optional initial param injected into the first auto-opened home-surface window. */
   homeParam?: string;
   /** Custom menu sections. If omitted, a default menu is generated. */
   menus?: DesktopMenuSection[];
-  /** Custom desktop icons. If omitted, icons are generated from stack cards. */
+  /** Custom desktop icons. If omitted, icons are generated from bundle surfaces. */
   icons?: DesktopIconDef[];
   /**
-   * Render a custom window body for non-card windows (content.kind === 'app').
+   * Render a custom window body for non-surface windows (content.kind === 'app').
    * Receives the appKey from the window's content and the window id.
    * Return null to fall back to the default placeholder.
    */

@@ -1,0 +1,25 @@
+export const KANBAN_PARTS = {
+  kb: 'kb',
+  kbHighlights: 'kb-highlights',
+  kbHighlight: 'kb-highlight',
+  kbHighlightLabel: 'kb-highlight-label',
+  kbHighlightValue: 'kb-highlight-value',
+  kbHighlightCaption: 'kb-highlight-caption',
+  kbHighlightTrend: 'kb-highlight-trend',
+  kbBoard: 'kb-board',
+  kbColumn: 'kb-column',
+  kbColumnHeader: 'kb-column-header',
+  kbColumnCount: 'kb-column-count',
+  kbColumnCards: 'kb-column-cards',
+  kbCard: 'kb-card',
+  kbCardTitle: 'kb-card-title',
+  kbCardDesc: 'kb-card-desc',
+  kbCardTags: 'kb-card-tags',
+  kbTag: 'kb-tag',
+  kbModal: 'kb-modal',
+  kbModalHeader: 'kb-modal-header',
+  kbModalBody: 'kb-modal-body',
+  kbModalFooter: 'kb-modal-footer',
+} as const;
+
+export type KanbanPartName = (typeof KANBAN_PARTS)[keyof typeof KANBAN_PARTS];

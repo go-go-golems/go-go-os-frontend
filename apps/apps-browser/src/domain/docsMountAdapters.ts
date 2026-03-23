@@ -167,17 +167,17 @@ export function createHelpDocsMount(owner = 'wesen-os', fetcher: FetchLike = def
   };
 }
 
-function normalizeVmmetaPackageSlug(pack: VmmetaPackageDoc): string {
+function normalizeVmmetaSurfaceTypeSlug(pack: VmmetaPackageDoc): string {
   return 'overview';
 }
 
-function packDocToObject(packId: string, pack: VmmetaPackageDoc, mountPath: DocsMountPath): DocObject {
+function surfaceTypeDocToObject(surfaceTypeId: string, pack: VmmetaPackageDoc, mountPath: DocsMountPath): DocObject {
   return {
-    path: buildDocObjectPath('pack', packId, normalizeVmmetaPackageSlug(pack)),
+    path: buildDocObjectPath('surface-type', surfaceTypeId, normalizeVmmetaSurfaceTypeSlug(pack)),
     mountPath,
-    kind: 'pack',
-    owner: packId,
-    slug: normalizeVmmetaPackageSlug(pack),
+    kind: 'surface-type',
+    owner: surfaceTypeId,
+    slug: normalizeVmmetaSurfaceTypeSlug(pack),
     title: pack.title ?? pack.name,
     summary: pack.description,
     docType: pack.category ?? 'reference',
@@ -186,7 +186,7 @@ function packDocToObject(packId: string, pack: VmmetaPackageDoc, mountPath: Docs
   };
 }
 
-function symbolDocToObject(kind: 'pack' | 'card', owner: string, symbol: VmmetaSymbolDoc, mountPath: DocsMountPath): DocObject {
+function symbolDocToObject(kind: 'surface-type' | 'surface', owner: string, symbol: VmmetaSymbolDoc, mountPath: DocsMountPath): DocObject {
   return {
     path: buildDocObjectPath(kind, owner, symbol.name),
     mountPath,
@@ -195,25 +195,25 @@ function symbolDocToObject(kind: 'pack' | 'card', owner: string, symbol: VmmetaS
     slug: symbol.name,
     title: symbol.name,
     summary: symbol.summary,
-    docType: kind === 'pack' ? 'reference' : 'example',
+    docType: kind === 'surface-type' ? 'reference' : 'example',
     tags: symbol.tags ? [...symbol.tags] : [],
     content: symbol.prose,
     seeAlso: symbol.related ? [...symbol.related] : [],
   };
 }
 
-export function createVmmetaPackDocsMount(metadata: VmmetaMetadata): DocsMount {
-  const mountPath = buildDocsMountPath('pack', metadata.packId);
+export function createVmmetaSurfaceTypeDocsMount(metadata: VmmetaMetadata): DocsMount {
+  const mountPath = buildDocsMountPath('surface-type', metadata.packId);
 
-  function collectPackDocs(): DocObject[] {
+  function collectSurfaceTypeDocs(): DocObject[] {
     const docs: DocObject[] = [];
     for (const file of metadata.docs?.files ?? []) {
       if (file.package?.name === metadata.packId) {
-        docs.push(packDocToObject(metadata.packId, file.package, mountPath));
+        docs.push(surfaceTypeDocToObject(metadata.packId, file.package, mountPath));
       }
       for (const symbol of file.symbols ?? []) {
         if (symbol.name.startsWith('widgets.')) {
-          docs.push(symbolDocToObject('pack', metadata.packId, symbol, mountPath));
+          docs.push(symbolDocToObject('surface-type', metadata.packId, symbol, mountPath));
         }
       }
     }
@@ -223,38 +223,38 @@ export function createVmmetaPackDocsMount(metadata: VmmetaMetadata): DocsMount {
   return {
     mountPath: () => mountPath,
     async list() {
-      return collectPackDocs();
+      return collectSurfaceTypeDocs();
     },
     async read(subpath) {
       const slug = subpath[0];
       if (!slug) {
         return null;
       }
-      return collectPackDocs().find((doc) => doc.slug === slug) ?? null;
+      return collectSurfaceTypeDocs().find((doc) => doc.slug === slug) ?? null;
     },
     async search(query: DocsSearchQuery) {
-      return collectPackDocs().filter((doc) => matchesDocsSearchQuery(doc, query));
+      return collectSurfaceTypeDocs().filter((doc) => matchesDocsSearchQuery(doc, query));
     },
   };
 }
 
-export function createVmmetaCardDocsMount(owner: string, metadata: VmmetaMetadata): DocsMount {
-  const mountPath = buildDocsMountPath('card', owner);
-  const cardsById = new Map((metadata.cards ?? []).map((card) => [card.id, card]));
+export function createVmmetaSurfaceDocsMount(owner: string, metadata: VmmetaMetadata): DocsMount {
+  const mountPath = buildDocsMountPath('surface', owner);
+  const surfacesById = new Map((metadata.cards ?? []).map((surface) => [surface.id, surface]));
 
-  function collectCardDocs(): DocObject[] {
+  function collectSurfaceDocs(): DocObject[] {
     const docs: DocObject[] = [];
     for (const file of metadata.docs?.files ?? []) {
       for (const symbol of file.symbols ?? []) {
-        const card = cardsById.get(symbol.name);
-        if (!card) {
+        const surface = surfacesById.get(symbol.name);
+        if (!surface) {
           continue;
         }
         docs.push({
-          ...symbolDocToObject('card', owner, symbol, mountPath),
-          title: card.title ?? symbol.name,
+          ...symbolDocToObject('surface', owner, symbol, mountPath),
+          title: surface.title ?? symbol.name,
           summary: symbol.summary,
-          tags: [...(symbol.tags ?? []), card.packId],
+          tags: [...(symbol.tags ?? []), surface.packId],
         });
       }
     }
@@ -264,27 +264,27 @@ export function createVmmetaCardDocsMount(owner: string, metadata: VmmetaMetadat
   return {
     mountPath: () => mountPath,
     async list() {
-      return collectCardDocs();
+      return collectSurfaceDocs();
     },
     async read(subpath) {
       const slug = subpath[0];
       if (!slug) {
         return null;
       }
-      const cardDoc = collectCardDocs().find((doc) => doc.slug === slug);
-      if (!cardDoc) {
+      const surfaceDoc = collectSurfaceDocs().find((doc) => doc.slug === slug);
+      if (!surfaceDoc) {
         return null;
       }
-      const cardMeta = cardsById.get(slug);
+      const surfaceMeta = surfacesById.get(slug);
       return {
-        ...cardDoc,
-        content: [cardDoc.content, cardMeta?.source ? `\n\n## Source\n\n\`\`\`js\n${cardMeta.source}\n\`\`\`\n` : '']
+        ...surfaceDoc,
+        content: [surfaceDoc.content, surfaceMeta?.source ? `\n\n## Source\n\n\`\`\`js\n${surfaceMeta.source}\n\`\`\`\n` : '']
           .filter(Boolean)
           .join(''),
       };
     },
     async search(query: DocsSearchQuery) {
-      return collectCardDocs().filter((doc) => matchesDocsSearchQuery(doc, query));
+      return collectSurfaceDocs().filter((doc) => matchesDocsSearchQuery(doc, query));
     },
   };
 }

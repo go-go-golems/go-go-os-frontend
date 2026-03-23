@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { timelineSlice, type TimelineEntity } from '@hypercard/chat-runtime';
-import { clearRuntimeCardRegistry, hasRuntimeCard } from '../../plugin-runtime';
+import { clearRuntimeSurfaceRegistry, hasRuntimeSurface } from '../../plugin-runtime';
 import { createArtifactProjectionMiddleware } from './artifactProjectionMiddleware';
 import { hypercardArtifactsReducer } from './artifactsSlice';
 
@@ -22,10 +22,10 @@ function flushListeners() {
 
 describe('artifactProjectionMiddleware', () => {
   beforeEach(() => {
-    clearRuntimeCardRegistry();
+    clearRuntimeSurfaceRegistry();
   });
 
-  it('projects artifacts from snapshot entities and registers runtime cards', async () => {
+  it('projects artifacts from snapshot entities and registers runtime surfaces', async () => {
     const store = createStore();
     const entities: TimelineEntity[] = [
       {
@@ -58,10 +58,10 @@ describe('artifactProjectionMiddleware', () => {
 
     const artifact = store.getState().hypercardArtifacts.byId['low-stock-drilldown'];
     expect(artifact).toBeDefined();
-    expect(artifact.runtimeCardId).toBe('runtime-low-stock');
+    expect(artifact.runtimeSurfaceId).toBe('runtime-low-stock');
     expect(artifact.packId).toBe('kanban.v1');
     expect(artifact.injectionStatus).toBe('pending');
-    expect(hasRuntimeCard('runtime-low-stock')).toBe(true);
+    expect(hasRuntimeSurface('runtime-low-stock')).toBe(true);
   });
 
   it('projects artifacts from mergeSnapshot entities for first-class card kinds', async () => {
@@ -99,7 +99,83 @@ describe('artifactProjectionMiddleware', () => {
     expect(artifact).toBeDefined();
     expect(artifact.title).toBe('Current Inventory Status');
     expect(artifact.source).toBe('card');
-    expect(artifact.runtimeCardId).toBe('runtimeInventoryStatus');
+    expect(artifact.runtimeSurfaceId).toBe('runtimeInventoryStatus');
     expect(artifact.packId).toBe('ui.card.v1');
+  });
+
+  it('does not register or queue runtime surfaces while a card entity is still streaming', async () => {
+    const store = createStore();
+
+    store.dispatch(
+      timelineSlice.actions.upsertEntity({
+        convId: 'conv-3',
+        entity: {
+          id: 'evt-card:streaming',
+          kind: 'hypercard.card.v2',
+          createdAt: 4,
+          props: {
+            status: 'streaming',
+            result: {
+              title: 'Streaming Card',
+              data: {
+                artifact: {
+                  id: 'artifact-streaming',
+                },
+                runtime: {
+                  pack: 'ui.card.v1',
+                },
+                card: {
+                  id: 'runtimeStreamingCard',
+                  code: '({ ui }) => ({ render() { return ui.text("partial"); } })',
+                },
+              },
+            },
+          },
+        },
+      }),
+    );
+    await flushListeners();
+
+    const streamingArtifact = store.getState().hypercardArtifacts.byId['artifact-streaming'];
+    expect(streamingArtifact).toBeDefined();
+    expect(streamingArtifact.runtimeSurfaceId).toBe('runtimeStreamingCard');
+    expect(streamingArtifact.injectionStatus).toBeUndefined();
+    expect(hasRuntimeSurface('runtimeStreamingCard')).toBe(false);
+
+    store.dispatch(
+      timelineSlice.actions.upsertEntity({
+        convId: 'conv-3',
+        entity: {
+          id: 'evt-card:streaming',
+          kind: 'hypercard.card.v2',
+          createdAt: 4,
+          updatedAt: 5,
+          props: {
+            status: 'success',
+            result: {
+              title: 'Streaming Card',
+              data: {
+                artifact: {
+                  id: 'artifact-streaming',
+                },
+                runtime: {
+                  pack: 'ui.card.v1',
+                },
+                card: {
+                  id: 'runtimeStreamingCard',
+                  code: '({ ui }) => ({ render() { return ui.text("final"); } })',
+                },
+              },
+            },
+          },
+        },
+      }),
+    );
+    await flushListeners();
+
+    const finalArtifact = store.getState().hypercardArtifacts.byId['artifact-streaming'];
+    expect(finalArtifact.runtimeSurfaceId).toBe('runtimeStreamingCard');
+    expect(finalArtifact.injectionStatus).toBe('pending');
+    expect(hasRuntimeSurface('runtimeStreamingCard')).toBe(true);
   });
 });

@@ -2,7 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
 import { type MouseEvent, useMemo, useState } from 'react';
 import { Provider } from 'react-redux';
-import type { CardDefinition, CardStackDefinition } from '../../../cards/types';
+import type { RuntimeSurfaceMeta, RuntimeBundleDefinition } from '../../../cards/types';
 import { windowingReducer } from '../../../desktop/core/state/windowingSlice';
 import { notificationsReducer } from '../../../features/notifications/notificationsSlice';
 import type { DesktopContribution } from './desktopContributions';
@@ -10,7 +10,7 @@ import { useOpenDesktopContextMenu, useRegisterWindowContextActions } from './de
 import { DesktopShell, type DesktopShellProps } from './DesktopShell';
 import type { DesktopActionEntry, DesktopIconDef } from './types';
 
-function makeCard(id: string, title: string, icon: string, body: string): CardDefinition {
+function makeCard(id: string, title: string, icon: string, body: string): RuntimeSurfaceMeta {
   return {
     id,
     type: 'report',
@@ -23,12 +23,12 @@ function makeCard(id: string, title: string, icon: string, body: string): CardDe
   };
 }
 
-const DEMO_STACK: CardStackDefinition = {
+const DEMO_BUNDLE: RuntimeBundleDefinition = {
   id: 'desktop-shell-demo',
   name: 'Desktop Shell Demo',
   icon: '🖥️',
-  homeCard: 'home',
-  cards: {
+  homeSurface: 'home',
+  surfaces: {
     home: makeCard('home', 'Home', '🏠', 'Welcome to the engine desktop shell story.'),
     dashboard: makeCard('dashboard', 'Dashboard', '📊', 'Dashboard card body.'),
     notes: makeCard('notes', 'Notes', '📝', 'Notes card body.'),
@@ -67,7 +67,7 @@ function DesktopShellFrame(props: Partial<DesktopShellProps>) {
   return (
     <Provider store={store}>
       <div style={{ width: 980, height: 620 }}>
-        <DesktopShell stack={DEMO_STACK} {...props} />
+        <DesktopShell bundle={DEMO_BUNDLE} {...props} />
       </div>
     </Provider>
   );

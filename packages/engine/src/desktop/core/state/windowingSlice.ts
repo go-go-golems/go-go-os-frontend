@@ -22,7 +22,7 @@ const windowingSlice = createSlice({
 
     /**
      * Open a new window or focus an existing one if dedupeKey matches.
-     * If content.kind === 'card' and a cardSessionId is provided, a session
+     * If content.kind === 'surface' and a surfaceSessionId is provided, a session
      * nav stack is initialised automatically.
      */
     openWindow(state, action: PayloadAction<OpenWindowPayload>) {
@@ -62,12 +62,12 @@ const windowingSlice = createSlice({
       state.order.push(win.id);
       state.desktop.focusedWindowId = win.id;
 
-      // Bootstrap session nav for card windows
-      const sessionId = spec.content.card?.cardSessionId;
-      if (spec.content.kind === 'card' && sessionId && !state.sessions[sessionId]) {
-        const cardId = spec.content.card?.cardId ?? 'home';
+      // Bootstrap session nav for surface windows
+      const sessionId = spec.content.surface?.surfaceSessionId;
+      if (spec.content.kind === 'surface' && sessionId && !state.sessions[sessionId]) {
+        const surfaceId = spec.content.surface?.surfaceId ?? 'home';
         state.sessions[sessionId] = {
-          nav: [{ card: cardId, param: spec.content.card?.param }],
+          nav: [{ surface: surfaceId, param: spec.content.surface?.param }],
         };
       }
     },
@@ -86,14 +86,14 @@ const windowingSlice = createSlice({
     /**
      * Close window and remove it from order.
      * Focus falls to the window with the highest z among remaining.
-     * Cleans up the associated card session if one exists.
+     * Cleans up the associated surface session if one exists.
      */
     closeWindow(state, action: PayloadAction<string>) {
       const win = state.windows[action.payload];
       if (!win) return;
 
       // Clean up session
-      const sessionId = win.content.card?.cardSessionId;
+      const sessionId = win.content.surface?.surfaceSessionId;
       if (sessionId) {
         delete state.sessions[sessionId];
       }
@@ -139,11 +139,19 @@ const windowingSlice = createSlice({
       const win = state.windows[action.payload.id];
       if (!win) return;
 
+      const nextMinW =
+        action.payload.minW !== undefined ? Math.max(win.baseMinW, action.payload.minW) : win.minW;
+      const nextMinH =
+        action.payload.minH !== undefined ? Math.max(win.baseMinH, action.payload.minH) : win.minH;
+      if (nextMinW === win.minW && nextMinH === win.minH) {
+        return;
+      }
+
       if (action.payload.minW !== undefined) {
-        win.minW = Math.max(win.baseMinW, action.payload.minW);
+        win.minW = nextMinW;
       }
       if (action.payload.minH !== undefined) {
-        win.minH = Math.max(win.baseMinH, action.payload.minH);
+        win.minH = nextMinH;
       }
 
       // Clamp bounds so a window never stays smaller than the new minimum
@@ -178,15 +186,15 @@ const windowingSlice = createSlice({
 
     // ── Per-session navigation ──
 
-    /** Navigate forward in a card session's nav stack. */
-    sessionNavGo(state, action: PayloadAction<{ sessionId: string; card: string; param?: string }>) {
+    /** Navigate forward in a surface session's nav stack. */
+    sessionNavGo(state, action: PayloadAction<{ sessionId: string; surface: string; param?: string }>) {
       const session = state.sessions[action.payload.sessionId];
       if (!session) return;
 
-      session.nav.push({ card: action.payload.card, param: action.payload.param });
+      session.nav.push({ surface: action.payload.surface, param: action.payload.param });
     },
 
-    /** Go back one step in a card session's nav stack. */
+    /** Go back one step in a surface session's nav stack. */
     sessionNavBack(state, action: PayloadAction<{ sessionId: string }>) {
       const session = state.sessions[action.payload.sessionId];
       if (!session || session.nav.length <= 1) return;
@@ -194,7 +202,7 @@ const windowingSlice = createSlice({
       session.nav.pop();
     },
 
-    /** Reset a card session's nav stack to its first entry. */
+    /** Reset a surface session's nav stack to its first entry. */
     sessionNavHome(state, action: PayloadAction<{ sessionId: string }>) {
       const session = state.sessions[action.payload.sessionId];
       if (!session || session.nav.length === 0) return;

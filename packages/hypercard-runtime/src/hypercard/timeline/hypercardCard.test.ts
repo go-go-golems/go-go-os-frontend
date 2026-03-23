@@ -9,7 +9,7 @@ import {
   resetChatModulesRegistrationForTest,
   timelineSlice,
 } from '@hypercard/chat-runtime';
-import { clearRuntimeCardRegistry, hasRuntimeCard } from '../../plugin-runtime/runtimeCardRegistry';
+import { clearRuntimeSurfaceRegistry, hasRuntimeSurface } from '../../plugin-runtime/runtimeSurfaceRegistry';
 import { createArtifactProjectionMiddleware } from '../artifacts/artifactProjectionMiddleware';
 import { hypercardArtifactsReducer } from '../artifacts/artifactsSlice';
 
@@ -27,13 +27,13 @@ function createStore() {
 
 describe('hypercard card timeline projection', () => {
   beforeEach(() => {
-    clearRuntimeCardRegistry();
+    clearRuntimeSurfaceRegistry();
     clearSemHandlers();
     resetChatModulesRegistrationForTest();
     ensureChatModulesRegistered();
   });
 
-  it('keeps hypercard.card.v2 as the stored timeline kind and registers runtime card', async () => {
+  it('keeps hypercard.card.v2 as the stored timeline kind and registers a runtime surface', async () => {
     const store = createStore();
 
     handleSem(
@@ -58,6 +58,9 @@ describe('hypercard card timeline projection', () => {
                   artifact: {
                     id: 'artifact-card-1',
                     data: { sku: 'WA-100' },
+                  },
+                  runtime: {
+                    pack: 'ui.card.v1',
                   },
                   card: {
                     id: 'runtime-low-stock',
@@ -88,7 +91,7 @@ describe('hypercard card timeline projection', () => {
 
     expect(artifact).toBeDefined();
     expect(artifact.source).toBe('card');
-    expect(hasRuntimeCard('runtime-low-stock')).toBe(true);
+    expect(hasRuntimeSurface('runtime-low-stock')).toBe(true);
   });
 
   it('keeps backend suggestions projection disabled by default', () => {

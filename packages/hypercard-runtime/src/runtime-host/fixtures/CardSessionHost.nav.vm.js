@@ -1,4 +1,4 @@
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   function asRecord(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   }
@@ -44,24 +44,27 @@ defineStackBundle(({ ui }) => {
   return {
     id: 'nav-demo',
     title: 'Nav Demo',
-    cards: {
+    packageIds: ["ui"],
+    surfaces: {
       list: {
+        packId: 'ui.card.v1',
         render() {
           return ui.panel([
             ui.text('Items'),
-            ui.button('🔍 View Widget A', { onClick: { handler: 'go', args: { cardId: 'detail', param: 'widget-a' } } }),
-            ui.button('🔍 View Widget B', { onClick: { handler: 'go', args: { cardId: 'detail', param: 'widget-b' } } }),
-            ui.button('🔍 View Widget C', { onClick: { handler: 'go', args: { cardId: 'detail', param: 'widget-c' } } }),
+            ui.button('🔍 View Widget A', { onClick: { handler: 'go', args: { surfaceId: 'detail', param: 'widget-a' } } }),
+            ui.button('🔍 View Widget B', { onClick: { handler: 'go', args: { surfaceId: 'detail', param: 'widget-b' } } }),
+            ui.button('🔍 View Widget C', { onClick: { handler: 'go', args: { surfaceId: 'detail', param: 'widget-c' } } }),
           ]);
         },
         handlers: {
           go({ dispatch }, args) {
             const payload = asRecord(args);
-            dispatch({ type: 'nav.go', payload: { cardId: String(payload.cardId || 'list'), param: String(payload.param || '') } });
+            dispatch({ type: 'nav.go', payload: { surfaceId: String(payload.surfaceId || 'list'), param: String(payload.param || '') } });
           },
         },
       },
       detail: {
+        packId: 'ui.card.v1',
         render({ state }) {
           const current = item(navParam(state));
           return ui.panel([

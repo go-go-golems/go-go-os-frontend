@@ -4,9 +4,9 @@ import { createTodoStore } from '../store';
 import { STACK } from '../../domain/stack';
 
 const { storeDecorator, createStory, FullApp } = createStoryHelpers({
-  stack: STACK,
+  bundle: STACK,
   createStore: createTodoStore,
-  cardParams: { taskDetail: 't1' },
+  surfaceParams: { taskDetail: 't1' },
 });
 
 const meta = {

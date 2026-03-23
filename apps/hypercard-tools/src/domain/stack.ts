@@ -1,4 +1,4 @@
-import type { CardDefinition, CardStackDefinition } from '@hypercard/engine';
+import type { RuntimeSurfaceMeta, RuntimeBundleDefinition } from '@hypercard/engine';
 import { HYPERCARD_TOOLS_DEMO_PLUGIN_BUNDLE } from './pluginBundle';
 
 interface DemoCardMeta {
@@ -23,7 +23,7 @@ const DEMO_CARDS: DemoCardMeta[] = [
   { id: 'playground', title: 'All Widgets Playground', icon: '🧪' },
 ];
 
-function toPluginCard(meta: DemoCardMeta): CardDefinition {
+function toPluginCard(meta: DemoCardMeta): RuntimeSurfaceMeta {
   return {
     id: meta.id,
     type: 'plugin',
@@ -36,17 +36,18 @@ function toPluginCard(meta: DemoCardMeta): CardDefinition {
   };
 }
 
-export const STACK: CardStackDefinition = {
+export const STACK: RuntimeBundleDefinition = {
   id: 'hypercardToolsUiDslDemo',
   name: 'HyperCard UI DSL Demos',
   icon: '🛠️',
-  homeCard: 'home',
+  homeSurface: 'home',
   plugin: {
+    packageIds: ['ui'],
     bundleCode: HYPERCARD_TOOLS_DEMO_PLUGIN_BUNDLE,
     capabilities: {
       domain: ['app_hypercard_tools'],
       system: ['nav.go', 'nav.back', 'notify.show', 'window.close'],
     },
   },
-  cards: Object.fromEntries(DEMO_CARDS.map((card) => [card.id, toPluginCard(card)])),
+  surfaces: Object.fromEntries(DEMO_CARDS.map((card) => [card.id, toPluginCard(card)])),
 };

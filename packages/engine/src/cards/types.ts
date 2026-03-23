@@ -1,4 +1,5 @@
-export interface PluginRuntimeStackConfig {
+export interface PluginRuntimeBundleConfig {
+  packageIds: string[];
   bundleCode: string;
   capabilities?: {
     domain?: 'all' | string[];
@@ -6,7 +7,7 @@ export interface PluginRuntimeStackConfig {
   };
 }
 
-export interface CardDefinition {
+export interface RuntimeSurfaceMeta {
   id: string;
   type: string;
   title?: string;
@@ -15,11 +16,11 @@ export interface CardDefinition {
   meta?: Record<string, unknown>;
 }
 
-export interface CardStackDefinition {
+export interface RuntimeBundleDefinition {
   id: string;
   name: string;
   icon: string;
-  homeCard: string;
-  plugin: PluginRuntimeStackConfig;
-  cards: Record<string, CardDefinition>;
+  homeSurface: string;
+  plugin: PluginRuntimeBundleConfig;
+  surfaces: Record<string, RuntimeSurfaceMeta>;
 }

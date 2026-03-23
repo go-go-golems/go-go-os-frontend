@@ -7,18 +7,18 @@ export interface WindowBounds {
   h: number;
 }
 
-export type WindowContentKind = 'card' | 'app' | 'dialog';
+export type WindowContentKind = 'surface' | 'app' | 'dialog';
 
-export interface CardSessionRef {
-  stackId: string;
-  cardId: string;
+export interface RuntimeSurfaceSessionRef {
+  bundleId: string;
+  surfaceId: string;
   param?: string;
-  cardSessionId: string;
+  surfaceSessionId: string;
 }
 
 export interface WindowContent {
   kind: WindowContentKind;
-  card?: CardSessionRef;
+  surface?: RuntimeSurfaceSessionRef;
   appKey?: string;
   dialogKey?: string;
 }
@@ -37,12 +37,12 @@ export interface WindowInstance {
   isDialog?: boolean;
   isResizable?: boolean;
   content: WindowContent;
-  /** Optional key used for dedupe (e.g. same card id). If omitted, id is used. */
+  /** Optional key used for dedupe (e.g. same surface id). If omitted, id is used. */
   dedupeKey?: string;
 }
 
 export interface NavEntry {
-  card: string;
+  surface: string;
   param?: string;
 }
 
@@ -103,7 +103,7 @@ export interface WindowingState {
   windows: Record<string, WindowInstance>;
   /** Stable insertion order for deterministic render */
   order: string[];
-  /** Per-card-session navigation stacks, keyed by cardSessionId */
+  /** Per-surface-session navigation stacks, keyed by surfaceSessionId */
   sessions: Record<string, SessionNav>;
 }
 

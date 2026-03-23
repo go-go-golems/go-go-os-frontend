@@ -4,9 +4,9 @@ import { createCrmStore } from '../store';
 import { STACK } from '../../domain/stack';
 
 const { storeDecorator, createStory, FullApp } = createStoryHelpers({
-  stack: STACK,
+  bundle: STACK,
   createStore: createCrmStore,
-  cardParams: { contactDetail: 'c1', companyDetail: 'co1', dealDetail: 'd1' },
+  surfaceParams: { contactDetail: 'c1', companyDetail: 'co1', dealDetail: 'd1' },
 });
 
 const meta = {

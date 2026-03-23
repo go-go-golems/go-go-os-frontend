@@ -2,7 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Provider } from 'react-redux';
 import { CodeEditorWindow } from './CodeEditorWindow';
-import { clearRuntimeCardRegistry, registerRuntimeCard } from '../../plugin-runtime';
+import { clearRuntimeSurfaceRegistry, registerRuntimeSurface } from '../../plugin-runtime';
 
 const store = configureStore({ reducer: { _: (s = {}) => s } });
 
@@ -30,7 +30,7 @@ const meta: Meta<typeof Wrapper> = {
   parameters: { layout: 'centered' },
   decorators: [
     (Story) => {
-      clearRuntimeCardRegistry();
+      clearRuntimeSurfaceRegistry();
       return <Story />;
     },
   ],
@@ -58,26 +58,29 @@ const SAMPLE_CODE = `({ ui }) => ({
 
 export const Empty: Story = {
   args: {
-    cardId: 'newCard',
+    surfaceId: 'newSurface',
+    packId: 'ui.card.v1',
     initialCode: '({ ui }) => ({\\n  render() {\\n    return ui.panel([ui.text(\"Hello\")]);\\n  }\\n})',
   },
 };
 
 export const PrefilledCode: Story = {
   args: {
-    cardId: 'inventoryBrowser',
+    surfaceId: 'inventoryBrowser',
+    packId: 'ui.card.v1',
     initialCode: SAMPLE_CODE,
   },
 };
 
 export const AlreadyRegistered: Story = {
   args: {
-    cardId: 'registeredCard',
+    surfaceId: 'registeredSurface',
+    packId: 'ui.card.v1',
     initialCode: SAMPLE_CODE,
   },
   decorators: [
     (Story) => {
-      registerRuntimeCard('registeredCard', SAMPLE_CODE);
+      registerRuntimeSurface('registeredSurface', SAMPLE_CODE, 'ui.card.v1');
       return <Story />;
     },
   ],

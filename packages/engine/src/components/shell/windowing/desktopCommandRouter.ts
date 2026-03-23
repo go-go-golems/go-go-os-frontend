@@ -1,7 +1,7 @@
 export interface DesktopCommandRouteContext {
-  homeCardId: string;
+  homeSurfaceId: string;
   focusedWindowId: string | null;
-  openCardWindow: (cardId: string, options?: { dedupe?: boolean }) => void;
+  openSurfaceWindow: (surfaceId: string, options?: { dedupe?: boolean }) => void;
   closeWindow: (windowId: string) => void;
   tileWindows: () => void;
   cascadeWindows: () => void;
@@ -13,7 +13,7 @@ export interface DesktopCommandRouteContext {
  */
 export function routeDesktopCommand(commandId: string, ctx: DesktopCommandRouteContext): boolean {
   if (commandId === 'window.open.home') {
-    ctx.openCardWindow(ctx.homeCardId, { dedupe: false });
+    ctx.openSurfaceWindow(ctx.homeSurfaceId, { dedupe: false });
     return true;
   }
 
@@ -22,9 +22,9 @@ export function routeDesktopCommand(commandId: string, ctx: DesktopCommandRouteC
     return true;
   }
 
-  if (commandId.startsWith('window.open.card.')) {
-    const cardId = commandId.replace('window.open.card.', '');
-    ctx.openCardWindow(cardId, { dedupe: false });
+  if (commandId.startsWith('window.open.surface.')) {
+    const surfaceId = commandId.replace('window.open.surface.', '');
+    ctx.openSurfaceWindow(surfaceId, { dedupe: false });
     return true;
   }
 

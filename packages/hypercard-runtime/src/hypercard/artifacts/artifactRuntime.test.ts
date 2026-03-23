@@ -7,46 +7,46 @@ import {
 } from './artifactRuntime';
 
 describe('artifactRuntime', () => {
-  it('builds deduped open-window payload when runtime card id is provided', () => {
+  it('builds deduped open-window payload when runtime surface id is provided', () => {
     const payload = buildArtifactOpenWindowPayload({
       artifactId: 'detailed_inventory_summary',
-      runtimeCardId: 'runtimeDetailedInventorySummary',
+      runtimeSurfaceId: 'runtimeDetailedInventorySummary',
       title: 'Detailed Inventory Summary',
-      stackId: 'inventory',
+      bundleId: 'inventory',
     });
 
     expect(payload).toBeTruthy();
     expect(payload?.dedupeKey).toBe('artifact:detailed_inventory_summary');
-    expect(payload?.content.kind).toBe('card');
-    expect(payload?.content.card?.cardId).toBe('runtimeDetailedInventorySummary');
-    expect(payload?.content.card?.stackId).toBe('inventory');
-    expect(payload?.content.card?.param).toBe('detailed_inventory_summary');
-    expect(payload?.content.card?.cardSessionId).toBe('artifact-session:detailed_inventory_summary');
+    expect(payload?.content.kind).toBe('surface');
+    expect(payload?.content.surface?.surfaceId).toBe('runtimeDetailedInventorySummary');
+    expect(payload?.content.surface?.bundleId).toBe('inventory');
+    expect(payload?.content.surface?.param).toBe('detailed_inventory_summary');
+    expect(payload?.content.surface?.surfaceSessionId).toBe('artifact-session:detailed_inventory_summary');
   });
 
   it('normalizes quoted artifact ids when building open payload', () => {
     const payload = buildArtifactOpenWindowPayload({
       artifactId: '"sales-summary-2026-02-20"',
-      runtimeCardId: 'runtimeSalesSummary',
+      runtimeSurfaceId: 'runtimeSalesSummary',
       title: "Today's Sales Summary",
-      stackId: 'inventory',
+      bundleId: 'inventory',
     });
 
     expect(payload?.dedupeKey).toBe('artifact:sales-summary-2026-02-20');
-    expect(payload?.content.card?.param).toBe('sales-summary-2026-02-20');
+    expect(payload?.content.surface?.param).toBe('sales-summary-2026-02-20');
   });
 
-  it('returns undefined when runtime card id is missing', () => {
+  it('returns undefined when runtime surface id is missing', () => {
     const payload = buildArtifactOpenWindowPayload({
       artifactId: 'sales-summary-2026-02-20',
       title: "Today's Sales Summary",
-      stackId: 'inventory',
+      bundleId: 'inventory',
     });
 
     expect(payload).toBeUndefined();
   });
 
-  it('extracts artifact upsert from hypercard.card.v2 with runtime card fields', () => {
+  it('extracts artifact upsert from hypercard.card.v2 with runtime surface fields', () => {
     const card = extractArtifactUpsertFromSem('hypercard.card.v2', {
       title: 'Low Stock Drilldown',
       name: 'Low Stock Items',
@@ -69,8 +69,8 @@ describe('artifactRuntime', () => {
       title: 'Low Stock Drilldown',
       data: { threshold: 5 },
       source: 'card',
-      runtimeCardId: 'lowStockDrilldown',
-      runtimeCardCode: '({ ui }) => ({ render() { return ui.text("hi"); } })',
+      runtimeSurfaceId: 'lowStockDrilldown',
+      runtimeSurfaceCode: '({ ui }) => ({ render() { return ui.text("hi"); } })',
       packId: 'kanban.v1',
     });
   });
@@ -126,7 +126,7 @@ describe('artifactRuntime', () => {
       id: 'low-stock-drilldown',
       title: 'Low Stock Drilldown',
       source: 'card',
-      runtimeCardId: 'runtime-low-stock',
+      runtimeSurfaceId: 'runtime-low-stock',
       packId: 'ui.card.v1',
     });
   });
@@ -155,7 +155,7 @@ describe('artifactRuntime', () => {
       id: 'inventory-snapshot-1',
       source: 'card',
       data: { totalSkus: 12 },
-      runtimeCardId: 'runtimeInventorySnapshot',
+      runtimeSurfaceId: 'runtimeInventorySnapshot',
       packId: 'ui.card.v1',
     });
   });

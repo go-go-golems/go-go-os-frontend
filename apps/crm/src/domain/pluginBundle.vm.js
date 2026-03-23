@@ -1,6 +1,6 @@
 // @ts-check
 /// <reference path="./pluginBundle.authoring.d.ts" />
-defineStackBundle(({ ui }) => {
+defineRuntimeBundle(({ ui }) => {
   function asRecord(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   }
@@ -224,8 +224,8 @@ defineStackBundle(({ ui }) => {
     context.dispatch({ type: 'draft.set', payload: { path, value } });
   }
 
-  function navigate(context, cardId, param) {
-    const payload = param ? { cardId, param: toText(param) } : { cardId };
+  function navigate(context, surfaceId, param) {
+    const payload = param ? { surfaceId, param: toText(param) } : { surfaceId };
     context.dispatch({ type: 'nav.go', payload });
   }
 
@@ -249,7 +249,8 @@ defineStackBundle(({ ui }) => {
   return {
     id: 'crm',
     title: 'CRM',
-    initialCardState: {
+    packageIds: ["ui"],
+    initialSurfaceState: {
       contactDetail: { edits: {} },
       companyDetail: { edits: {} },
       dealDetail: { edits: {} },
@@ -274,28 +275,28 @@ defineStackBundle(({ ui }) => {
         submitResult: '',
       },
     },
-    cards: {
+    surfaces: {
       home: {
         render() {
           return ui.panel([
             ui.text('CRM Dashboard'),
             ui.text('Contacts · Companies · Deals · Activities'),
-            ui.button('👤 Contacts', { onClick: { handler: 'go', args: { cardId: 'contacts' } } }),
-            ui.button('🏢 Companies', { onClick: { handler: 'go', args: { cardId: 'companies' } } }),
-            ui.button('💰 Deals', { onClick: { handler: 'go', args: { cardId: 'deals' } } }),
-            ui.button('📊 Pipeline Report', { onClick: { handler: 'go', args: { cardId: 'pipeline' } } }),
-            ui.button('📝 Activity Log', { onClick: { handler: 'go', args: { cardId: 'activityLog' } } }),
+            ui.button('👤 Contacts', { onClick: { handler: 'go', args: { surfaceId: 'contacts' } } }),
+            ui.button('🏢 Companies', { onClick: { handler: 'go', args: { surfaceId: 'companies' } } }),
+            ui.button('💰 Deals', { onClick: { handler: 'go', args: { surfaceId: 'deals' } } }),
+            ui.button('📊 Pipeline Report', { onClick: { handler: 'go', args: { surfaceId: 'pipeline' } } }),
+            ui.button('📝 Activity Log', { onClick: { handler: 'go', args: { surfaceId: 'activityLog' } } }),
             ui.row([
-              ui.button('➕ New Contact', { onClick: { handler: 'go', args: { cardId: 'addContact' } } }),
-              ui.button('➕ New Deal', { onClick: { handler: 'go', args: { cardId: 'addDeal' } } }),
-              ui.button('➕ Log Activity', { onClick: { handler: 'go', args: { cardId: 'addActivity' } } }),
+              ui.button('➕ New Contact', { onClick: { handler: 'go', args: { surfaceId: 'addContact' } } }),
+              ui.button('➕ New Deal', { onClick: { handler: 'go', args: { surfaceId: 'addDeal' } } }),
+              ui.button('➕ Log Activity', { onClick: { handler: 'go', args: { surfaceId: 'addActivity' } } }),
             ]),
             ui.button('🔄 Reset Demo Data', { onClick: { handler: 'resetAll' } }),
           ]);
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
           resetAll(context) {
             dispatchDomain(context, 'contacts', 'resetContacts');
@@ -318,15 +319,15 @@ defineStackBundle(({ ui }) => {
             contacts.length ? ui.text('Quick open:') : ui.badge('No contacts yet.'),
             ui.column(quickOpenButtons(contacts, 'name', 'openContact')),
             ui.row([
-              ui.button('Add Contact', { onClick: { handler: 'go', args: { cardId: 'addContact' } } }),
+              ui.button('Add Contact', { onClick: { handler: 'go', args: { surfaceId: 'addContact' } } }),
               ui.button('Reset', { onClick: { handler: 'resetContacts' } }),
-              ui.button('Home', { onClick: { handler: 'go', args: { cardId: 'home' } } }),
+              ui.button('Home', { onClick: { handler: 'go', args: { surfaceId: 'home' } } }),
             ]),
           ]);
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
           openContact(context, args) {
             navigate(context, 'contactDetail', toText(asRecord(args).id));
@@ -379,7 +380,7 @@ defineStackBundle(({ ui }) => {
               ui.button('⭐ Promote to Customer', { onClick: { handler: 'promote' } }),
             ]),
             ui.row([
-              ui.button('💰 View Deals', { onClick: { handler: 'go', args: { cardId: 'deals' } } }),
+              ui.button('💰 View Deals', { onClick: { handler: 'go', args: { surfaceId: 'deals' } } }),
               ui.button('🗑 Delete', { onClick: { handler: 'remove' } }),
               ui.button('← Back', { onClick: { handler: 'back' } }),
             ]),
@@ -387,7 +388,7 @@ defineStackBundle(({ ui }) => {
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
           back(context) {
             goBack(context);
@@ -510,13 +511,13 @@ defineStackBundle(({ ui }) => {
             ui.column(quickOpenButtons(companies, 'name', 'openCompany')),
             ui.row([
               ui.button('Reset', { onClick: { handler: 'resetCompanies' } }),
-              ui.button('Home', { onClick: { handler: 'go', args: { cardId: 'home' } } }),
+              ui.button('Home', { onClick: { handler: 'go', args: { surfaceId: 'home' } } }),
             ]),
           ]);
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
           openCompany(context, args) {
             navigate(context, 'companyDetail', toText(asRecord(args).id));
@@ -607,15 +608,15 @@ defineStackBundle(({ ui }) => {
             deals.length ? ui.text('Quick open:') : ui.badge('No deals yet.'),
             ui.column(quickOpenButtons(deals, 'title', 'openDeal')),
             ui.row([
-              ui.button('Add Deal', { onClick: { handler: 'go', args: { cardId: 'addDeal' } } }),
-              ui.button('Open Only', { onClick: { handler: 'go', args: { cardId: 'openDeals' } } }),
+              ui.button('Add Deal', { onClick: { handler: 'go', args: { surfaceId: 'addDeal' } } }),
+              ui.button('Open Only', { onClick: { handler: 'go', args: { surfaceId: 'openDeals' } } }),
               ui.button('Reset', { onClick: { handler: 'resetDeals' } }),
             ]),
           ]);
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
           openDeal(context, args) {
             navigate(context, 'dealDetail', toText(asRecord(args).id));
@@ -637,14 +638,14 @@ defineStackBundle(({ ui }) => {
             deals.length ? ui.text('Quick open:') : ui.badge('No open deals. Time to prospect!'),
             ui.column(quickOpenButtons(deals, 'title', 'openDeal')),
             ui.row([
-              ui.button('All Deals', { onClick: { handler: 'go', args: { cardId: 'deals' } } }),
-              ui.button('Add Deal', { onClick: { handler: 'go', args: { cardId: 'addDeal' } } }),
+              ui.button('All Deals', { onClick: { handler: 'go', args: { surfaceId: 'deals' } } }),
+              ui.button('Add Deal', { onClick: { handler: 'go', args: { surfaceId: 'addDeal' } } }),
             ]),
           ]);
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
           openDeal(context, args) {
             navigate(context, 'dealDetail', toText(asRecord(args).id));
@@ -849,15 +850,15 @@ defineStackBundle(({ ui }) => {
             ui.text('Pipeline Report'),
             ui.table(sections, { headers: ['Metric', 'Value'] }),
             ui.row([
-              ui.button('View Deals', { onClick: { handler: 'go', args: { cardId: 'deals' } } }),
-              ui.button('View Contacts', { onClick: { handler: 'go', args: { cardId: 'contacts' } } }),
+              ui.button('View Deals', { onClick: { handler: 'go', args: { surfaceId: 'deals' } } }),
+              ui.button('View Contacts', { onClick: { handler: 'go', args: { surfaceId: 'contacts' } } }),
               ui.button('Reset All', { onClick: { handler: 'resetAll' } }),
             ]),
           ]);
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
           resetAll(context) {
             dispatchDomain(context, 'contacts', 'resetContacts');
@@ -878,15 +879,15 @@ defineStackBundle(({ ui }) => {
               headers: ['ID', 'Date', 'Type', 'Subject', 'Contact'],
             }),
             ui.row([
-              ui.button('Log Activity', { onClick: { handler: 'go', args: { cardId: 'addActivity' } } }),
+              ui.button('Log Activity', { onClick: { handler: 'go', args: { surfaceId: 'addActivity' } } }),
               ui.button('Reset', { onClick: { handler: 'resetActivities' } }),
-              ui.button('Home', { onClick: { handler: 'go', args: { cardId: 'home' } } }),
+              ui.button('Home', { onClick: { handler: 'go', args: { surfaceId: 'home' } } }),
             ]),
           ]);
         },
         handlers: {
           go(context, args) {
-            navigate(context, toText(asRecord(args).cardId, 'home'));
+            navigate(context, toText(asRecord(args).surfaceId, 'home'));
           },
           resetActivities(context) {
             dispatchDomain(context, 'activities', 'resetActivities');

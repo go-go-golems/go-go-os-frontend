@@ -109,9 +109,9 @@ function toWindowDef(win: WindowInstance, focused: boolean): DesktopWindowDef {
 }
 
 function getWindowBodySignature(win: WindowInstance, mode: 'interactive' | 'preview'): string {
-  if (win.content.kind === 'card') {
-    const card = win.content.card;
-    return `card:${card?.stackId ?? ''}:${card?.cardId ?? ''}:${card?.cardSessionId ?? ''}:${card?.param ?? ''}:${mode}`;
+  if (win.content.kind === 'surface') {
+    const surface = win.content.surface;
+    return `surface:${surface?.bundleId ?? ''}:${surface?.surfaceId ?? ''}:${surface?.surfaceSessionId ?? ''}:${surface?.param ?? ''}:${mode}`;
   }
 
   if (win.content.kind === 'app') {
@@ -343,7 +343,7 @@ export interface DesktopShellControllerResult {
 }
 
 export function useDesktopShellController({
-  stack,
+  bundle,
   mode = 'interactive',
   themeClass,
   homeParam,
@@ -372,13 +372,13 @@ export function useDesktopShellController({
   const composedContributions = useMemo(() => composeDesktopContributions(contributions), [contributions]);
 
   const defaultIcons = useMemo(() => {
-    const cardIds = Object.keys(stack.cards);
-    return cardIds.map((cardId) => ({
-      id: cardId,
-      label: stack.cards[cardId].title ?? cardId,
-      icon: stack.cards[cardId].icon ?? '📄',
+    const surfaceIds = Object.keys(bundle.surfaces);
+    return surfaceIds.map((surfaceId) => ({
+      id: surfaceId,
+      label: bundle.surfaces[surfaceId].title ?? surfaceId,
+      icon: bundle.surfaces[surfaceId].icon ?? '📄',
     }));
-  }, [stack.cards]);
+  }, [bundle.surfaces]);
 
   const defaultMenus = useMemo((): DesktopMenuSection[] => {
     return [
@@ -388,7 +388,7 @@ export function useDesktopShellController({
         items: [
           {
             id: 'new-home',
-            label: `New ${stack.cards[stack.homeCard]?.title ?? 'Home'} Window`,
+            label: `New ${bundle.surfaces[bundle.homeSurface]?.title ?? 'Home'} Window`,
             commandId: 'window.open.home',
             shortcut: 'Ctrl+N',
           },
@@ -396,12 +396,12 @@ export function useDesktopShellController({
         ],
       },
       {
-        id: 'cards',
+        id: 'surfaces',
         label: 'Cards',
-        items: Object.keys(stack.cards).map((cardId) => ({
-          id: `open-${cardId}`,
-          label: `${stack.cards[cardId].icon ?? ''} ${stack.cards[cardId].title ?? cardId}`.trim(),
-          commandId: `window.open.card.${cardId}`,
+        items: Object.keys(bundle.surfaces).map((surfaceId) => ({
+          id: `open-${surfaceId}`,
+          label: `${bundle.surfaces[surfaceId].icon ?? ''} ${bundle.surfaces[surfaceId].title ?? surfaceId}`.trim(),
+          commandId: `window.open.surface.${surfaceId}`,
         })),
       },
       {
@@ -413,7 +413,7 @@ export function useDesktopShellController({
         ],
       },
     ];
-  }, [stack.cards, stack.homeCard]);
+  }, [bundle.surfaces, bundle.homeSurface]);
 
   const baseIcons = useMemo(() => {
     if (iconsProp) return iconsProp;
@@ -451,40 +451,40 @@ export function useDesktopShellController({
   );
 
   useEffect(() => {
-    const homeCard = stack.cards[stack.homeCard];
-    if (!homeCard) return;
-    const homeKey = `${stack.id}:${stack.homeCard}:${homeParam ?? ''}`;
+    const homeSurface = bundle.surfaces[bundle.homeSurface];
+    if (!homeSurface) return;
+    const homeKey = `${bundle.id}:${bundle.homeSurface}:${homeParam ?? ''}`;
     if (lastOpenedHomeKeyRef.current === homeKey) return;
     lastOpenedHomeKeyRef.current = homeKey;
 
     const sid = nextSessionId();
     dispatch(
       openWindow({
-        id: `window:${stack.homeCard}:${sid}`,
-        title: homeCard.title ?? stack.homeCard,
-        icon: homeCard.icon,
+        id: `window:${bundle.homeSurface}:${sid}`,
+        title: homeSurface.title ?? bundle.homeSurface,
+        icon: homeSurface.icon,
         bounds: { x: 140, y: 20, w: 420, h: 340 },
         content: {
-          kind: 'card',
-          card: { stackId: stack.id, cardId: stack.homeCard, cardSessionId: sid, param: homeParam },
+          kind: 'surface',
+          surface: { bundleId: bundle.id, surfaceId: bundle.homeSurface, surfaceSessionId: sid, param: homeParam },
         },
-        dedupeKey: stack.homeCard,
+        dedupeKey: bundle.homeSurface,
       }),
     );
-  }, [dispatch, homeParam, stack.id, stack.homeCard, stack.cards]);
+  }, [dispatch, homeParam, bundle.id, bundle.homeSurface, bundle.surfaces]);
 
   const lastOpenedStartupKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (composedContributions.startupWindows.length === 0) return;
-    const startupKey = `${stack.id}:${homeParam ?? ''}:${composedContributions.startupWindows.map((w) => w.id).join('|')}`;
+    const startupKey = `${bundle.id}:${homeParam ?? ''}:${composedContributions.startupWindows.map((w) => w.id).join('|')}`;
     if (lastOpenedStartupKeyRef.current === startupKey) return;
     lastOpenedStartupKeyRef.current = startupKey;
 
     for (const startup of composedContributions.startupWindows) {
-      const payload = startup.create({ stack, homeParam });
+      const payload = startup.create({ bundle, homeParam });
       if (payload) dispatch(openWindow(payload));
     }
-  }, [composedContributions.startupWindows, dispatch, homeParam, stack]);
+  }, [composedContributions.startupWindows, dispatch, homeParam, bundle]);
 
   const windowDefs = useMemo(() => {
     return windows.map((w) => {
@@ -681,9 +681,21 @@ export function useDesktopShellController({
 
   const handleContentMinSize = useCallback(
     (windowId: string, size: ContentMinSize) => {
+      const state = store.getState() as ShellState;
+      const win = state.windowing.windows[windowId];
+      if (!win) {
+        return;
+      }
+
+      const nextMinW = Math.max(win.baseMinW, size.minW);
+      const nextMinH = Math.max(win.baseMinH, size.minH);
+      if (win.minW === nextMinW && win.minH === nextMinH) {
+        return;
+      }
+
       dispatch(updateWindowMinSize({ id: windowId, minW: size.minW, minH: size.minH }));
     },
-    [dispatch],
+    [dispatch, store],
   );
 
   const { beginMove, beginResize } = useWindowInteractionController({
@@ -707,26 +719,26 @@ export function useDesktopShellController({
     dragOverlayStore.pruneMissing(windows.map((w) => w.id));
   }, [windows]);
 
-  const openCardWindow = useCallback(
-    (cardId: string, options?: { dedupe?: boolean }) => {
-      const cardDef = stack.cards[cardId];
-      if (!cardDef) return;
+  const openSurfaceWindow = useCallback(
+    (surfaceId: string, options?: { dedupe?: boolean }) => {
+      const surfaceDef = bundle.surfaces[surfaceId];
+      if (!surfaceDef) return;
       const sid = nextSessionId();
       dispatch(
         openWindow({
-          id: `window:${cardId}:${sid}`,
-          title: cardDef.title ?? cardId,
-          icon: cardDef.icon,
+          id: `window:${surfaceId}:${sid}`,
+          title: surfaceDef.title ?? surfaceId,
+          icon: surfaceDef.icon,
           bounds: { x: 160 + (sessionCounter % 5) * 32, y: 30 + (sessionCounter % 4) * 24, w: 420, h: 340 },
           content: {
-            kind: 'card',
-            card: { stackId: stack.id, cardId, cardSessionId: sid },
+            kind: 'surface',
+            surface: { bundleId: bundle.id, surfaceId, surfaceSessionId: sid },
           },
-          dedupeKey: options?.dedupe ? cardId : undefined,
+          dedupeKey: options?.dedupe ? surfaceId : undefined,
         }),
       );
     },
-    [dispatch, stack.id, stack.cards],
+    [dispatch, bundle.id, bundle.surfaces],
   );
 
   const createContributionCommandContext = useCallback(
@@ -734,10 +746,10 @@ export function useDesktopShellController({
       dispatch,
       getState: () => store.getState(),
       focusedWindowId: focusedWin?.id ?? null,
-      openCardWindow,
+      openSurfaceWindow,
       closeWindow: handleClose,
     }),
-    [dispatch, focusedWin?.id, handleClose, openCardWindow, store],
+    [dispatch, focusedWin?.id, handleClose, openSurfaceWindow, store],
   );
 
   const routeIconOpenCommand = useCallback(
@@ -747,8 +759,8 @@ export function useDesktopShellController({
         return false;
       }
 
-      if (stack.cards[normalizedIconId]) {
-        openCardWindow(normalizedIconId, { dedupe: false });
+      if (bundle.surfaces[normalizedIconId]) {
+        openSurfaceWindow(normalizedIconId, { dedupe: false });
         return true;
       }
 
@@ -772,7 +784,7 @@ export function useDesktopShellController({
         options.invocation,
       );
     },
-    [composedContributions.commandHandlers, createContributionCommandContext, openCardWindow, stack.cards],
+    [composedContributions.commandHandlers, createContributionCommandContext, openSurfaceWindow, bundle.surfaces],
   );
 
   const resolveFolderMembers = useCallback(
@@ -922,9 +934,9 @@ export function useDesktopShellController({
       }
 
       const handled = routeDesktopCommand(commandId, {
-        homeCardId: stack.homeCard,
+        homeSurfaceId: bundle.homeSurface,
         focusedWindowId: focusedWin?.id ?? null,
-        openCardWindow,
+        openSurfaceWindow,
         closeWindow: handleClose,
         tileWindows: () => {
           dragOverlayStore.clearAll();
@@ -951,8 +963,8 @@ export function useDesktopShellController({
       focusedWin?.id,
       handleClose,
       onCommandProp,
-      openCardWindow,
-      stack.homeCard,
+      openSurfaceWindow,
+      bundle.homeSurface,
       resolveContextMenuItemsForTarget,
       routeFolderCommand,
       routeIconOpenCommand,
@@ -1109,14 +1121,14 @@ export function useDesktopShellController({
       return renderWindowContentWithAdapters(
         winInstance,
         {
-          stack,
+          bundle,
           mode,
           renderAppWindow,
         },
         allAdapters,
       );
     },
-    [allAdapters, mode, renderAppWindow, stack],
+    [allAdapters, mode, renderAppWindow, bundle],
   );
 
   useEffect(() => {

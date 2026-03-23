@@ -1,4 +1,4 @@
-import type { CardDefinition, CardStackDefinition } from '@hypercard/engine';
+import type { RuntimeSurfaceMeta, RuntimeBundleDefinition } from '@hypercard/engine';
 import { TODO_PLUGIN_BUNDLE } from './pluginBundle';
 
 interface PluginCardMeta {
@@ -16,7 +16,7 @@ const TODO_CARD_META: PluginCardMeta[] = [
   { id: 'newTask', title: 'New Task', icon: '➕' },
 ];
 
-function toPluginCard(card: PluginCardMeta): CardDefinition {
+function toPluginCard(card: PluginCardMeta): RuntimeSurfaceMeta {
   return {
     id: card.id,
     type: 'plugin',
@@ -29,17 +29,18 @@ function toPluginCard(card: PluginCardMeta): CardDefinition {
   };
 }
 
-export const STACK: CardStackDefinition = {
+export const STACK: RuntimeBundleDefinition = {
   id: 'todo',
   name: 'My Tasks',
   icon: '✅',
-  homeCard: 'home',
+  homeSurface: 'home',
   plugin: {
+    packageIds: ['ui'],
     bundleCode: TODO_PLUGIN_BUNDLE,
     capabilities: {
       domain: ['tasks'],
       system: ['nav.go', 'nav.back', 'notify.show'],
     },
   },
-  cards: Object.fromEntries(TODO_CARD_META.map((card) => [card.id, toPluginCard(card)])),
+  surfaces: Object.fromEntries(TODO_CARD_META.map((card) => [card.id, toPluginCard(card)])),
 };

@@ -41,15 +41,15 @@ function reduce(...actions: Array<{ type: string }>) {
   return state;
 }
 
-const cardWindow = (id: string, cardId: string, overrides?: Partial<OpenWindowPayload>): OpenWindowPayload => ({
+const cardWindow = (id: string, surfaceId: string, overrides?: Partial<OpenWindowPayload>): OpenWindowPayload => ({
   id,
   title: `Window ${id}`,
   bounds: { x: 100, y: 100, w: 300, h: 200 },
   content: {
-    kind: 'card',
-    card: { stackId: 'test-stack', cardId, cardSessionId: `session-${id}` },
+    kind: 'surface',
+    surface: { bundleId: 'test-stack', surfaceId, surfaceSessionId: `session-${id}` },
   },
-  dedupeKey: cardId,
+  dedupeKey: surfaceId,
   ...overrides,
 });
 
@@ -130,7 +130,7 @@ describe('windowingReducer', () => {
       const state = reduce(openWindow(cardWindow('w1', 'browse')));
 
       expect(state.sessions['session-w1']).toBeDefined();
-      expect(state.sessions['session-w1'].nav).toEqual([{ card: 'browse', param: undefined }]);
+      expect(state.sessions['session-w1'].nav).toEqual([{ surface: 'browse', param: undefined }]);
     });
 
     it('does not create session for app windows', () => {
@@ -269,6 +269,18 @@ describe('windowingReducer', () => {
       const state = reduce(openWindow(cardWindow('w1', 'browse')), closeWindow('nonexistent'));
 
       expect(state.order).toEqual(['w1']);
+    });
+  });
+
+  describe('updateWindowMinSize', () => {
+    it('is a no-op when the computed minimum size does not change', () => {
+      const originalState = reduce(openWindow(cardWindow('w1', 'browse')));
+      const nextState = windowingReducer(
+        originalState,
+        updateWindowMinSize({ id: 'w1', minW: 180, minH: 120 }),
+      );
+
+      expect(nextState).toBe(originalState);
     });
   });
 
@@ -528,45 +540,45 @@ describe('windowingReducer', () => {
     it('sessionNavGo pushes onto session stack', () => {
       const state = reduce(
         openWindow(cardWindow('w1', 'browse')),
-        sessionNavGo({ sessionId: 'session-w1', card: 'detail', param: 'item-1' }),
+        sessionNavGo({ sessionId: 'session-w1', surface: 'detail', param: 'item-1' }),
       );
 
       expect(state.sessions['session-w1'].nav).toEqual([
-        { card: 'browse', param: undefined },
-        { card: 'detail', param: 'item-1' },
+        { surface: 'browse', param: undefined },
+        { surface: 'detail', param: 'item-1' },
       ]);
     });
 
     it('sessionNavBack pops from session stack', () => {
       const state = reduce(
         openWindow(cardWindow('w1', 'browse')),
-        sessionNavGo({ sessionId: 'session-w1', card: 'detail' }),
+        sessionNavGo({ sessionId: 'session-w1', surface: 'detail' }),
         sessionNavBack({ sessionId: 'session-w1' }),
       );
 
-      expect(state.sessions['session-w1'].nav).toEqual([{ card: 'browse', param: undefined }]);
+      expect(state.sessions['session-w1'].nav).toEqual([{ surface: 'browse', param: undefined }]);
     });
 
     it('sessionNavBack does not pop last entry', () => {
       const state = reduce(openWindow(cardWindow('w1', 'browse')), sessionNavBack({ sessionId: 'session-w1' }));
 
-      expect(state.sessions['session-w1'].nav).toEqual([{ card: 'browse', param: undefined }]);
+      expect(state.sessions['session-w1'].nav).toEqual([{ surface: 'browse', param: undefined }]);
     });
 
     it('sessionNavHome resets to first entry', () => {
       const state = reduce(
         openWindow(cardWindow('w1', 'browse')),
-        sessionNavGo({ sessionId: 'session-w1', card: 'detail' }),
-        sessionNavGo({ sessionId: 'session-w1', card: 'edit' }),
+        sessionNavGo({ sessionId: 'session-w1', surface: 'detail' }),
+        sessionNavGo({ sessionId: 'session-w1', surface: 'edit' }),
         sessionNavHome({ sessionId: 'session-w1' }),
       );
 
-      expect(state.sessions['session-w1'].nav).toEqual([{ card: 'browse', param: undefined }]);
+      expect(state.sessions['session-w1'].nav).toEqual([{ surface: 'browse', param: undefined }]);
     });
 
     it('session nav actions are no-ops for unknown sessions', () => {
       const before = reduce(openWindow(cardWindow('w1', 'browse')));
-      let state = windowingReducer(before, sessionNavGo({ sessionId: 'nonexistent', card: 'x' }));
+      let state = windowingReducer(before, sessionNavGo({ sessionId: 'nonexistent', surface: 'x' }));
       expect(state).toEqual(before);
 
       state = windowingReducer(before, sessionNavBack({ sessionId: 'nonexistent' }));
@@ -589,15 +601,15 @@ describe('windowing selectors', () => {
     return { windowing: state };
   }
 
-  const cardWindow = (id: string, cardId: string): OpenWindowPayload => ({
+  const cardWindow = (id: string, surfaceId: string): OpenWindowPayload => ({
     id,
     title: `Window ${id}`,
     bounds: { x: 100, y: 100, w: 300, h: 200 },
     content: {
-      kind: 'card',
-      card: { stackId: 'test-stack', cardId, cardSessionId: `session-${id}` },
+      kind: 'surface',
+      surface: { bundleId: 'test-stack', surfaceId, surfaceSessionId: `session-${id}` },
     },
-    dedupeKey: cardId,
+    dedupeKey: surfaceId,
   });
 
   describe('selectWindowsInOrder', () => {
@@ -691,10 +703,10 @@ describe('windowing selectors', () => {
     it('returns top of session nav stack', () => {
       const s = buildState(
         openWindow(cardWindow('w1', 'browse')),
-        sessionNavGo({ sessionId: 'session-w1', card: 'detail', param: 'item-1' }),
+        sessionNavGo({ sessionId: 'session-w1', surface: 'detail', param: 'item-1' }),
       );
 
-      expect(selectSessionCurrentNav(s, 'session-w1')).toEqual({ card: 'detail', param: 'item-1' });
+      expect(selectSessionCurrentNav(s, 'session-w1')).toEqual({ surface: 'detail', param: 'item-1' });
     });
 
     it('returns undefined for unknown session', () => {
@@ -704,10 +716,10 @@ describe('windowing selectors', () => {
   });
 
   describe('selectSessionNavDepth', () => {
-    it('returns stack depth', () => {
+    it('returns bundle depth', () => {
       const s = buildState(
         openWindow(cardWindow('w1', 'browse')),
-        sessionNavGo({ sessionId: 'session-w1', card: 'detail' }),
+        sessionNavGo({ sessionId: 'session-w1', surface: 'detail' }),
       );
 
       expect(selectSessionNavDepth(s, 'session-w1')).toBe(2);

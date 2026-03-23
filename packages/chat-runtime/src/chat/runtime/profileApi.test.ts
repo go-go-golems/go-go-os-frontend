@@ -1,12 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   ChatProfileApiError,
-  createProfile,
   listExtensionSchemas,
   listMiddlewareSchemas,
   listProfiles,
-  setDefaultProfile,
-  updateProfile,
 } from './profileApi';
 
 describe('profileApi', () => {
@@ -56,91 +53,6 @@ describe('profileApi', () => {
 
     expect(profiles.map((profile) => profile.slug)).toEqual(['default', 'inventory']);
     expect(profiles.map((profile) => profile.registry)).toEqual(['default', 'default']);
-  });
-
-  it('decodes extensions in create and update profile responses', async () => {
-    const fetchImpl = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 201,
-        json: async () => ({
-          registry: 'default',
-          slug: 'analyst',
-          is_default: true,
-          extensions: {
-            'webchat.starter_suggestions@v1': {
-              items: ['Explain top movers'],
-            },
-          },
-        }),
-        text: async () => '',
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          registry: 'default',
-          slug: 'analyst',
-          is_default: false,
-          extensions: {
-            'webchat.starter_suggestions@v1': {
-              items: ['Summarize low stock'],
-            },
-          },
-        }),
-        text: async () => '',
-      } as Response);
-
-    const created = await createProfile(
-      {
-        slug: 'analyst',
-      },
-      { basePrefix: '/chat', fetchImpl: fetchImpl as unknown as typeof fetch }
-    );
-    const updated = await updateProfile(
-      'analyst',
-      {
-        expected_version: 1,
-      },
-      { basePrefix: '/chat', fetchImpl: fetchImpl as unknown as typeof fetch }
-    );
-
-    expect(created.extensions).toEqual({
-      'webchat.starter_suggestions@v1': {
-        items: ['Explain top movers'],
-      },
-    });
-    expect(updated.extensions).toEqual({
-      'webchat.starter_suggestions@v1': {
-        items: ['Summarize low stock'],
-      },
-    });
-  });
-
-  it('decodes set default response contract', async () => {
-    const fetchImpl = vi.fn(async () => ({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        registry: 'default',
-        slug: 'inventory',
-        is_default: true,
-      }),
-      text: async () => '',
-    } as Response));
-
-    const doc = await setDefaultProfile(
-      'inventory',
-      {},
-      { basePrefix: '/chat', fetchImpl: fetchImpl as unknown as typeof fetch }
-    );
-
-    expect(doc).toEqual({
-      registry: 'default',
-      slug: 'inventory',
-      is_default: true,
-    });
   });
 
   it('throws ChatProfileApiError on malformed 200 payload', async () => {

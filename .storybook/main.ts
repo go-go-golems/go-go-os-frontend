@@ -35,6 +35,10 @@ const config: StorybookConfig = {
       files: '**/*.stories.@(ts|tsx)',
     },
     {
+      directory: '../packages/repl/src',
+      files: '**/*.stories.@(ts|tsx)',
+    },
+    {
       directory: '../packages/hypercard-runtime/src',
       files: '**/*.stories.@(ts|tsx)',
     },
@@ -57,6 +61,7 @@ const config: StorybookConfig = {
       ...config_.resolve.alias,
       '@hypercard/engine': resolve(__dirname, '../packages/engine/src'),
       '@hypercard/chat-runtime': resolve(__dirname, '../packages/chat-runtime/src'),
+      '@hypercard/repl': resolve(__dirname, '../packages/repl/src'),
       '@hypercard/hypercard-runtime': resolve(__dirname, '../packages/hypercard-runtime/src'),
       '@hypercard/confirm-runtime': resolve(__dirname, '../packages/confirm-runtime/src'),
       '@hypercard/apps-browser': resolve(__dirname, '../apps/apps-browser/src'),

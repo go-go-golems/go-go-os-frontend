@@ -18,10 +18,12 @@
       "@hypercard/engine": ["../engine/src"],
       "@hypercard/engine/*": ["../engine/src/*"],
       "@hypercard/chat-runtime": ["../chat-runtime/src"],
-      "@hypercard/chat-runtime/*": ["../chat-runtime/src/*"]
+      "@hypercard/chat-runtime/*": ["../chat-runtime/src/*"],
+      "@hypercard/repl": ["../repl/src"],
+      "@hypercard/repl/*": ["../repl/src/*"]
     }
   },
   "include": ["src"],
   "exclude": ["src/**/*.test.ts", "src/**/*.stories.tsx", "src/__tests__"],
-  "references": [{ "path": "../engine" }, { "path": "../chat-runtime" }]
+  "references": [{ "path": "../engine" }, { "path": "../chat-runtime" }, { "path": "../repl" }]
 }
