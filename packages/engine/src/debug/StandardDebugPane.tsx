@@ -32,14 +32,28 @@ export function StandardDebugPane({ title = 'Debug Pane', snapshotSelector }: St
   const kinds = useSelector(selectDebugKinds);
   const filteredEvents = useSelector(selectFilteredDebugEvents);
   const selected = useSelector(selectSelectedDebugEvent);
-
-  const snapshot = useSelector((state: DebugStateSlice & Record<string, unknown>) => {
-    if (snapshotSelector) return snapshotSelector(state);
-    // Default: show plugin runtime state
-    const snap: Record<string, unknown> = {};
-    if ('pluginCardRuntime' in state) snap.runtime = state.pluginCardRuntime;
-    return snap;
+  const defaultRuntimeState = useSelector((state: DebugStateSlice & Record<string, unknown>) => {
+    if ('runtimeSessions' in state) {
+      return state.runtimeSessions;
+    }
+    if ('pluginCardRuntime' in state) {
+      return state.pluginCardRuntime;
+    }
+    return undefined;
   });
+  const selectedSnapshot = useSelector(
+    snapshotSelector ?? (() => undefined as Record<string, unknown> | undefined),
+  );
+
+  const snapshot = useMemo(() => {
+    if (selectedSnapshot) {
+      return selectedSnapshot;
+    }
+    if (defaultRuntimeState !== undefined) {
+      return { runtime: defaultRuntimeState };
+    }
+    return {};
+  }, [defaultRuntimeState, selectedSnapshot]);
 
   const stats = useMemo(() => {
     const counts: Record<string, number> = {};

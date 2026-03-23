@@ -12,6 +12,28 @@ import { createArtifactProjectionMiddleware } from '../hypercard/artifacts/artif
 import { hypercardArtifactsReducer } from '../hypercard/artifacts/artifactsSlice';
 import { createRuntimeSessionLifecycleMiddleware } from './runtimeSessionLifecycleMiddleware';
 
+export const CORE_APP_REDUCER_KEYS = [
+  'pluginCardRuntime',
+  'runtimeSessions',
+  'windowing',
+  'notifications',
+  'debug',
+  'hypercardArtifacts',
+] as const;
+
+const CORE_APP_REDUCER_KEY_SET = new Set<string>(CORE_APP_REDUCER_KEYS);
+
+function assertNoReservedDomainReducerKeys(domainReducers: Record<string, Reducer>): void {
+  const reservedKeys = Object.keys(domainReducers).filter((key) => CORE_APP_REDUCER_KEY_SET.has(key));
+  if (reservedKeys.length === 0) {
+    return;
+  }
+
+  throw new Error(
+    `createAppStore domain reducer keys are reserved by engine core reducers: ${reservedKeys.join(', ')}`,
+  );
+}
+
 /** Options for `createAppStore`. */
 export interface CreateAppStoreOptions {
   /** Enable Redux throughput/FPS diagnostics middleware. Default: false. */
@@ -53,6 +75,7 @@ export function createAppStore<T extends Record<string, Reducer>>(
   options: CreateAppStoreOptions = {},
 ) {
   const enableDiag = options.enableReduxDiagnostics === true;
+  assertNoReservedDomainReducerKeys(domainReducers);
 
   const reducer = {
     runtimeSessions: runtimeSessionsReducer,

@@ -1,15 +1,9 @@
-import { type CreateAppStoreOptions, createAppStore } from '@hypercard/hypercard-runtime';
+import { CORE_APP_REDUCER_KEYS, type CreateAppStoreOptions, createAppStore } from '@hypercard/hypercard-runtime';
 import type { Reducer } from '@reduxjs/toolkit';
 import type { AppStateKey } from '../contracts/appManifest';
 import type { LaunchableAppModule } from '../contracts/launchableAppModule';
 
-const ENGINE_CORE_REDUCER_KEYS = new Set([
-  'pluginCardRuntime',
-  'windowing',
-  'notifications',
-  'debug',
-  'hypercardArtifacts',
-]);
+const ENGINE_CORE_REDUCER_KEYS = new Set<string>(CORE_APP_REDUCER_KEYS);
 
 export function collectModuleReducers(modules: readonly LaunchableAppModule[]): Record<string, Reducer> {
   const seen = new Set<string>();
