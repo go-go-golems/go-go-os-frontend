@@ -10,17 +10,17 @@
     "outDir": "dist",
     "rootDir": "src",
     "paths": {
-      "@hypercard/desktop-os": ["../../packages/desktop-os/src"],
-      "@hypercard/engine": ["../../packages/engine/src"],
-      "@hypercard/chat-runtime": ["../../packages/chat-runtime/src"],
-      "@hypercard/hypercard-runtime": ["../../packages/hypercard-runtime/src"]
+      "@go-go-golems/os-shell": ["../../packages/os-shell/src"],
+      "@go-go-golems/os-core": ["../../packages/os-core/src"],
+      "@go-go-golems/os-chat": ["../../packages/os-chat/src"],
+      "@go-go-golems/os-scripting": ["../../packages/os-scripting/src"]
     }
   },
   "include": ["src"],
   "references": [
-    { "path": "../../packages/desktop-os" },
-    { "path": "../../packages/engine" },
-    { "path": "../../packages/chat-runtime" },
-    { "path": "../../packages/hypercard-runtime" }
+    { "path": "../../packages/os-shell" },
+    { "path": "../../packages/os-core" },
+    { "path": "../../packages/os-chat" },
+    { "path": "../../packages/os-scripting" }
   ]
 }

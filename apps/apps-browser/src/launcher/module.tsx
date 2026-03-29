@@ -1,12 +1,12 @@
-import type { LaunchableAppModule, LauncherHostContext, LaunchReason } from '@hypercard/desktop-os';
-import type { OpenWindowPayload } from '@hypercard/engine/desktop-core';
+import type { LaunchableAppModule, LauncherHostContext, LaunchReason } from '@go-go-golems/os-shell';
+import type { OpenWindowPayload } from '@go-go-golems/os-core/desktop-core';
 import type {
   DesktopCommandHandler,
   DesktopCommandInvocation,
   DesktopContribution,
   DesktopMenuSection,
   WindowContentAdapter,
-} from '@hypercard/engine/desktop-react';
+} from '@go-go-golems/os-core/desktop-react';
 import { type ReactNode, useEffect, useRef } from 'react';
 import { Provider } from 'react-redux';
 import { createAppsBrowserStore } from '../app/store';

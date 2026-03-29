@@ -81,8 +81,8 @@ This codebase now avoids that by keeping the layers separate.
 
 Main files:
 
-- [runtimeService.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/plugin-runtime/runtimeService.ts)
-- [runtimeSessionsSlice.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/features/runtimeSessions/runtimeSessionsSlice.ts)
+- [runtimeService.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/plugin-runtime/runtimeService.ts)
+- [runtimeSessionsSlice.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/features/runtimeSessions/runtimeSessionsSlice.ts)
 
 In the current system:
 
@@ -97,9 +97,9 @@ This path is still more store-centric than the plain JS stack, but the service l
 
 Main files:
 
-- [runtimeSessionManager.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/runtime-session-manager/runtimeSessionManager.ts)
-- [runtimeOwnership.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/runtime-session-manager/runtimeOwnership.ts)
-- [runtimeSessionLifecycleMiddleware.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/app/runtimeSessionLifecycleMiddleware.ts)
+- [runtimeSessionManager.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/runtime-session-manager/runtimeSessionManager.ts)
+- [runtimeOwnership.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/runtime-session-manager/runtimeOwnership.ts)
+- [runtimeSessionLifecycleMiddleware.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/app/runtimeSessionLifecycleMiddleware.ts)
 
 This layer now sits between the low-level runtime service and the host/debug/operator surfaces.
 
@@ -125,9 +125,9 @@ This is the important architectural correction from APP-28:
 
 Main files:
 
-- [jsSessionService.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/plugin-runtime/jsSessionService.ts)
-- [jsSessionBroker.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/repl/jsSessionBroker.ts)
-- [jsSessionDebugRegistry.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/hypercard/debug/jsSessionDebugRegistry.ts)
+- [jsSessionService.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/plugin-runtime/jsSessionService.ts)
+- [jsSessionBroker.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/repl/jsSessionBroker.ts)
+- [jsSessionDebugRegistry.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/hypercard/debug/jsSessionDebugRegistry.ts)
 
 This newer path is cleaner:
 
@@ -290,8 +290,8 @@ Use summary rows and source-specific actions instead.
 
 If you are onboarding, read these in order:
 
-1. [jsSessionService.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/plugin-runtime/jsSessionService.ts)
-2. [jsSessionBroker.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/repl/jsSessionBroker.ts)
-3. [jsSessionDebugRegistry.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/hypercard/debug/jsSessionDebugRegistry.ts)
-4. [RuntimeSurfaceDebugWindow.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/hypercard/debug/RuntimeSurfaceDebugWindow.tsx)
+1. [jsSessionService.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/plugin-runtime/jsSessionService.ts)
+2. [jsSessionBroker.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/repl/jsSessionBroker.ts)
+3. [jsSessionDebugRegistry.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/hypercard/debug/jsSessionDebugRegistry.ts)
+4. [RuntimeSurfaceDebugWindow.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/hypercard/debug/RuntimeSurfaceDebugWindow.tsx)
 5. [repl-and-runtime-debug-guide.md](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/docs/repl-and-runtime-debug-guide.md)

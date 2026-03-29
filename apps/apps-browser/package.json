@@ -1,5 +1,5 @@
 {
-  "name": "@hypercard/apps-browser",
+  "name": "@go-go-golems/apps-browser",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -13,10 +13,10 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@hypercard/chat-runtime": "workspace:*",
-    "@hypercard/desktop-os": "workspace:*",
-    "@hypercard/engine": "workspace:*",
-    "@hypercard/hypercard-runtime": "workspace:*",
+    "@go-go-golems/os-chat": "workspace:*",
+    "@go-go-golems/os-shell": "workspace:*",
+    "@go-go-golems/os-core": "workspace:*",
+    "@go-go-golems/os-scripting": "workspace:*",
     "@reduxjs/toolkit": "^2.5.0",
     "highlight.js": "^11.11.1",
     "react": "^19.0.0",

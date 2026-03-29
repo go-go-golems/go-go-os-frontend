@@ -2,10 +2,10 @@
   "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
   "files": {
     "includes": [
-      "packages/engine/src/**/*.ts",
-      "packages/engine/src/**/*.tsx",
-      "packages/desktop-os/src/**/*.ts",
-      "packages/desktop-os/src/**/*.tsx",
+      "packages/os-core/src/**/*.ts",
+      "packages/os-core/src/**/*.tsx",
+      "packages/os-shell/src/**/*.ts",
+      "packages/os-shell/src/**/*.tsx",
       "apps/**/src/**/*.ts",
       "apps/**/src/**/*.tsx",
       "apps/**/.storybook/**/*.ts",

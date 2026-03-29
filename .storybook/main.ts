@@ -27,23 +27,23 @@ const config: StorybookConfig = {
       files: '**/*.stories.@(ts|tsx)',
     },
     {
-      directory: '../packages/engine/src',
+      directory: '../packages/os-core/src',
       files: '**/*.stories.@(ts|tsx)',
     },
     {
-      directory: '../packages/chat-runtime/src',
+      directory: '../packages/os-chat/src',
       files: '**/*.stories.@(ts|tsx)',
     },
     {
-      directory: '../packages/repl/src',
+      directory: '../packages/os-repl/src',
       files: '**/*.stories.@(ts|tsx)',
     },
     {
-      directory: '../packages/hypercard-runtime/src',
+      directory: '../packages/os-scripting/src',
       files: '**/*.stories.@(ts|tsx)',
     },
     {
-      directory: '../packages/rich-widgets/src',
+      directory: '../packages/os-widgets/src',
       files: '**/*.stories.@(ts|tsx)',
     },
   ],
@@ -59,15 +59,15 @@ const config: StorybookConfig = {
     config_.resolve = config_.resolve || {};
     config_.resolve.alias = {
       ...config_.resolve.alias,
-      '@hypercard/engine': resolve(__dirname, '../packages/engine/src'),
-      '@hypercard/chat-runtime': resolve(__dirname, '../packages/chat-runtime/src'),
-      '@hypercard/repl': resolve(__dirname, '../packages/repl/src'),
-      '@hypercard/hypercard-runtime': resolve(__dirname, '../packages/hypercard-runtime/src'),
-      '@hypercard/confirm-runtime': resolve(__dirname, '../packages/confirm-runtime/src'),
-      '@hypercard/apps-browser': resolve(__dirname, '../apps/apps-browser/src'),
-      '@hypercard/arc-agi-player': resolve(__dirname, '../apps/arc-agi-player/src'),
-      '@hypercard/rich-widgets/kanban-runtime': resolve(__dirname, '../packages/rich-widgets/src/kanban/runtime.ts'),
-      '@hypercard/rich-widgets': resolve(__dirname, '../packages/rich-widgets/src'),
+      '@go-go-golems/os-core': resolve(__dirname, '../packages/os-core/src'),
+      '@go-go-golems/os-chat': resolve(__dirname, '../packages/os-chat/src'),
+      '@go-go-golems/os-repl': resolve(__dirname, '../packages/os-repl/src'),
+      '@go-go-golems/os-scripting': resolve(__dirname, '../packages/os-scripting/src'),
+      '@go-go-golems/os-confirm': resolve(__dirname, '../packages/os-confirm/src'),
+      '@go-go-golems/apps-browser': resolve(__dirname, '../apps/apps-browser/src'),
+      '@go-go-golems/arc-agi-player': resolve(__dirname, '../apps/arc-agi-player/src'),
+      '@go-go-golems/os-widgets/kanban-runtime': resolve(__dirname, '../packages/os-widgets/src/kanban/runtime.ts'),
+      '@go-go-golems/os-widgets': resolve(__dirname, '../packages/os-widgets/src'),
     };
     return config_;
   },

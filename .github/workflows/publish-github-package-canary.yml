@@ -1,0 +1,110 @@
+name: publish-github-package-canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_set:
+        description: Ordered package set to publish to GitHub Packages
+        required: true
+        default: os-core
+        type: choice
+        options:
+          - os-core
+          - os-shell-stack
+      npm_tag:
+        description: npm dist-tag to publish under
+        required: true
+        default: canary
+        type: string
+      version_suffix:
+        description: Optional prerelease suffix appended to the package version
+        required: false
+        default: ''
+        type: string
+      dry_run:
+        description: Run npm publish with --dry-run
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  publish-canary:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      PACKAGE_SET: ${{ inputs.package_set }}
+      NPM_TAG: ${{ inputs.npm_tag }}
+      VERSION_SUFFIX: ${{ inputs.version_suffix != '' && inputs.version_suffix || format('canary.{0}', github.run_number) }}
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@go-go-golems'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Resolve package set
+        id: package_set
+        run: |
+          case "$PACKAGE_SET" in
+            os-core)
+              PACKAGE_DIRS=(packages/os-core)
+              ;;
+            os-shell-stack)
+              PACKAGE_DIRS=(packages/os-core packages/os-chat packages/os-repl packages/os-scripting packages/os-shell)
+              ;;
+            *)
+              echo "Unknown package set: $PACKAGE_SET" >&2
+              exit 1
+              ;;
+          esac
+
+          printf 'package_dirs=%s\n' "$(IFS=,; echo "${PACKAGE_DIRS[*]}")" >> "$GITHUB_OUTPUT"
+
+      - name: Typecheck selected package set
+        run: |
+          IFS=',' read -r -a PACKAGE_DIRS <<< "${{ steps.package_set.outputs.package_dirs }}"
+          for package_dir in "${PACKAGE_DIRS[@]}"; do
+            npm run typecheck -w "$package_dir"
+          done
+
+      - name: Run selected package set tests
+        run: |
+          IFS=',' read -r -a PACKAGE_DIRS <<< "${{ steps.package_set.outputs.package_dirs }}"
+          for package_dir in "${PACKAGE_DIRS[@]}"; do
+            npm run test -w "$package_dir"
+          done
+
+      - name: Build publish artifacts
+        run: |
+          IFS=',' read -r -a PACKAGE_DIRS <<< "${{ steps.package_set.outputs.package_dirs }}"
+          for package_dir in "${PACKAGE_DIRS[@]}"; do
+            npm run build:dist -w "$package_dir"
+          done
+
+      - name: Pack smoke selected package set
+        run: |
+          IFS=',' read -r -a PACKAGE_DIRS <<< "${{ steps.package_set.outputs.package_dirs }}"
+          node scripts/packages/pack-smoke.mjs "${PACKAGE_DIRS[@]}"
+
+      - name: Publish selected package set
+        run: |
+          PUBLISH_ARGS=("$PACKAGE_SET" --tag "$NPM_TAG" --version-suffix "$VERSION_SUFFIX")
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            PUBLISH_ARGS+=(--dry-run)
+          fi
+          node scripts/packages/publish-github-package-set.mjs "${PUBLISH_ARGS[@]}"

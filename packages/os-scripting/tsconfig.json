@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "jsx": "react-jsx",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "composite": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@go-go-golems/os-core": ["../os-core/src"],
+      "@go-go-golems/os-core/*": ["../os-core/src/*"],
+      "@go-go-golems/os-chat": ["../os-chat/src"],
+      "@go-go-golems/os-chat/*": ["../os-chat/src/*"],
+      "@go-go-golems/os-repl": ["../os-repl/src"],
+      "@go-go-golems/os-repl/*": ["../os-repl/src/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.stories.tsx", "src/__tests__"],
+  "references": [{ "path": "../os-core" }, { "path": "../os-chat" }, { "path": "../os-repl" }]
+}

@@ -66,8 +66,8 @@ For pending AI indicator:
 
 ## Reference Files
 
-- `packages/engine/src/chat/state/chatWindowSlice.ts`
-- `packages/engine/src/chat/state/selectors.ts`
-- `packages/engine/src/chat/components/ChatConversationWindow.tsx`
+- `packages/os-core/src/chat/state/chatWindowSlice.ts`
+- `packages/os-core/src/chat/state/selectors.ts`
+- `packages/os-core/src/chat/components/ChatConversationWindow.tsx`
 - `apps/inventory/src/launcher/module.tsx`
 - `apps/inventory/src/launcher/renderInventoryApp.tsx`

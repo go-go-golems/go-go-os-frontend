@@ -1,4 +1,4 @@
-import { createStoryHelpers } from '@hypercard/engine';
+import { createStoryHelpers } from '@go-go-golems/os-core';
 import type { Meta, StoryObj } from '@storybook/react';
 import { createCrmStore } from '../store';
 import { STACK } from '../../domain/stack';

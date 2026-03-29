@@ -43,5 +43,5 @@ localStorage.removeItem('debug');
 
 ## Source Files
 
-- `packages/engine/src/chat/debug/debugChannels.ts`
-- `packages/engine/src/chat/runtime/useConversation.ts`
+- `packages/os-core/src/chat/debug/debugChannels.ts`
+- `packages/os-core/src/chat/runtime/useConversation.ts`

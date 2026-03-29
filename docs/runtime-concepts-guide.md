@@ -127,7 +127,7 @@ The workspace now has a clear layer split.
 
 Main package:
 
-- `@hypercard/engine`
+- `@go-go-golems/os-core`
 
 Responsibilities:
 
@@ -140,16 +140,16 @@ Responsibilities:
 
 Key files:
 
-- `packages/engine/src/index.ts`
-- `packages/engine/src/components/shell/windowing/DesktopShell.tsx`
-- `packages/engine/src/desktop/core/state/types.ts`
-- `packages/engine/src/app/generateCardStories.tsx`
+- `packages/os-core/src/index.ts`
+- `packages/os-core/src/components/shell/windowing/DesktopShell.tsx`
+- `packages/os-core/src/desktop/core/state/types.ts`
+- `packages/os-core/src/app/generateCardStories.tsx`
 
 ### Layer 2: Runtime core
 
 Main package:
 
-- `@hypercard/hypercard-runtime`
+- `@go-go-golems/os-scripting`
 
 Responsibilities:
 
@@ -162,18 +162,18 @@ Responsibilities:
 
 Key files:
 
-- `packages/hypercard-runtime/src/index.ts`
-- `packages/hypercard-runtime/src/plugin-runtime/runtimeService.ts`
-- `packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js`
-- `packages/hypercard-runtime/src/runtime-packages/runtimePackageRegistry.ts`
-- `packages/hypercard-runtime/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx`
+- `packages/os-scripting/src/index.ts`
+- `packages/os-scripting/src/plugin-runtime/runtimeService.ts`
+- `packages/os-scripting/src/plugin-runtime/stack-bootstrap.vm.js`
+- `packages/os-scripting/src/runtime-packages/runtimePackageRegistry.ts`
+- `packages/os-scripting/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx`
 
 ### Layer 3: Concrete runtime packages
 
 Current first-party examples:
 
-- `@hypercard/ui-runtime`
-- `@hypercard/kanban-runtime`
+- `@go-go-golems/os-ui-cards`
+- `@go-go-golems/os-kanban`
 
 Responsibilities:
 
@@ -185,10 +185,10 @@ Responsibilities:
 
 Key files:
 
-- `packages/ui-runtime/src/index.ts`
-- `packages/ui-runtime/src/runtimeRegistration.tsx`
-- `packages/kanban-runtime/src/index.ts`
-- `packages/kanban-runtime/src/runtimeRegistration.tsx`
+- `packages/os-ui-cards/src/index.ts`
+- `packages/os-ui-cards/src/runtimeRegistration.tsx`
+- `packages/os-kanban/src/index.ts`
+- `packages/os-kanban/src/runtimeRegistration.tsx`
 
 ### Layer 4: Host apps and bundles
 
@@ -213,8 +213,8 @@ A `RuntimeSession` is one running runtime instance.
 
 Current implementation:
 
-- `packages/hypercard-runtime/src/plugin-runtime/runtimeService.ts`
-- `packages/hypercard-runtime/src/plugin-runtime/jsSessionService.ts`
+- `packages/os-scripting/src/plugin-runtime/runtimeService.ts`
+- `packages/os-scripting/src/plugin-runtime/jsSessionService.ts`
 
 Current class:
 
@@ -299,9 +299,9 @@ create RuntimeSession
 
 After APP-28, there is an explicit manager layer above `QuickJSRuntimeService`:
 
-- `packages/hypercard-runtime/src/runtime-session-manager/runtimeSessionManager.ts`
-- `packages/hypercard-runtime/src/runtime-session-manager/runtimeOwnership.ts`
-- `packages/hypercard-runtime/src/app/runtimeSessionLifecycleMiddleware.ts`
+- `packages/os-scripting/src/runtime-session-manager/runtimeSessionManager.ts`
+- `packages/os-scripting/src/runtime-session-manager/runtimeOwnership.ts`
+- `packages/os-scripting/src/app/runtimeSessionLifecycleMiddleware.ts`
 
 This manager is important because the VM lifecycle is no longer supposed to follow ordinary React mount/unmount behavior.
 
@@ -336,7 +336,7 @@ There are two ways to think about bundles:
 
 Source:
 
-- `packages/engine/src/cards/types.ts`
+- `packages/os-core/src/cards/types.ts`
 
 Important fields:
 
@@ -357,7 +357,7 @@ Example host-side bundle definitions:
 
 Source:
 
-- `packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js`
+- `packages/os-scripting/src/plugin-runtime/stack-bootstrap.vm.js`
 
 Main entrypoint:
 
@@ -395,7 +395,7 @@ A `RuntimePackage` is the installable DSL/API capability bundle.
 
 Source:
 
-- `packages/hypercard-runtime/src/runtime-packages/runtimePackageRegistry.ts`
+- `packages/os-scripting/src/runtime-packages/runtimePackageRegistry.ts`
 
 Definition:
 
@@ -472,7 +472,7 @@ This is the runtime-core replacement for the old notion of a “card”.
 
 Source of the VM-side authoring contract:
 
-- `packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js`
+- `packages/os-scripting/src/plugin-runtime/stack-bootstrap.vm.js`
 
 Main entrypoints:
 
@@ -525,7 +525,7 @@ A `RuntimeSurfaceType` is the host/runtime contract for the tree returned by a s
 
 Source:
 
-- `packages/hypercard-runtime/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx`
+- `packages/os-scripting/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx`
 
 Definition:
 
@@ -576,7 +576,7 @@ The VM bootstrap file is the most important single file in runtime core.
 
 Source:
 
-- `packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js`
+- `packages/os-scripting/src/plugin-runtime/stack-bootstrap.vm.js`
 
 It defines the contract between the host and the QuickJS runtime.
 
@@ -663,7 +663,7 @@ Mixing these levels up is a common source of confusion.
 
 Source entry:
 
-- `packages/ui-runtime/src/index.ts`
+- `packages/os-ui-cards/src/index.ts`
 
 This package owns:
 
@@ -691,7 +691,7 @@ It does not own:
 
 Source entry:
 
-- `packages/kanban-runtime/src/index.ts`
+- `packages/os-kanban/src/index.ts`
 
 This package owns:
 
@@ -968,23 +968,23 @@ If you are onboarding and want a concrete reading path, use this order.
 
 ### Start here
 
-- `packages/engine/src/cards/types.ts`
-- `packages/engine/src/desktop/core/state/types.ts`
-- `packages/hypercard-runtime/src/runtime-packages/runtimePackageRegistry.ts`
-- `packages/hypercard-runtime/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx`
+- `packages/os-core/src/cards/types.ts`
+- `packages/os-core/src/desktop/core/state/types.ts`
+- `packages/os-scripting/src/runtime-packages/runtimePackageRegistry.ts`
+- `packages/os-scripting/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx`
 
 ### Then read runtime core
 
-- `packages/hypercard-runtime/src/plugin-runtime/runtimeService.ts`
-- `packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js`
-- `packages/hypercard-runtime/src/runtime-host/RuntimeSurfaceSessionHost.tsx`
+- `packages/os-scripting/src/plugin-runtime/runtimeService.ts`
+- `packages/os-scripting/src/plugin-runtime/stack-bootstrap.vm.js`
+- `packages/os-scripting/src/runtime-host/RuntimeSurfaceSessionHost.tsx`
 
 ### Then read the concrete packages
 
-- `packages/ui-runtime/src/index.ts`
-- `packages/ui-runtime/src/runtimeRegistration.tsx`
-- `packages/kanban-runtime/src/index.ts`
-- `packages/kanban-runtime/src/runtimeRegistration.tsx`
+- `packages/os-ui-cards/src/index.ts`
+- `packages/os-ui-cards/src/runtimeRegistration.tsx`
+- `packages/os-kanban/src/index.ts`
+- `packages/os-kanban/src/runtimeRegistration.tsx`
 
 ### Then read a host app
 
@@ -996,8 +996,8 @@ If you are onboarding and want a concrete reading path, use this order.
 ### Then read docs/debug integration
 
 - `apps/os-launcher/src/app/registerAppsBrowserDocs.ts`
-- `packages/hypercard-runtime/src/hypercard/debug/runtimeDebugApp.tsx`
-- `packages/hypercard-runtime/src/hypercard/debug/RuntimeSurfaceDebugWindow.tsx`
+- `packages/os-scripting/src/hypercard/debug/runtimeDebugApp.tsx`
+- `packages/os-scripting/src/hypercard/debug/RuntimeSurfaceDebugWindow.tsx`
 
 ## 21. Closing Mental Model
 

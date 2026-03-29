@@ -1,4 +1,4 @@
-import { type DesktopActionEntry, useDesktopWindowId, useOpenDesktopContextMenu, useRegisterContextActions } from '@hypercard/engine/desktop-react';
+import { type DesktopActionEntry, useDesktopWindowId, useOpenDesktopContextMenu, useRegisterContextActions } from '@go-go-golems/os-core/desktop-react';
 import type { MouseEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useGetAppsQuery } from '../api/appsApi';

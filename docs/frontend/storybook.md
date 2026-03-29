@@ -43,8 +43,8 @@ App stories must be in one of:
 
 Engine stories must be in one of:
 
-- `packages/engine/src/components/**/*.stories.tsx`
-- `packages/engine/src/plugin-runtime/**/*.stories.tsx`
+- `packages/os-core/src/components/**/*.stories.tsx`
+- `packages/os-core/src/plugin-runtime/**/*.stories.tsx`
 
 Flat app buckets such as `apps/<app>/src/stories/*` are deprecated and must not be reintroduced.
 
@@ -69,11 +69,11 @@ Avoid monolith story modules. Split by scenario class when files grow:
 
 Current split examples:
 
-- `packages/engine/src/components/widgets/ChatWindow.stories.tsx`
-- `packages/engine/src/components/widgets/ChatWindow.widgets.stories.tsx`
-- `packages/engine/src/components/widgets/ChatWindow.interaction.stories.tsx`
-- `packages/engine/src/components/shell/windowing/DesktopPrimitives.stories.tsx`
-- `packages/engine/src/components/shell/windowing/DesktopPrimitives.workspace.stories.tsx`
+- `packages/os-core/src/components/widgets/ChatWindow.stories.tsx`
+- `packages/os-core/src/components/widgets/ChatWindow.widgets.stories.tsx`
+- `packages/os-core/src/components/widgets/ChatWindow.interaction.stories.tsx`
+- `packages/os-core/src/components/shell/windowing/DesktopPrimitives.stories.tsx`
+- `packages/os-core/src/components/shell/windowing/DesktopPrimitives.workspace.stories.tsx`
 
 ## Addon Policy
 
@@ -90,7 +90,7 @@ Run this before committing Storybook changes:
 
 ```bash
 npm run storybook:check
-npm run -w packages/engine test
+npm run -w packages/os-core test
 ```
 
 `storybook:check` is implemented in `scripts/storybook/check-taxonomy.mjs` and enforces:

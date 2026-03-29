@@ -1,19 +1,19 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/engine" },
-    { "path": "packages/chat-runtime" },
-    { "path": "packages/repl" },
-    { "path": "packages/hypercard-runtime" },
-    { "path": "packages/ui-runtime" },
-    { "path": "packages/kanban-runtime" },
-    { "path": "packages/confirm-runtime" },
-    { "path": "packages/desktop-os" },
+    { "path": "packages/os-core" },
+    { "path": "packages/os-chat" },
+    { "path": "packages/os-repl" },
+    { "path": "packages/os-scripting" },
+    { "path": "packages/os-ui-cards" },
+    { "path": "packages/os-kanban" },
+    { "path": "packages/os-confirm" },
+    { "path": "packages/os-shell" },
     { "path": "apps/book-tracker-debug" },
     { "path": "apps/todo" },
     { "path": "apps/crm" },
     { "path": "apps/apps-browser" },
     { "path": "apps/hypercard-tools" },
-    { "path": "packages/rich-widgets" }
+    { "path": "packages/os-widgets" }
   ]
 }

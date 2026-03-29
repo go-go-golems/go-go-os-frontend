@@ -49,7 +49,7 @@ model.
 ## 2. Conceptual Split
 
 ```text
-@hypercard/repl
+@go-go-golems/os-repl
   reusable shell
   transcript
   history
@@ -74,13 +74,13 @@ debug UI
 
 Each layer should stay independently reusable.
 
-## 3. `@hypercard/repl`: The Shared Shell
+## 3. `@go-go-golems/os-repl`: The Shared Shell
 
 Main files:
 
-- [packages/repl/src/MacRepl.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/repl/src/MacRepl.tsx)
-- [packages/repl/src/controller.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/repl/src/controller.ts)
-- [packages/repl/src/types.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/repl/src/types.ts)
+- [packages/os-repl/src/MacRepl.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-repl/src/MacRepl.tsx)
+- [packages/os-repl/src/controller.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-repl/src/controller.ts)
+- [packages/os-repl/src/types.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-repl/src/types.ts)
 
 Responsibilities:
 
@@ -126,8 +126,8 @@ async function handleSubmit(raw: string) {
 
 Main files:
 
-- [packages/hypercard-runtime/src/repl/hypercardReplDriver.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/repl/hypercardReplDriver.ts)
-- [packages/hypercard-runtime/src/repl/runtimeBroker.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/repl/runtimeBroker.ts)
+- [packages/os-scripting/src/repl/hypercardReplDriver.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/repl/hypercardReplDriver.ts)
+- [packages/os-scripting/src/repl/runtimeBroker.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/repl/runtimeBroker.ts)
 - [apps/os-launcher/src/app/hypercardReplModule.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/apps/os-launcher/src/app/hypercardReplModule.tsx)
 
 This profile is for:
@@ -150,9 +150,9 @@ It is not a blank JS console.
 
 Main files:
 
-- [packages/hypercard-runtime/src/plugin-runtime/jsSessionService.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/plugin-runtime/jsSessionService.ts)
-- [packages/hypercard-runtime/src/repl/jsSessionBroker.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/repl/jsSessionBroker.ts)
-- [packages/hypercard-runtime/src/repl/jsReplDriver.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/repl/jsReplDriver.ts)
+- [packages/os-scripting/src/plugin-runtime/jsSessionService.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/plugin-runtime/jsSessionService.ts)
+- [packages/os-scripting/src/repl/jsSessionBroker.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/repl/jsSessionBroker.ts)
+- [packages/os-scripting/src/repl/jsReplDriver.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/repl/jsReplDriver.ts)
 - [apps/os-launcher/src/app/jsReplModule.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/apps/os-launcher/src/app/jsReplModule.tsx)
 
 This profile is for:
@@ -220,10 +220,10 @@ They can be visible in the same debugging UI, but the storage model should stay 
 
 Main files:
 
-- [packages/hypercard-runtime/src/hypercard/debug/RuntimeSurfaceDebugWindow.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/hypercard/debug/RuntimeSurfaceDebugWindow.tsx)
-- [packages/hypercard-runtime/src/hypercard/debug/runtimeDebugRegistry.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/hypercard/debug/runtimeDebugRegistry.ts)
-- [packages/hypercard-runtime/src/hypercard/debug/jsSessionDebugRegistry.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/hypercard/debug/jsSessionDebugRegistry.ts)
-- [packages/hypercard-runtime/src/hypercard/task-manager/TaskManagerWindow.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/hypercard/task-manager/TaskManagerWindow.tsx)
+- [packages/os-scripting/src/hypercard/debug/RuntimeSurfaceDebugWindow.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/hypercard/debug/RuntimeSurfaceDebugWindow.tsx)
+- [packages/os-scripting/src/hypercard/debug/runtimeDebugRegistry.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/hypercard/debug/runtimeDebugRegistry.ts)
+- [packages/os-scripting/src/hypercard/debug/jsSessionDebugRegistry.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/hypercard/debug/jsSessionDebugRegistry.ts)
+- [packages/os-scripting/src/hypercard/task-manager/TaskManagerWindow.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/hypercard/task-manager/TaskManagerWindow.tsx)
 - [apps/os-launcher/src/app/taskManagerModule.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/apps/os-launcher/src/app/taskManagerModule.tsx)
 
 `Stacks & Cards` still reads three data sources:

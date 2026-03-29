@@ -1,4 +1,4 @@
-import { createAppStore } from '@hypercard/hypercard-runtime';
+import { createAppStore } from '@go-go-golems/os-scripting';
 import { tasksReducer } from '../features/tasks/tasksSlice';
 
 export const { store, createStore: createTodoStore } = createAppStore({

@@ -1,4 +1,4 @@
-import type { DesktopContribution } from '@hypercard/engine/desktop-react';
+import type { DesktopContribution } from '@go-go-golems/os-core/desktop-react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { appsBrowserLauncherModule } from './module';

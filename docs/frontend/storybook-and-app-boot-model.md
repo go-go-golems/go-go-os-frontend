@@ -8,7 +8,7 @@ Clarify ownership boundaries for Storybook and runtime app bootstrapping in this
 
 The frontend is structured as:
 
-- shared engine package: `packages/engine`
+- shared engine package: `packages/os-core`
 - app packages: `apps/inventory`, `apps/todo`, `apps/crm`, `apps/book-tracker-debug`
 
 The engine contains shared UI/runtime/store primitives. Apps compose domain reducers, stack definitions, and app-specific windows/features.
@@ -43,7 +43,7 @@ Because of this, Storybook should be treated as a shared frontend platform artif
 
 ## Alias ownership
 
-`@hypercard/engine` aliasing for Storybook is configured in:
+`@go-go-golems/os-core` aliasing for Storybook is configured in:
 
 - `.storybook/main.ts`
 
@@ -69,7 +69,7 @@ Representative files:
 
 Shared store composition:
 
-- engine factory: `packages/engine/src/app/createAppStore.ts`
+- engine factory: `packages/os-core/src/app/createAppStore.ts`
 - app reducers passed in by each app store module
 
 ## Boundary Rules
@@ -86,7 +86,7 @@ To keep cleanup work low-risk and understandable:
 
 When adding stories:
 
-1. Put reusable stories in `packages/engine/src`.
+1. Put reusable stories in `packages/os-core/src`.
 2. Put app-specific behavior stories in the corresponding app.
 3. Prefer package-aligned title prefixes (`Apps/*`, `Engine/*`) and feature-aligned story placement (`src/app/stories`, `src/features/**/stories`).
 4. Prefer `createStoryHelpers` for card-page app stories.

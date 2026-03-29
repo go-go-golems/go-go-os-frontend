@@ -51,8 +51,8 @@ Examples:
 
 These belong in:
 
-- `@hypercard/ui-runtime`
-- `@hypercard/kanban-runtime`
+- `@go-go-golems/os-ui-cards`
+- `@go-go-golems/os-kanban`
 
 ### Bundle-owned authored surface source and docs
 
@@ -128,8 +128,8 @@ This is what the debug/editor tooling reads.
 
 Main files:
 
-- [RuntimeSurfaceDebugWindow.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/hypercard/debug/RuntimeSurfaceDebugWindow.tsx)
-- [editorLaunch.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/hypercard/editor/editorLaunch.ts)
+- [RuntimeSurfaceDebugWindow.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/hypercard/debug/RuntimeSurfaceDebugWindow.tsx)
+- [editorLaunch.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/hypercard/editor/editorLaunch.ts)
 
 Current flow:
 
@@ -218,4 +218,4 @@ Read these in order if you are onboarding:
 2. [apps/os-launcher/src/domain/generated/kanbanVmmeta.generated.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/apps/os-launcher/src/domain/generated/kanbanVmmeta.generated.ts)
 3. [apps/os-launcher/src/domain/vmmeta.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/apps/os-launcher/src/domain/vmmeta.ts)
 4. [apps/os-launcher/src/domain/stack.ts](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/apps/os-launcher/src/domain/stack.ts)
-5. [RuntimeSurfaceDebugWindow.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/hypercard-runtime/src/hypercard/debug/RuntimeSurfaceDebugWindow.tsx)
+5. [RuntimeSurfaceDebugWindow.tsx](/home/manuel/workspaces/2026-03-02/os-openai-app-server/wesen-os/workspace-links/go-go-os-frontend/packages/os-scripting/src/hypercard/debug/RuntimeSurfaceDebugWindow.tsx)

@@ -1,0 +1,74 @@
+{
+  "name": "@go-go-golems/os-scripting",
+  "version": "0.1.0",
+  "description": "QuickJS runtime, plugin, and REPL-session support for go-go-os.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "author": "Manuel Odendahl",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/go-go-golems/go-go-os-frontend.git",
+    "directory": "packages/os-scripting"
+  },
+  "homepage": "https://github.com/go-go-golems/go-go-os-frontend/tree/main/packages/os-scripting#readme",
+  "bugs": {
+    "url": "https://github.com/go-go-golems/go-go-os-frontend/issues"
+  },
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/*.css",
+    "**/*.vm.js",
+    "**/*.json",
+    "README.md"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "build:dist": "node ../../scripts/packages/build-dist.mjs",
+    "typecheck": "tsc -b",
+    "test": "vitest run src",
+    "test:watch": "vitest src"
+  },
+  "dependencies": {
+    "@go-go-golems/os-core": "workspace:*",
+    "@go-go-golems/os-chat": "workspace:*",
+    "@go-go-golems/os-repl": "workspace:*",
+    "@codemirror/commands": "^6.10.2",
+    "@codemirror/autocomplete": "^6.18.7",
+    "@codemirror/lang-javascript": "^6.2.4",
+    "@codemirror/language": "^6.12.1",
+    "@codemirror/lint": "^6.8.5",
+    "@codemirror/state": "^6.5.4",
+    "@codemirror/theme-one-dark": "^6.1.3",
+    "@codemirror/view": "^6.39.15",
+    "@jitl/quickjs-singlefile-mjs-release-sync": "^0.31.0",
+    "@jitl/quickjs-ffi-types": "^0.31.0",
+    "@lezer/common": "^1.3.0",
+    "@lezer/highlight": "^1.2.3",
+    "@lezer/javascript": "^1.5.1",
+    "@lezer/lr": "^1.4.2",
+    "quickjs-emscripten": "^0.31.0",
+    "quickjs-emscripten-core": "^0.31.0"
+  },
+  "peerDependencies": {
+    "@reduxjs/toolkit": "^2.0.0",
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19",
+    "react-redux": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  }
+}

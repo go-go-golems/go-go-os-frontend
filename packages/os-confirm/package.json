@@ -1,0 +1,52 @@
+{
+  "name": "@go-go-golems/os-confirm",
+  "version": "0.1.0",
+  "description": "plz-confirm integration components for go-go-os hosts and apps.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "author": "Manuel Odendahl",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/go-go-golems/go-go-os-frontend.git",
+    "directory": "packages/os-confirm"
+  },
+  "homepage": "https://github.com/go-go-golems/go-go-os-frontend/tree/main/packages/os-confirm#readme",
+  "bugs": {
+    "url": "https://github.com/go-go-golems/go-go-os-frontend/issues"
+  },
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/*.css",
+    "**/*.vm.js",
+    "**/*.json",
+    "README.md"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "build:dist": "node ../../scripts/packages/build-dist.mjs",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@go-go-golems/os-core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19",
+    "react-redux": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  }
+}

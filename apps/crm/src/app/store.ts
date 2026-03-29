@@ -1,5 +1,5 @@
-import { chatSessionReducer, chatWindowReducer, timelineReducer } from '@hypercard/chat-runtime';
-import { createAppStore } from '@hypercard/hypercard-runtime';
+import { chatSessionReducer, chatWindowReducer, timelineReducer } from '@go-go-golems/os-chat';
+import { createAppStore } from '@go-go-golems/os-scripting';
 import { activitiesReducer } from '../features/activities/activitiesSlice';
 import { companiesReducer } from '../features/companies/companiesSlice';
 import { contactsReducer } from '../features/contacts/contactsSlice';

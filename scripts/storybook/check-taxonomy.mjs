@@ -44,46 +44,46 @@ function walk(dir, out) {
 }
 
 function inferExpectedPrefix(relPath) {
-  if (relPath.startsWith('packages/engine/src/components/shell/')) {
+  if (relPath.startsWith('packages/os-core/src/components/shell/')) {
     return 'Engine/Shell/';
   }
-  if (relPath.startsWith('packages/engine/src/components/widgets/')) {
+  if (relPath.startsWith('packages/os-core/src/components/widgets/')) {
     return 'Engine/Widgets/';
   }
-  if (relPath.startsWith('packages/engine/src/plugin-runtime/')) {
+  if (relPath.startsWith('packages/os-core/src/plugin-runtime/')) {
     return 'Engine/PluginRuntime/';
   }
-  if (relPath.startsWith('packages/engine/')) {
+  if (relPath.startsWith('packages/os-core/')) {
     return 'Engine/';
   }
-  if (relPath.startsWith('packages/chat-runtime/src/chat/components/')) {
+  if (relPath.startsWith('packages/os-chat/src/chat/components/')) {
     return 'ChatRuntime/Components/';
   }
-  if (relPath.startsWith('packages/chat-runtime/src/chat/debug/')) {
+  if (relPath.startsWith('packages/os-chat/src/chat/debug/')) {
     return 'ChatRuntime/Debug/';
   }
-  if (relPath.startsWith('packages/chat-runtime/src/chat/renderers/')) {
+  if (relPath.startsWith('packages/os-chat/src/chat/renderers/')) {
     return 'ChatRuntime/Renderers/';
   }
-  if (relPath.startsWith('packages/chat-runtime/')) {
+  if (relPath.startsWith('packages/os-chat/')) {
     return 'ChatRuntime/';
   }
-  if (relPath.startsWith('packages/hypercard-runtime/src/hypercard/debug/')) {
+  if (relPath.startsWith('packages/os-scripting/src/hypercard/debug/')) {
     return 'HypercardRuntime/Debug/';
   }
-  if (relPath.startsWith('packages/hypercard-runtime/src/hypercard/editor/')) {
+  if (relPath.startsWith('packages/os-scripting/src/hypercard/editor/')) {
     return 'HypercardRuntime/Editor/';
   }
-  if (relPath.startsWith('packages/hypercard-runtime/src/hypercard/timeline/')) {
+  if (relPath.startsWith('packages/os-scripting/src/hypercard/timeline/')) {
     return 'HypercardRuntime/Timeline/';
   }
-  if (relPath.startsWith('packages/hypercard-runtime/src/runtime-host/')) {
+  if (relPath.startsWith('packages/os-scripting/src/runtime-host/')) {
     return 'HypercardRuntime/RuntimeHost/';
   }
-  if (relPath.startsWith('packages/hypercard-runtime/src/plugin-runtime/')) {
+  if (relPath.startsWith('packages/os-scripting/src/plugin-runtime/')) {
     return 'HypercardRuntime/PluginRuntime/';
   }
-  if (relPath.startsWith('packages/hypercard-runtime/')) {
+  if (relPath.startsWith('packages/os-scripting/')) {
     return 'HypercardRuntime/';
   }
   for (const [pathPrefix, titlePrefix] of APP_PREFIXES.entries()) {
@@ -119,21 +119,21 @@ function checkPlacement(relPath) {
     }
   }
 
-  if (relPath.startsWith('packages/engine/')) {
-    const ok = /^packages\/engine\/src\/(components\/.+|plugin-runtime\/.+)\.stories\.(ts|tsx)$/.test(relPath);
+  if (relPath.startsWith('packages/os-core/')) {
+    const ok = /^packages\/os-core\/src\/(components\/.+|plugin-runtime\/.+)\.stories\.(ts|tsx)$/.test(relPath);
     if (!ok) {
-      return 'engine story path must be under packages/engine/src/components or packages/engine/src/plugin-runtime';
+      return 'engine story path must be under packages/os-core/src/components or packages/os-core/src/plugin-runtime';
     }
   }
-  if (relPath.startsWith('packages/chat-runtime/')) {
-    const ok = /^packages\/chat-runtime\/src\/chat\/.+\.stories\.(ts|tsx)$/.test(relPath);
+  if (relPath.startsWith('packages/os-chat/')) {
+    const ok = /^packages\/os-chat\/src\/chat\/.+\.stories\.(ts|tsx)$/.test(relPath);
     if (!ok) {
-      return 'chat-runtime story path must be under packages/chat-runtime/src/chat';
+      return 'chat-runtime story path must be under packages/os-chat/src/chat';
     }
   }
-  if (relPath.startsWith('packages/hypercard-runtime/')) {
+  if (relPath.startsWith('packages/os-scripting/')) {
     const ok =
-      /^packages\/hypercard-runtime\/src\/(hypercard\/.+|runtime-host\/.+|plugin-runtime\/.+)\.stories\.(ts|tsx)$/.test(
+      /^packages\/os-scripting\/src\/(hypercard\/.+|runtime-host\/.+|plugin-runtime\/.+)\.stories\.(ts|tsx)$/.test(
         relPath,
       );
     if (!ok) {
@@ -146,9 +146,9 @@ function checkPlacement(relPath) {
 
 const storyFiles = [];
 walk(join(repoRoot, 'apps'), storyFiles);
-walk(join(repoRoot, 'packages/engine/src'), storyFiles);
-walk(join(repoRoot, 'packages/chat-runtime/src'), storyFiles);
-walk(join(repoRoot, 'packages/hypercard-runtime/src'), storyFiles);
+walk(join(repoRoot, 'packages/os-core/src'), storyFiles);
+walk(join(repoRoot, 'packages/os-chat/src'), storyFiles);
+walk(join(repoRoot, 'packages/os-scripting/src'), storyFiles);
 
 const errors = [];
 

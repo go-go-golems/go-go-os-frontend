@@ -1,9 +1,9 @@
 import type { Preview } from '@storybook/react';
 import React from 'react';
 import { initialize, mswLoader } from 'msw-storybook-addon';
-import { HyperCardTheme } from '@hypercard/engine';
-import '@hypercard/engine/theme';
-import '@hypercard/chat-runtime/theme';
+import { HyperCardTheme } from '@go-go-golems/os-core';
+import '@go-go-golems/os-core/theme';
+import '@go-go-golems/os-chat/theme';
 
 initialize();
 

@@ -1,4 +1,4 @@
-import { SyntaxHighlight, toYaml } from '@hypercard/chat-runtime';
+import { SyntaxHighlight, toYaml } from '@go-go-golems/os-chat';
 import { useLazyGetSchemaDocumentQuery } from '../api/appsApi';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { compareDocSummaries, groupDocsByMount, useDocsIndex } from '../domain/docsHooks';

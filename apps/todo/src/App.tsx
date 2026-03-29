@@ -1,4 +1,4 @@
-import { formatAppKey, type LauncherRenderContext } from '@hypercard/desktop-os';
+import { formatAppKey, type LauncherRenderContext } from '@go-go-golems/os-shell';
 import { todoLauncherModule } from './launcher/module';
 
 const STANDALONE_INSTANCE_ID = 'standalone';

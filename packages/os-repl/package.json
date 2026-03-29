@@ -1,0 +1,48 @@
+{
+  "name": "@go-go-golems/os-repl",
+  "version": "0.1.0",
+  "description": "Terminal and REPL UI components shared by go-go-os packages.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "author": "Manuel Odendahl",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/go-go-golems/go-go-os-frontend.git",
+    "directory": "packages/os-repl"
+  },
+  "homepage": "https://github.com/go-go-golems/go-go-os-frontend/tree/main/packages/os-repl#readme",
+  "bugs": {
+    "url": "https://github.com/go-go-golems/go-go-os-frontend/issues"
+  },
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/*.css",
+    "**/*.vm.js",
+    "**/*.json",
+    "README.md"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./theme": "./src/theme.css"
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "build:dist": "node ../../scripts/packages/build-dist.mjs",
+    "typecheck": "tsc -b",
+    "test": "vitest run src",
+    "test:watch": "vitest src"
+  },
+  "peerDependencies": {
+    "@reduxjs/toolkit": "^2.0.0",
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19",
+    "react-redux": "^9.0.0"
+  }
+}

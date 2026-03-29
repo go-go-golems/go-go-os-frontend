@@ -23,34 +23,34 @@ There are several JavaScript and TypeScript package layers in this workspace, an
 
 At a high level:
 
-- `@hypercard/engine` gives you the desktop shell, windowing state/actions, generic widgets, theming, and Storybook helpers.
-- `@hypercard/hypercard-runtime` gives you the runtime core: runtime sessions, runtime bundle loading, runtime package registration, runtime surface-type registration, runtime debug windows, and runtime-host plumbing.
-- `@hypercard/ui-runtime` gives you the concrete `ui` runtime package and the `ui.card.v1` runtime surface type.
-- `@hypercard/kanban-runtime` gives you the concrete `kanban` runtime package and the `kanban.v1` runtime surface type.
-- `@hypercard/repl` gives you the reusable REPL shell: transcript, prompt, completions, history, and effect delivery.
+- `@go-go-golems/os-core` gives you the desktop shell, windowing state/actions, generic widgets, theming, and Storybook helpers.
+- `@go-go-golems/os-scripting` gives you the runtime core: runtime sessions, runtime bundle loading, runtime package registration, runtime surface-type registration, runtime debug windows, and runtime-host plumbing.
+- `@go-go-golems/os-ui-cards` gives you the concrete `ui` runtime package and the `ui.card.v1` runtime surface type.
+- `@go-go-golems/os-kanban` gives you the concrete `kanban` runtime package and the `kanban.v1` runtime surface type.
+- `@go-go-golems/os-repl` gives you the reusable REPL shell: transcript, prompt, completions, history, and effect delivery.
 
 That means the architecture is intentionally layered:
 
 ```text
-@hypercard/engine
+@go-go-golems/os-core
   desktop shell + widgets + theming + story helpers
 
-@hypercard/hypercard-runtime
+@go-go-golems/os-scripting
   generic runtime lifecycle + registries + host/runtime bridge
 
-@hypercard/repl
+@go-go-golems/os-repl
   reusable shell for multiple REPL profiles
 
-@hypercard/ui-runtime
+@go-go-golems/os-ui-cards
   concrete base UI DSL package
 
-@hypercard/kanban-runtime
+@go-go-golems/os-kanban
   concrete Kanban DSL package
 ```
 
 The single most important architectural rule is:
 
-- `@hypercard/hypercard-runtime` owns generic runtime infrastructure;
+- `@go-go-golems/os-scripting` owns generic runtime infrastructure;
 - concrete runtime DSL packages live outside it and are registered explicitly by the host app.
 
 ## 2. The Mental Model You Should Use
@@ -92,11 +92,11 @@ and not the older `stack` / `card` terminology in runtime core.
 
 ## 3. Package Map
 
-### `@hypercard/engine`
+### `@go-go-golems/os-core`
 
 Main barrel:
 
-- `packages/engine/src/index.ts`
+- `packages/os-core/src/index.ts`
 
 Use this package when you need:
 
@@ -110,18 +110,18 @@ Use this package when you need:
 Main import patterns:
 
 ```ts
-import { createStoryHelpers, DataTable, Btn } from '@hypercard/engine';
-import { DesktopShell } from '@hypercard/engine/desktop-react';
-import { openWindow, closeWindow, windowingReducer } from '@hypercard/engine/desktop-core';
-import '@hypercard/engine/theme';
-import '@hypercard/engine/theme/modern.css';
+import { createStoryHelpers, DataTable, Btn } from '@go-go-golems/os-core';
+import { DesktopShell } from '@go-go-golems/os-core/desktop-react';
+import { openWindow, closeWindow, windowingReducer } from '@go-go-golems/os-core/desktop-core';
+import '@go-go-golems/os-core/theme';
+import '@go-go-golems/os-core/theme/modern.css';
 ```
 
-### `@hypercard/hypercard-runtime`
+### `@go-go-golems/os-scripting`
 
 Main barrel:
 
-- `packages/hypercard-runtime/src/index.ts`
+- `packages/os-scripting/src/index.ts`
 
 Use this package when you need:
 
@@ -140,10 +140,10 @@ import {
   registerRuntimeSurfaceType,
   RuntimeSurfaceSessionHost,
   buildRuntimeDebugWindowPayload,
-} from '@hypercard/hypercard-runtime';
+} from '@go-go-golems/os-scripting';
 ```
 
-### `@hypercard/ui-runtime`
+### `@go-go-golems/os-ui-cards`
 
 Use this package when you need:
 
@@ -154,13 +154,13 @@ Use this package when you need:
 
 Main file:
 
-- `packages/ui-runtime/src/index.ts`
+- `packages/os-ui-cards/src/index.ts`
 
-### `@hypercard/repl`
+### `@go-go-golems/os-repl`
 
 Main barrel:
 
-- `packages/repl/src/index.ts`
+- `packages/os-repl/src/index.ts`
 
 Use this package when you need:
 
@@ -174,10 +174,10 @@ Use this package when you need:
 Main import patterns:
 
 ```ts
-import { MacRepl, type ReplDriver } from '@hypercard/repl';
+import { MacRepl, type ReplDriver } from '@go-go-golems/os-repl';
 ```
 
-### `@hypercard/kanban-runtime`
+### `@go-go-golems/os-kanban`
 
 Use this package when you need:
 
@@ -189,7 +189,7 @@ Use this package when you need:
 
 Main file:
 
-- `packages/kanban-runtime/src/index.ts`
+- `packages/os-kanban/src/index.ts`
 
 ## 4. The Most Important Public Types
 
@@ -199,7 +199,7 @@ These are the types new developers most often need first.
 
 Source:
 
-- `packages/engine/src/cards/types.ts`
+- `packages/os-core/src/cards/types.ts`
 
 Definition:
 
@@ -246,7 +246,7 @@ The `plugin.packageIds` field is not documentation only. It is part of runtime l
 
 Source:
 
-- `packages/engine/src/components/shell/windowing/desktopShellTypes.ts`
+- `packages/os-core/src/components/shell/windowing/desktopShellTypes.ts`
 
 Definition:
 
@@ -275,7 +275,7 @@ This is the core host-shell composition prop set. In practice:
 
 Source:
 
-- `packages/engine/src/desktop/core/state/types.ts`
+- `packages/os-core/src/desktop/core/state/types.ts`
 
 Definition:
 
@@ -320,7 +320,7 @@ content: {
 
 Source:
 
-- `packages/hypercard-runtime/src/runtime-packages/runtimePackageRegistry.ts`
+- `packages/os-scripting/src/runtime-packages/runtimePackageRegistry.ts`
 
 Definition:
 
@@ -349,7 +349,7 @@ A package can contribute:
 
 Source:
 
-- `packages/hypercard-runtime/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx`
+- `packages/os-scripting/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx`
 
 Definition:
 
@@ -384,9 +384,9 @@ Examples:
 Use this when you already have a `RuntimeBundleDefinition` and want to render it in a host shell.
 
 ```tsx
-import { DesktopShell } from '@hypercard/engine/desktop-react';
-import '@hypercard/engine/theme';
-import '@hypercard/engine/theme/modern.css';
+import { DesktopShell } from '@go-go-golems/os-core/desktop-react';
+import '@go-go-golems/os-core/theme';
+import '@go-go-golems/os-core/theme/modern.css';
 
 export function App() {
   return <DesktopShell bundle={MY_BUNDLE} />;
@@ -410,9 +410,9 @@ DesktopShell
 Use this when your app has runtime-authored surfaces.
 
 ```ts
-import { registerRuntimePackage, registerRuntimeSurfaceType } from '@hypercard/hypercard-runtime';
-import { UI_RUNTIME_PACKAGE, UI_CARD_V1_RUNTIME_SURFACE_TYPE } from '@hypercard/ui-runtime';
-import { KANBAN_RUNTIME_PACKAGE, KANBAN_V1_RUNTIME_SURFACE_TYPE } from '@hypercard/kanban-runtime';
+import { registerRuntimePackage, registerRuntimeSurfaceType } from '@go-go-golems/os-scripting';
+import { UI_RUNTIME_PACKAGE, UI_CARD_V1_RUNTIME_SURFACE_TYPE } from '@go-go-golems/os-ui-cards';
+import { KANBAN_RUNTIME_PACKAGE, KANBAN_V1_RUNTIME_SURFACE_TYPE } from '@go-go-golems/os-kanban';
 
 registerRuntimePackage(UI_RUNTIME_PACKAGE);
 registerRuntimeSurfaceType(UI_CARD_V1_RUNTIME_SURFACE_TYPE);
@@ -430,10 +430,10 @@ Important rule:
 
 Source:
 
-- `packages/engine/src/app/generateCardStories.tsx`
+- `packages/os-core/src/app/generateCardStories.tsx`
 
 ```tsx
-import { createStoryHelpers } from '@hypercard/engine';
+import { createStoryHelpers } from '@go-go-golems/os-core';
 
 const { storeDecorator, createStory, FullApp } = createStoryHelpers({
   bundle: MY_BUNDLE,
@@ -466,7 +466,7 @@ What `createStoryHelpers(...)` gives you:
 Use the desktop-core state actions:
 
 ```ts
-import { openWindow, closeWindow } from '@hypercard/engine/desktop-core';
+import { openWindow, closeWindow } from '@go-go-golems/os-core/desktop-core';
 
 dispatch(openWindow({
   id: 'window:inventory:report',
@@ -492,16 +492,16 @@ Use this API when:
 - an app launches a shared debug window;
 - a non-runtime host wants to open an app window.
 
-## 6. `@hypercard/engine` API Reference
+## 6. `@go-go-golems/os-core` API Reference
 
-This section covers the public API families exported by `@hypercard/engine`.
+This section covers the public API families exported by `@go-go-golems/os-core`.
 
 ### 6.1 App Helpers
 
 Source:
 
-- `packages/engine/src/app/index.ts`
-- `packages/engine/src/app/generateCardStories.tsx`
+- `packages/os-core/src/app/index.ts`
+- `packages/os-core/src/app/generateCardStories.tsx`
 
 Exports:
 
@@ -515,7 +515,7 @@ Exports:
 
 Source:
 
-- `packages/engine/src/desktop/react/index.ts`
+- `packages/os-core/src/desktop/react/index.ts`
 
 Important exports:
 
@@ -543,7 +543,7 @@ Use these when:
 
 Source:
 
-- `packages/engine/src/desktop/core/state/index.ts`
+- `packages/os-core/src/desktop/core/state/index.ts`
 
 Important exports:
 
@@ -576,7 +576,7 @@ These are the APIs to use when you are writing reducers, launchers, or app-shell
 
 Source:
 
-- `packages/engine/src/components/widgets/index.ts`
+- `packages/os-core/src/components/widgets/index.ts`
 
 Important exports include:
 
@@ -611,14 +611,14 @@ These are normal React host widgets. They are not the same thing as VM-side DSL 
 
 That distinction matters:
 
-- `GridBoard` is a host React widget from `@hypercard/engine`;
-- `ui.gridBoard(...)` is a VM-side structured node constructor exposed through `@hypercard/ui-runtime`.
+- `GridBoard` is a host React widget from `@go-go-golems/os-core`;
+- `ui.gridBoard(...)` is a VM-side structured node constructor exposed through `@go-go-golems/os-ui-cards`.
 
 ### 6.5 Generic Shared Types
 
 Source:
 
-- `packages/engine/src/types.ts`
+- `packages/os-core/src/types.ts`
 
 Important types:
 
@@ -636,18 +636,18 @@ Use these for generic host widgets such as data tables, forms, list/detail views
 
 Source:
 
-- `packages/engine/src/theme/index.ts`
+- `packages/os-core/src/theme/index.ts`
 
 Load once at app entry:
 
 ```ts
-import '@hypercard/engine/theme';
+import '@go-go-golems/os-core/theme';
 ```
 
 Optional theme layer:
 
 ```ts
-import '@hypercard/engine/theme/modern.css';
+import '@go-go-golems/os-core/theme/modern.css';
 ```
 
 What the base theme loads:
@@ -660,7 +660,7 @@ What the base theme loads:
 
 If you forget the theme import, the shell and widgets still render, but they will look broken or unstyled.
 
-## 7. `@hypercard/hypercard-runtime` API Reference
+## 7. `@go-go-golems/os-scripting` API Reference
 
 This package is the runtime core. It is where QuickJS sessions, registries, and runtime-host plumbing live.
 
@@ -668,8 +668,8 @@ This package is the runtime core. It is where QuickJS sessions, registries, and 
 
 Source:
 
-- `packages/hypercard-runtime/src/runtime-packages/runtimePackageRegistry.ts`
-- `packages/hypercard-runtime/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx`
+- `packages/os-scripting/src/runtime-packages/runtimePackageRegistry.ts`
+- `packages/os-scripting/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx`
 
 Runtime package API:
 
@@ -702,7 +702,7 @@ These registries are module-global today. That means:
 
 Source:
 
-- `packages/hypercard-runtime/src/plugin-runtime/runtimeService.ts`
+- `packages/os-scripting/src/plugin-runtime/runtimeService.ts`
 
 Core class:
 
@@ -767,7 +767,7 @@ QuickJSRuntimeService
 
 Source:
 
-- `packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js`
+- `packages/os-scripting/src/plugin-runtime/stack-bootstrap.vm.js`
 
 This file defines the globals that exist inside the QuickJS VM:
 
@@ -809,9 +809,9 @@ Use `RuntimeSurfaceSessionHost` when you need to mount a runtime-authored surfac
 
 Source:
 
-- `packages/hypercard-runtime/src/plugin-runtime/jsSessionService.ts`
-- `packages/hypercard-runtime/src/repl/jsSessionBroker.ts`
-- `packages/hypercard-runtime/src/repl/jsReplDriver.ts`
+- `packages/os-scripting/src/plugin-runtime/jsSessionService.ts`
+- `packages/os-scripting/src/repl/jsSessionBroker.ts`
+- `packages/os-scripting/src/repl/jsReplDriver.ts`
 
 Core types:
 
@@ -844,13 +844,13 @@ Important rule:
 - the broker owns the live session handles
 - debug UIs should consume summaries and subscriptions, not serialize broker objects into Redux
 
-## 8. `@hypercard/ui-runtime` Reference
+## 8. `@go-go-golems/os-ui-cards` Reference
 
 This is the base UI DSL package.
 
 Source entry:
 
-- `packages/ui-runtime/src/index.ts`
+- `packages/os-ui-cards/src/index.ts`
 
 Important exports:
 
@@ -884,13 +884,13 @@ What it does not own:
 - bundle loading
 - app startup
 
-## 9. `@hypercard/kanban-runtime` Reference
+## 9. `@go-go-golems/os-kanban` Reference
 
 This is the richer Kanban DSL package.
 
 Source entry:
 
-- `packages/kanban-runtime/src/index.ts`
+- `packages/os-kanban/src/index.ts`
 
 Important exports:
 
@@ -1016,8 +1016,8 @@ Important concepts:
 
 Typical ownership split:
 
-- `@hypercard/ui-runtime` owns `ui.card.v1` docs
-- `@hypercard/kanban-runtime` owns `kanban.v1` docs
+- `@go-go-golems/os-ui-cards` owns `ui.card.v1` docs
+- `@go-go-golems/os-kanban` owns `kanban.v1` docs
 - `os-launcher` owns docs for its concrete demo surfaces
 - Inventory owns docs for its concrete `ui.card.v1` surfaces
 
@@ -1075,8 +1075,8 @@ Examples:
 2. Read `docs/runtime-concepts-guide.md`.
 3. Read `docs/hypercard-runtime-pack-playbook.md`.
 4. Read one concrete package:
-   - `packages/ui-runtime/src/index.ts`
-   - `packages/kanban-runtime/src/index.ts`
+   - `packages/os-ui-cards/src/index.ts`
+   - `packages/os-kanban/src/index.ts`
 5. Read one host app bootstrap:
    - `apps/os-launcher/src/App.tsx`
    - `apps/os-launcher/src/app/registerRuntimePackages.ts`
@@ -1084,36 +1084,36 @@ Examples:
    - `apps/os-launcher/src/domain/stack.ts`
    - `apps/os-launcher/src/domain/pluginBundle.ts`
 7. Then read runtime core:
-   - `packages/hypercard-runtime/src/plugin-runtime/runtimeService.ts`
-   - `packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js`
+   - `packages/os-scripting/src/plugin-runtime/runtimeService.ts`
+   - `packages/os-scripting/src/plugin-runtime/stack-bootstrap.vm.js`
 
 ## 15. Short File Reference Map
 
 If you need to jump straight into code, start here:
 
 - engine barrel:
-  - `packages/engine/src/index.ts`
+  - `packages/os-core/src/index.ts`
 - engine desktop shell:
-  - `packages/engine/src/components/shell/windowing/DesktopShell.tsx`
-  - `packages/engine/src/components/shell/windowing/desktopShellTypes.ts`
+  - `packages/os-core/src/components/shell/windowing/DesktopShell.tsx`
+  - `packages/os-core/src/components/shell/windowing/desktopShellTypes.ts`
 - desktop state/actions:
-  - `packages/engine/src/desktop/core/state/index.ts`
-  - `packages/engine/src/desktop/core/state/types.ts`
+  - `packages/os-core/src/desktop/core/state/index.ts`
+  - `packages/os-core/src/desktop/core/state/types.ts`
 - story helpers:
-  - `packages/engine/src/app/generateCardStories.tsx`
+  - `packages/os-core/src/app/generateCardStories.tsx`
 - runtime core barrel:
-  - `packages/hypercard-runtime/src/index.ts`
+  - `packages/os-scripting/src/index.ts`
 - runtime service:
-  - `packages/hypercard-runtime/src/plugin-runtime/runtimeService.ts`
+  - `packages/os-scripting/src/plugin-runtime/runtimeService.ts`
 - runtime bootstrap:
-  - `packages/hypercard-runtime/src/plugin-runtime/stack-bootstrap.vm.js`
+  - `packages/os-scripting/src/plugin-runtime/stack-bootstrap.vm.js`
 - runtime package registry:
-  - `packages/hypercard-runtime/src/runtime-packages/runtimePackageRegistry.ts`
+  - `packages/os-scripting/src/runtime-packages/runtimePackageRegistry.ts`
 - runtime surface-type registry:
-  - `packages/hypercard-runtime/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx`
+  - `packages/os-scripting/src/runtime-packs/runtimeSurfaceTypeRegistry.tsx`
 - UI package:
-  - `packages/ui-runtime/src/index.ts`
+  - `packages/os-ui-cards/src/index.ts`
 - Kanban package:
-  - `packages/kanban-runtime/src/index.ts`
+  - `packages/os-kanban/src/index.ts`
 
 That set of files is enough to reconstruct the current architecture from source.

@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "jsx": "react-jsx",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "composite": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@go-go-golems/os-core": ["../os-core/src"],
+      "@go-go-golems/os-core/*": ["../os-core/src/*"],
+      "@go-go-golems/os-scripting": ["../os-scripting/src"],
+      "@go-go-golems/os-scripting/*": ["../os-scripting/src/*"],
+      "@go-go-golems/os-ui-cards": ["../os-ui-cards/src"],
+      "@go-go-golems/os-ui-cards/*": ["../os-ui-cards/src/*"],
+      "@go-go-golems/os-widgets": ["../os-widgets/src"],
+      "@go-go-golems/os-widgets/*": ["../os-widgets/src/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.stories.tsx", "src/__tests__"],
+  "references": [{ "path": "../os-core" }, { "path": "../os-scripting" }, { "path": "../os-ui-cards" }, { "path": "../os-widgets" }]
+}

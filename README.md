@@ -9,9 +9,9 @@ It no longer owns:
 ## What Lives Here
 
 - Frontend platform packages:
-  - `packages/engine`
-  - `packages/desktop-os`
-  - `packages/confirm-runtime`
+  - `packages/os-core`
+  - `packages/os-shell`
+  - `packages/os-confirm`
 - Example/demo apps that exercise platform APIs:
   - `apps/todo`
   - `apps/crm`
@@ -26,9 +26,9 @@ go-go-os-frontend/
     crm/
     book-tracker-debug/
   packages/
-    engine/
-    desktop-os/
-    confirm-runtime/
+    os-core/
+    os-shell/
+    os-confirm/
 ```
 
 ## Frontend Quick Start

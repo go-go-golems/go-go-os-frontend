@@ -1,4 +1,4 @@
-import type { RuntimeSurfaceMeta, RuntimeBundleDefinition } from '@hypercard/engine';
+import type { RuntimeSurfaceMeta, RuntimeBundleDefinition } from '@go-go-golems/os-core';
 import { BOOK_TRACKER_PLUGIN_BUNDLE } from './pluginBundle';
 
 interface PluginCardMeta {
