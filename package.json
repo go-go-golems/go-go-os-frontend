@@ -10,6 +10,7 @@
     "build": "npm run build -w packages/os-core && npm run build -w packages/os-chat && npm run build -w packages/os-repl && npm run build -w packages/os-scripting && npm run build -w packages/os-ui-cards && npm run build -w packages/os-kanban && npm run build -w packages/os-confirm && npm run build -w packages/os-shell && npm run build -w apps/todo && npm run build -w apps/crm && npm run build -w apps/book-tracker-debug",
     "build:publish-v1": "npm run build:dist -w packages/os-core && npm run build:dist -w packages/os-chat && npm run build:dist -w packages/os-repl && npm run build:dist -w packages/os-scripting && npm run build:dist -w packages/os-ui-cards && npm run build:dist -w packages/os-confirm && npm run build:dist -w packages/os-shell && npm run build:dist -w packages/os-widgets && npm run build:dist -w packages/os-kanban",
     "pack:smoke-v1": "npm run build:publish-v1 && node scripts/packages/pack-smoke.mjs packages/os-core packages/os-repl packages/os-scripting",
+    "install:smoke-v1": "npm run build:publish-v1 && node scripts/packages/install-smoke.mjs packages/os-core packages/os-chat packages/os-repl packages/os-scripting",
     "storybook": "storybook dev -p 6006 --config-dir ./.storybook",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
