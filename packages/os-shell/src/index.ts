@@ -18,6 +18,7 @@ export type {
 } from './contracts/launchableAppModule';
 export type { LauncherHostContext } from './contracts/launcherHostContext';
 export type { LauncherRenderContext } from './contracts/launcherRenderContext';
+export type { FederatedAppHostContract } from './contracts/federatedAppHostContract';
 export { type AppRegistry, createAppRegistry } from './registry/createAppRegistry';
 export { formatAppKey, isAppKeyForApp, type ParsedAppKey, parseAppKey } from './runtime/appKey';
 export {
