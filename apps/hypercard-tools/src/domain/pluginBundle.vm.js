@@ -1,6 +1,7 @@
 // @ts-check
 /// <reference path="./pluginBundle.authoring.d.ts" />
 defineRuntimeBundle(({ ui }) => {
+  const UI_CARD_PACK_ID = 'ui.card.v1';
   const DEMO_CARDS = [
     { id: 'layouts', title: 'Layouts', focus: 'panel / row / column composition' },
     { id: 'textBadges', title: 'Text and Badges', focus: 'text and badge primitives' },
@@ -212,6 +213,13 @@ defineRuntimeBundle(({ ui }) => {
     return `row=${toNumber(value.row, -1)} col=${toNumber(value.col, -1)} idx=${toNumber(value.cellIndex, -1)}`;
   }
 
+  function uiCardSurface(definition) {
+    return {
+      packId: UI_CARD_PACK_ID,
+      ...definition,
+    };
+  }
+
   return {
     id: 'hypercardToolsUiDslDemo',
     title: 'HyperCard Tools UI DSL Demos',
@@ -249,7 +257,7 @@ defineRuntimeBundle(({ ui }) => {
       },
     },
     surfaces: {
-      home: {
+      home: uiCardSurface({
         render({ state }) {
           const session = filtersState(state);
           const rows = catalogRows(session);
@@ -307,9 +315,9 @@ defineRuntimeBundle(({ ui }) => {
             closeRuntimeWindow(context);
           },
         },
-      },
+      }),
 
-      layouts: {
+      layouts: uiCardSurface({
         render() {
           return ui.panel([
             ui.text('Layouts Demo'),
@@ -341,9 +349,9 @@ defineRuntimeBundle(({ ui }) => {
           back,
           home: goHome,
         },
-      },
+      }),
 
-      textBadges: {
+      textBadges: uiCardSurface({
         render({ state }) {
           const card = draftState(state);
           const session = filtersState(state);
@@ -378,9 +386,9 @@ defineRuntimeBundle(({ ui }) => {
           back,
           home: goHome,
         },
-      },
+      }),
 
-      buttons: {
+      buttons: uiCardSurface({
         render({ state }) {
           const card = draftState(state);
           const clicks = toNumber(card.clicks, 0);
@@ -437,9 +445,9 @@ defineRuntimeBundle(({ ui }) => {
           back,
           home: goHome,
         },
-      },
+      }),
 
-      inputs: {
+      inputs: uiCardSurface({
         render({ state }) {
           const card = draftState(state);
           const name = toText(card.name);
@@ -499,9 +507,9 @@ defineRuntimeBundle(({ ui }) => {
           back,
           home: goHome,
         },
-      },
+      }),
 
-      tables: {
+      tables: uiCardSurface({
         render({ state }) {
           const card = draftState(state);
           const query = toText(card.query);
@@ -538,9 +546,9 @@ defineRuntimeBundle(({ ui }) => {
           back,
           home: goHome,
         },
-      },
+      }),
 
-      dropdowns: {
+      dropdowns: uiCardSurface({
         render({ state }) {
           const card = draftState(state);
           const selected = dropdownSelected(FONT_OPTIONS, card.selectedFont);
@@ -588,9 +596,9 @@ defineRuntimeBundle(({ ui }) => {
           back,
           home: goHome,
         },
-      },
+      }),
 
-      selectableTable: {
+      selectableTable: uiCardSurface({
         render({ state }) {
           const card = draftState(state);
           const searchText = toText(card.searchText);
@@ -656,9 +664,9 @@ defineRuntimeBundle(({ ui }) => {
           back,
           home: goHome,
         },
-      },
+      }),
 
-      gridBoard: {
+      gridBoard: uiCardSurface({
         render({ state }) {
           const card = draftState(state);
           const selectedIndex = toNumber(card.selectedIndex, 0);
@@ -709,9 +717,9 @@ defineRuntimeBundle(({ ui }) => {
           back,
           home: goHome,
         },
-      },
+      }),
 
-      eventPayloads: {
+      eventPayloads: uiCardSurface({
         render({ state }) {
           const card = draftState(state);
           return ui.panel([
@@ -769,9 +777,9 @@ defineRuntimeBundle(({ ui }) => {
           back,
           home: goHome,
         },
-      },
+      }),
 
-      domainIntents: {
+      domainIntents: uiCardSurface({
         render({ state }) {
           const domain = appDomainState(state);
           const selectedTheme = dropdownSelected(THEME_OPTIONS, THEME_OPTIONS.indexOf(toText(domain.selectedTheme, 'Geneva')));
@@ -842,9 +850,9 @@ defineRuntimeBundle(({ ui }) => {
           back,
           home: goHome,
         },
-      },
+      }),
 
-      stateNav: {
+      stateNav: uiCardSurface({
         render({ state }) {
           const card = draftState(state);
           const session = filtersState(state);
@@ -905,9 +913,9 @@ defineRuntimeBundle(({ ui }) => {
           back,
           home: goHome,
         },
-      },
+      }),
 
-      playground: {
+      playground: uiCardSurface({
         render({ state }) {
           const card = draftState(state);
           const session = filtersState(state);
@@ -1006,7 +1014,7 @@ defineRuntimeBundle(({ ui }) => {
           back,
           home: goHome,
         },
-      },
+      }),
     },
   };
 });
