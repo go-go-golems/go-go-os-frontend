@@ -272,6 +272,27 @@ eventRuntimeSurface(sessionId, surfaceId, handlerName, args, state)
 disposeRuntimeSession(sessionId)
 ```
 
+Important load-time invariant:
+
+- every runtime surface must resolve to a concrete surface-type id;
+- in practice that means bundle-owned surfaces must declare `packId`;
+- runtime package installation and runtime surface typing are separate concerns.
+
+The common mistake is assuming:
+
+- `packageIds: ['ui']` means surfaces automatically become `ui.card.v1`.
+
+That is wrong.
+
+- `packageIds` tells the host which VM helper APIs to install;
+- `packId` tells the host which surface-type validator/renderer owns the tree returned by one specific surface.
+
+If a bundle omits `packId` for a surface, bundle load fails before the surface can render. The runtime currently fails with an error shaped like:
+
+```text
+Runtime surface packId is required for surface: home
+```
+
 ### What a session is not
 
 A runtime session is not:
@@ -502,6 +523,50 @@ defineRuntimeSurface(
 );
 ```
 
+Bundle-owned surfaces follow the same rule even when they are declared as metadata objects inside `defineRuntimeBundle(...)`.
+
+Correct:
+
+```js
+defineRuntimeBundle(({ ui }) => ({
+  id: 'demo',
+  title: 'Demo Bundle',
+  packageIds: ['ui'],
+  surfaces: {
+    home: {
+      packId: 'ui.card.v1',
+      render({ state }) {
+        return ui.panel([]);
+      },
+      handlers: {
+        reload(context) {
+          context.dispatch({ type: 'reload.requested' });
+        },
+      },
+    },
+  },
+}));
+```
+
+Incorrect:
+
+```js
+defineRuntimeBundle(({ ui }) => ({
+  id: 'demo',
+  title: 'Demo Bundle',
+  packageIds: ['ui'],
+  surfaces: {
+    home: {
+      render({ state }) {
+        return ui.panel([]);
+      },
+    },
+  },
+}));
+```
+
+The incorrect example installs the `ui` API but never tells the runtime which surface type owns `home`.
+
 ### What a surface owns
 
 A runtime surface owns:
@@ -557,6 +622,16 @@ That gives you:
 - stable DSL boundaries
 - safer runtime behavior
 - room for documentation and prompting around a real schema
+
+### Authoring checklist
+
+Before you load a bundle, verify:
+
+- each surface has a `packId`;
+- each `packId` matches a registered runtime surface type such as `ui.card.v1` or `kanban.v1`;
+- the bundle `packageIds` include the VM helper package needed by the surface implementation, such as `ui` for `ui.panel(...)`;
+- you are not relying on package installation to infer a surface type;
+- there is at least one direct regression test that loads the bundle and renders a real surface.
 
 ### Registry API
 
