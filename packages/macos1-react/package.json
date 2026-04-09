@@ -44,7 +44,9 @@
     "build:dist": "node ../../scripts/packages/build-dist.mjs",
     "typecheck": "tsc -b",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "peerDependencies": {
     "react": "^18 || ^19",
