@@ -1,0 +1,1 @@
+{"version":3,"file":"DisclosureTriangle.d.ts","sourceRoot":"","sources":["DisclosureTriangle.tsx"],"names":[],"mappings":"AAAA,OAAO,EAAY,KAAK,SAAS,EAAE,MAAM,OAAO,CAAC;AAGjD,MAAM,WAAW,uBAAuB;IACtC,KAAK,EAAE,MAAM,CAAC;IACd,WAAW,CAAC,EAAE,OAAO,CAAC;IACtB,QAAQ,EAAE,SAAS,CAAC;CACrB;AAED,wBAAgB,kBAAkB,CAAC,EAAE,KAAK,EAAE,WAAmB,EAAE,QAAQ,EAAE,EAAE,uBAAuB,2CAgBnG"}

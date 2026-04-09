@@ -1,0 +1,1 @@
+{"version":3,"file":"WindowResizeHandle.d.ts","sourceRoot":"","sources":["WindowResizeHandle.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,OAAO,CAAC;AAG1C,MAAM,WAAW,uBAAuB;IACtC,aAAa,CAAC,EAAE,CAAC,KAAK,EAAE,YAAY,CAAC,iBAAiB,CAAC,KAAK,IAAI,CAAC;CAClE;AAED,wBAAgB,kBAAkB,CAAC,EAAE,aAAa,EAAE,EAAE,uBAAuB,2CAS5E"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"useContentMinSize.d.ts","sourceRoot":"","sources":["useContentMinSize.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,SAAS,EAA2B,MAAM,OAAO,CAAC;AAEhE,MAAM,WAAW,cAAc;IAC7B,IAAI,EAAE,MAAM,CAAC;IACb,IAAI,EAAE,MAAM,CAAC;CACd;AAgBD;;;;;;;;;;GAUG;AACH,wBAAgB,iBAAiB,CAC/B,SAAS,CAAC,EAAE,CAAC,IAAI,EAAE,cAAc,KAAK,IAAI,GACzC,SAAS,CAAC,cAAc,GAAG,IAAI,CAAC,CAsBlC"}
