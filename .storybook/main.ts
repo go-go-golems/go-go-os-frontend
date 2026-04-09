@@ -46,6 +46,10 @@ const config: StorybookConfig = {
       directory: '../packages/os-widgets/src',
       files: '**/*.stories.@(ts|tsx)',
     },
+    {
+      directory: '../packages/macos1-react/src',
+      files: '**/*.stories.@(ts|tsx)',
+    },
   ],
   staticDirs: ['./public'],
   addons: [
@@ -68,6 +72,7 @@ const config: StorybookConfig = {
       '@go-go-golems/arc-agi-player': resolve(__dirname, '../apps/arc-agi-player/src'),
       '@go-go-golems/os-widgets/kanban-runtime': resolve(__dirname, '../packages/os-widgets/src/kanban/runtime.ts'),
       '@go-go-golems/os-widgets': resolve(__dirname, '../packages/os-widgets/src'),
+      '@go-go-golems/macos1-react': resolve(__dirname, '../packages/macos1-react/src'),
     };
     return config_;
   },
