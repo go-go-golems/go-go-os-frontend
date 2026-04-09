@@ -71,6 +71,28 @@ Importing the theme automatically loads all CSS:
 import '@go-go-golems/macos1-react/theme';
 ```
 
+## Development
+
+### Build
+
+```bash
+# TypeScript compilation (outputs to dist/)
+npm run build
+
+# Full dist build with CSS assets copied to dist/
+npm run build:dist
+```
+
+### Storybook
+
+```bash
+# Run Storybook
+npm run storybook
+
+# Build Storybook
+npm run build-storybook
+```
+
 ## License
 
 MIT
