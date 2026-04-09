@@ -18,5 +18,9 @@ import './compat.css';
 // macos1 theme overlay
 import './themes/macos1.css';
 
+// Rich widget styles from os-widgets
+import './rich-primitives.css';
+import './sparkline.css';
+
 export { Macos1Theme } from './Macos1Theme';
 export type { Macos1ThemeProps } from './Macos1Theme';
