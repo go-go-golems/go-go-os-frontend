@@ -27,20 +27,21 @@
     "registry": "https://npm.pkg.github.com"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./theme": "./src/theme/index.ts",
-    "./primitives": "./src/primitives/index.ts",
-    "./rich": "./src/rich/index.ts",
-    "./shell": "./src/shell/index.ts",
-    "./parts": "./src/parts/index.ts"
+    ".": "./dist/index.js",
+    "./theme": "./dist/theme/index.js",
+    "./primitives": "./dist/primitives/index.js",
+    "./rich": "./dist/rich/index.js",
+    "./shell": "./dist/shell/index.js",
+    "./parts": "./dist/parts/index.js"
   },
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "sideEffects": [
     "**/*.css"
   ],
   "scripts": {
     "build": "tsc -b",
+    "build:dist": "node ../../scripts/packages/build-dist.mjs",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest"
