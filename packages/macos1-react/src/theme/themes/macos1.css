@@ -1,0 +1,21 @@
+/* macOS-1 theme overlay for macos1 theme system
+ * Apply via className="theme-macos1" on the theme scoping root.
+ * 
+ * Supports both data-widget="macos1" (canonical) and 
+ * data-widget="hypercard" (legacy, for migration compatibility).
+ */
+
+[data-widget="macos1"].theme-macos1,
+[data-widget="hypercard"].theme-macos1 {
+  --hc-font-family: "Geneva", "Chicago", "Monaco", monospace;
+  --hc-font-size: 11px;
+  --hc-border-radius: 0px;
+  --hc-color-bg: #fff;
+  --hc-color-fg: #000;
+  --hc-color-border: #000;
+  --hc-color-muted: #777;
+  --hc-color-accent: #000;
+  --hc-color-desktop-bg: #bfc8d8;
+  --hc-window-shadow: 3px 3px 0 #000;
+  --hc-window-border-radius: 3px;
+}

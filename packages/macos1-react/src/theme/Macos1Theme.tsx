@@ -1,24 +1,30 @@
-// Macos1Theme - Theme scoping component
-// Extracted from os-core/src/theme/HyperCardTheme.tsx
-// Will be populated in Phase 2
-
-import React from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 export interface Macos1ThemeProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  /** Theme class name (e.g. 'theme-macos1') */
   theme?: string;
+  /** Skip the root scoping wrapper — data-part attrs still render for user CSS */
   unstyled?: boolean;
-  themeVars?: React.CSSProperties;
+  /** Inline CSS variable overrides (e.g. { '--hc-color-bg': '#1a1a2e' }) */
+  themeVars?: Record<string, string>;
 }
 
 /**
- * Macos1Theme provides the CSS scoping root for the macos1 theme system.
- * It renders a div with data-widget="macos1" to scope CSS custom properties.
+ * Provides the `data-widget="macos1"` scoping root required by all
+ * macos1 CSS. Wrap standalone widgets, stories, or embedded uses in
+ * this component so theme tokens and part selectors activate.
+ *
+ * The component also supports the legacy `data-widget="hypercard"` selector
+ * for backward compatibility during migration.
  */
 export function Macos1Theme({ children, theme, unstyled, themeVars }: Macos1ThemeProps) {
   if (unstyled) return <>{children}</>;
+
+  const style: CSSProperties | undefined = themeVars ? (themeVars as unknown as CSSProperties) : undefined;
+
   return (
-    <div data-widget="macos1" className={theme} style={themeVars}>
+    <div data-widget="macos1" className={theme} style={style}>
       {children}
     </div>
   );

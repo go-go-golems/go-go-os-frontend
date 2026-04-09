@@ -1,0 +1,34 @@
+/* ─── Syntax Highlighting (CodeMirror / lezer tok-* tokens) ── */
+[data-part="syntax-highlight"] .tok-keyword       { color: #cf222e; }
+[data-part="syntax-highlight"] .tok-operatorKeyword { color: #cf222e; }
+[data-part="syntax-highlight"] .tok-operator      { color: #cf222e; }
+[data-part="syntax-highlight"] .tok-typeName      { color: #8250df; }
+[data-part="syntax-highlight"] .tok-string        { color: #0a3069; }
+[data-part="syntax-highlight"] .tok-number        { color: #0550ae; }
+[data-part="syntax-highlight"] .tok-propertyName  { color: #116329; }
+[data-part="syntax-highlight"] .tok-definition    { color: #116329; }
+[data-part="syntax-highlight"] .tok-bool          { color: #0550ae; }
+[data-part="syntax-highlight"] .tok-null          { color: #0550ae; }
+[data-part="syntax-highlight"] .tok-comment       { color: #6e7781; font-style: italic; }
+[data-part="syntax-highlight"] .tok-variableName  { color: #24292f; }
+[data-part="syntax-highlight"] .tok-punctuation   { color: #6e7781; }
+[data-part="syntax-highlight"] .tok-meta          { color: #8250df; }
+[data-part="syntax-highlight"] .tok-atom          { color: #0550ae; }
+
+/* Dark variant */
+[data-part="syntax-highlight"][data-variant="dark"] .tok-keyword       { color: #ff7b72; }
+[data-part="syntax-highlight"][data-variant="dark"] .tok-operatorKeyword { color: #ff7b72; }
+[data-part="syntax-highlight"][data-variant="dark"] .tok-operator      { color: #ff7b72; }
+[data-part="syntax-highlight"][data-variant="dark"] .tok-typeName      { color: #d2a8ff; }
+[data-part="syntax-highlight"][data-variant="dark"] .tok-string        { color: #a5d6ff; }
+[data-part="syntax-highlight"][data-variant="dark"] .tok-number        { color: #79c0ff; }
+[data-part="syntax-highlight"][data-variant="dark"] .tok-propertyName  { color: #7ee787; }
+[data-part="syntax-highlight"][data-variant="dark"] .tok-definition    { color: #7ee787; }
+[data-part="syntax-highlight"][data-variant="dark"] .tok-bool          { color: #79c0ff; }
+[data-part="syntax-highlight"][data-variant="dark"] .tok-null          { color: #79c0ff; }
+[data-part="syntax-highlight"][data-variant="dark"] .tok-comment       { color: #8b949e; font-style: italic; }
+[data-part="syntax-highlight"][data-variant="dark"] .tok-variableName  { color: #c9d1d9; }
+[data-part="syntax-highlight"][data-variant="dark"] .tok-punctuation   { color: #8b949e; }
+[data-part="syntax-highlight"][data-variant="dark"] .tok-meta          { color: #d2a8ff; }
+[data-part="syntax-highlight"][data-variant="dark"] .tok-atom          { color: #79c0ff; }
+

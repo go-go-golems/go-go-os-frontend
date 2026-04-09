@@ -1,0 +1,21 @@
+/* Compatibility layer: map data-widget="macos1" to data-widget="hypercard"
+ * This allows the new Macos1Theme (data-widget="macos1") to work with
+ * existing CSS that targets data-widget="hypercard".
+ * 
+ * Once all consumers are migrated, this file can be removed and the
+ * data-widget="hypercard" selectors in tokens.css, primitives.css,
+ * shell.css, etc. can be updated to data-widget="macos1".
+ */
+
+/* Make [data-widget="macos1"] inherit all hypercard tokens */
+[data-widget="macos1"],
+[data-widget="hypercard"] {
+  /* Token inheritance - the actual tokens are defined in tokens.css on [data-widget="hypercard"]
+   * but we need to ensure they cascade to data-widget="macos1" as well */
+}
+
+/* Map theme class names */
+[data-widget="macos1"].theme-macos1,
+[data-widget="hypercard"].theme-macos1 {
+  /* The macos1 theme overrides from themes/macos1.css apply here */
+}
