@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
-import { Btn } from '../../primitives/Btn';
-import { Checkbox } from '../../primitives/Checkbox';
-import { RadioButton } from '../../primitives/RadioButton';
-import { DropdownMenu } from '../../primitives/DropdownMenu';
-import { ListBox } from '../../primitives/ListBox';
-import { TabControl } from '../../primitives/TabControl';
+import { Btn } from '../../../src/primitives/Btn';
+import { Checkbox } from '../../../src/primitives/Checkbox';
+import { RadioButton } from '../../../src/primitives/RadioButton';
+import { DropdownMenu } from '../../../src/primitives/DropdownMenu';
+import { ListBox } from '../../../src/primitives/ListBox';
+import { TabControl } from '../../../src/primitives/TabControl';
 
 // ── Fixture data ──
 

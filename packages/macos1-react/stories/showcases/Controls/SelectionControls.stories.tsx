@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
-import { Checkbox } from '../../primitives/Checkbox';
-import { RadioButton } from '../../primitives/RadioButton';
+import { Checkbox } from '../../../src/primitives/Checkbox';
+import { RadioButton } from '../../../src/primitives/RadioButton';
 
 // ── Style constants ──
 
