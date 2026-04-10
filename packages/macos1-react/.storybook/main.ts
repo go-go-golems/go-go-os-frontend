@@ -18,6 +18,10 @@ const config: StorybookConfig = {
       directory: '../src/shell',
       files: '**/*.stories.@(ts|tsx)',
     },
+    {
+      directory: '../stories',
+      files: '**/*.stories.@(ts|tsx)',
+    },
   ],
   addons: [
     '@storybook/addon-docs',
