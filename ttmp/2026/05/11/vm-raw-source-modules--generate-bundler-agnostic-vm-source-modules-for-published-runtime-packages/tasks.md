@@ -2,11 +2,11 @@
 
 ## TODO
 
-- [ ] 1. Add `scripts/packages/generate-vm-source-modules.mjs` with normal and `--check` modes.
-- [ ] 2. Generate and commit `stackBootstrapSource.generated.ts`, `uiPackageSource.generated.ts`, and `kanbanPackageSource.generated.ts` from the `.vm.js` source files.
-- [ ] 3. Replace runtime-critical `?raw` imports in `os-scripting`, `os-ui-cards`, and `os-kanban` with generated TypeScript module imports.
-- [ ] 4. Add a root/package script for generating or checking VM source modules.
-- [ ] 5. Run source validation for `os-scripting`, `os-ui-cards`, and `os-kanban`: typecheck, tests, and generator `--check`.
+- [x] 1. Add `scripts/packages/generate-vm-source-modules.mjs` with normal and `--check` modes.
+- [x] 2. Generate and commit `stackBootstrapSource.generated.ts`, `uiPackageSource.generated.ts`, and `kanbanPackageSource.generated.ts` from the `.vm.js` source files.
+- [x] 3. Replace runtime-critical `?raw` imports in `os-scripting`, `os-ui-cards`, and `os-kanban` with generated TypeScript module imports.
+- [x] 4. Add a root/package script for generating or checking VM source modules.
+- [x] 5. Run source validation for `os-scripting`, `os-ui-cards`, and `os-kanban`: typecheck, tests, and generator `--check`.
 - [ ] 6. Bump `os-scripting`, `os-ui-cards`, and `os-kanban` to `0.1.1`.
 - [ ] 7. Build dist artifacts for the three packages and inspect that runtime JS no longer imports `.vm.js?raw`.
 - [ ] 8. Dry-run publish the three patch packages from `dist/`.
