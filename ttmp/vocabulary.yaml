@@ -65,6 +65,12 @@ topics:
       description: Code refactoring and restructuring
     - slug: widgets
       description: UI widget components
+    - slug: npm
+      description: Node package manager, package metadata, publishing, and npm registry workflows.
+    - slug: react
+      description: React components, hooks, JSX, and React application integration.
+    - slug: theme
+      description: Theme entrypoints, CSS assets, design tokens, and styling contracts.
 docTypes:
     - slug: design-doc
       description: Structured rationale and architecture notes

@@ -1,8 +1,8 @@
 {
   "name": "@go-go-golems/os-core",
-  "version": "0.1.0",
-  "description": "Core desktop widgets, theming, Redux helpers, and shell primitives for go-go-os.",
-  "private": true,
+  "version": "0.1.1",
+  "description": "Reusable React desktop primitives, shell components, Redux helpers, and HyperCard-inspired theme CSS.",
+  "private": false,
   "type": "module",
   "license": "MIT",
   "author": "Manuel Odendahl",
@@ -24,7 +24,7 @@
     "README.md"
   ],
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "exports": {
     ".": "./src/index.ts",
@@ -59,5 +59,18 @@
     "@types/react-dom": "^19.2.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
-  }
+  },
+  "keywords": [
+    "react",
+    "desktop",
+    "widgets",
+    "theme",
+    "redux",
+    "go-go-golems"
+  ],
+  "sideEffects": [
+    "**/*.css",
+    "./theme/index.js",
+    "./theme/*.css"
+  ]
 }

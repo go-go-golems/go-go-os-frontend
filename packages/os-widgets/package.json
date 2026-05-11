@@ -1,8 +1,8 @@
 {
   "name": "@go-go-golems/os-widgets",
-  "version": "0.1.0",
-  "description": "Shared rich widget primitives and launcher modules for go-go-os.",
-  "private": true,
+  "version": "0.1.1",
+  "description": "Reusable rich React widgets, widget primitives, Redux state helpers, and theme CSS from go-go-os.",
+  "private": false,
   "type": "module",
   "license": "MIT",
   "author": "Manuel Odendahl",
@@ -24,7 +24,7 @@
     "README.md"
   ],
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "exports": {
     ".": "./src/index.ts",
@@ -56,5 +56,23 @@
     "@types/react-dom": "^19.2.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
+  },
+  "keywords": [
+    "react",
+    "widgets",
+    "theme",
+    "redux",
+    "desktop",
+    "go-go-golems"
+  ],
+  "sideEffects": [
+    "**/*.css",
+    "./theme/index.js",
+    "./theme/*.css"
+  ],
+  "peerDependenciesMeta": {
+    "@go-go-golems/os-shell": {
+      "optional": true
+    }
   }
 }
