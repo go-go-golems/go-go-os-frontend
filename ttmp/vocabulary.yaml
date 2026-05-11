@@ -71,6 +71,12 @@ topics:
       description: React components, hooks, JSX, and React application integration.
     - slug: theme
       description: Theme entrypoints, CSS assets, design tokens, and styling contracts.
+    - slug: vm
+      description: Sandboxed JavaScript VM execution and host integration
+    - slug: quickjs
+      description: QuickJS JavaScript runtime integration and sandboxing
+    - slug: runtime
+      description: Runtime session, package, and surface execution systems
 docTypes:
     - slug: design-doc
       description: Structured rationale and architecture notes
