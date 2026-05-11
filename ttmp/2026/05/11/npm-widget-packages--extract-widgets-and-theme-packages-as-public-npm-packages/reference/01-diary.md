@@ -14,7 +14,7 @@ Owners: []
 RelatedFiles: []
 ExternalSources: []
 Summary: "Chronological investigation diary for extracting go-go-os-frontend widget and theme packages for public npm reuse."
-LastUpdated: 2026-05-11T16:40:00-04:00
+LastUpdated: 2026-05-11T18:20:00-04:00
 WhatFor: "Use this to understand what was inspected, what failed, and how to continue the package extraction work."
 WhenToUse: "Before implementing or reviewing the public npm packaging changes."
 ---
@@ -695,4 +695,131 @@ Target patch versions:
 @go-go-golems/os-core@0.1.1
 @go-go-golems/os-repl@0.1.1
 @go-go-golems/os-widgets@0.1.1
+```
+
+
+## Step 9: Fixed REPL submit focus and republished dependent packages
+
+The REPL console example exposed a package-level focus bug in `@go-go-golems/os-repl`: after pressing Enter, browser focus moved from the REPL input to `BODY`. This step fixed that behavior in the package, added a regression test and local repro, then republished the affected package chain.
+
+The key lesson was to use a local package repro and local dist validation before publishing. The final fix was small: avoid using the real DOM `disabled` attribute for the REPL input while a command is running, because disabled inputs blur by browser design.
+
+### Prompt Context
+
+**User prompt (verbatim):** "every time i press enter in the console it seems to lose focus?"
+
+**Assistant interpretation:** Investigate and fix the REPL input losing focus after command submission in the examples workspace.
+
+**Inferred user intent:** Make the published REPL package usable as an interactive console without requiring the user to click the input after every command.
+
+**Commit (code):** `892b7db` — "Fix os-repl input focus after submit"
+
+### What I did
+
+- Reproduced the focus loss from the stage 06 REPL example.
+- Added a package-local repro under:
+  - `packages/os-repl/repro/focus/index.html`
+  - `packages/os-repl/repro/focus/src/main.tsx`
+  - `packages/os-repl/repro/focus/src/styles.css`
+- Added a regression test in `packages/os-repl/src/MacRepl.test.tsx`.
+- Changed `packages/os-repl/src/ReplInputLine.tsx` so the input no longer uses the real `disabled` attribute while a command is running.
+- Bumped and published:
+  - `@go-go-golems/os-repl@0.1.5`
+  - `@go-go-golems/os-widgets@0.1.2`
+- Bumped `packages/os-widgets/package.json` so its published dependency resolves to the fixed `os-repl` version.
+
+### Why
+
+- Real HTML disabled inputs lose focus when disabled. The REPL temporarily entered a running state on submit, so `disabled={isRunning}` caused browser focus to fall back to `BODY`.
+- `os-widgets` also needed a patch because the demo dependency graph otherwise retained an old nested `@go-go-golems/os-repl@0.1.1` dependency.
+
+### What worked
+
+Package validation passed:
+
+```bash
+npm run typecheck -w packages/os-repl
+npm test -w packages/os-repl
+npm run build:dist -w packages/os-repl
+npm run typecheck -w packages/os-widgets
+npm run build:dist -w packages/os-widgets
+```
+
+The package-local browser repro showed the desired result after pressing Enter:
+
+```text
+activeTag: INPUT
+activePart: repl-input
+```
+
+Publishing succeeded for:
+
+```text
+@go-go-golems/os-repl@0.1.5
+@go-go-golems/os-widgets@0.1.2
+```
+
+### What didn't work
+
+- I initially used a too-fast publish/debug loop and produced noisy interim versions before stopping and switching to a local repro workflow.
+- A demo-level focus check continued to appear stale until the Vite dependency cache and old dev servers were cleared.
+- The demo also had duplicate `os-repl` versions before `os-widgets` was republished:
+
+```text
+@go-go-golems/os-repl@0.1.5
+@go-go-golems/os-widgets@0.1.1 -> @go-go-golems/os-repl@0.1.1
+```
+
+### What I learned
+
+- Package-level input focus bugs should be reproduced inside the package before using the full examples workspace.
+- For browser focus debugging, `MutationObserver` is useful: it showed the input’s `disabled` attribute toggling in the old build.
+- Publishing a dependent package can be necessary even when the code change is in a lower-level package, because nested dependencies may pin stale behavior.
+
+### What was tricky to build
+
+- The tricky part was separating three problems that looked similar:
+  - the real package bug (`disabled` blurring the input),
+  - stale Vite/browser/dev-server caches,
+  - duplicate nested `os-repl` versions through `os-widgets`.
+- The fix was to validate in layers: package-local repro, package dist build, demo dependency dedupe, then demo browser smoke.
+
+### What warrants a second pair of eyes
+
+- Review whether `aria-disabled` communicates enough running state for accessibility, or whether the REPL input should also guard edits while running through a different mechanism.
+- Review whether `os-widgets` should depend on `os-repl` with a caret range in future generated package metadata instead of exact rewritten workspace versions.
+
+### What should be done in the future
+
+- Add a scripted Playwright regression for the package-local focus repro.
+- Configure release automation so patch publishing uses a repeatable local-dist validation gate.
+
+### Code review instructions
+
+- Start with `packages/os-repl/src/ReplInputLine.tsx`; confirm the input uses `aria-disabled` rather than `disabled`.
+- Review `packages/os-repl/src/MacRepl.test.tsx` for the focus regression.
+- Run:
+
+```bash
+npm run typecheck -w packages/os-repl
+npm test -w packages/os-repl
+npm run build:dist -w packages/os-repl
+```
+
+- Run the local browser repro through Vite and verify focus stays on `[data-part="repl-input"]` after Enter.
+
+### Technical details
+
+Relevant published versions:
+
+```text
+@go-go-golems/os-repl@0.1.5
+@go-go-golems/os-widgets@0.1.2
+```
+
+Relevant commits:
+
+```text
+892b7db Fix os-repl input focus after submit
+131b095 Bump os-widgets for repl focus fix
 ```

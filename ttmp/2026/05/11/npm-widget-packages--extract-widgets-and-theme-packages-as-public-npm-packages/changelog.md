@@ -100,3 +100,15 @@ Added package READMEs, verified dist/ copies them, and prepared patch release 0.
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-widgets/README.md — public npm package onboarding for os-widgets
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/ttmp/2026/05/11/npm-widget-packages--extract-widgets-and-theme-packages-as-public-npm-packages/reference/01-diary.md — Step 8 README and patch release prep
 
+
+## 2026-05-11
+
+Fixed os-repl input focus after submit, added a package-local repro and regression test, then published os-repl@0.1.5 and os-widgets@0.1.2.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-repl/repro/focus/src/main.tsx — package-local browser repro
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-repl/src/MacRepl.test.tsx — focus regression test
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-repl/src/ReplInputLine.tsx — uses aria-disabled instead of disabled so submit does not blur the input
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-widgets/package.json — patch bump to consume fixed os-repl
+
