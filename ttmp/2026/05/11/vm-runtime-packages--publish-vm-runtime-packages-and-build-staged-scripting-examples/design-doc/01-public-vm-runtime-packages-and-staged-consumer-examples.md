@@ -14,6 +14,14 @@ DocType: design-doc
 Intent: long-term
 Owners: []
 RelatedFiles:
+    - Path: ../../../../../../../2026-05-11--npm-go-go-os-test/.storybook/main.ts
+      Note: Storybook Vite optimization configuration for VM packages
+    - Path: ../../../../../../../2026-05-11--npm-go-go-os-test/examples/shared/src/VmExampleHost.tsx
+      Note: shared scripting-aware provider and RuntimeSurfaceSessionHost wrapper
+    - Path: ../../../../../../../2026-05-11--npm-go-go-os-test/examples/shared/src/runtimePackages.ts
+      Note: idempotent runtime package and surface type registration
+    - Path: ../../../../../../../2026-05-11--npm-go-go-os-test/vite.config.ts
+      Note: Vite dev optimization configuration for published VM raw imports
     - Path: packages/os-kanban/src/runtimeRegistration.tsx
       Note: kanban runtime package and renderer registration
     - Path: packages/os-scripting/src/plugin-runtime/quickJsSessionCore.ts
@@ -30,10 +38,11 @@ RelatedFiles:
       Note: dist builder used for public package artifacts
 ExternalSources: []
 Summary: Design and implementation guide for publishing the QuickJS VM runtime packages and extending the standalone npm demo with staged VM/runtime examples.
-LastUpdated: 2026-05-11T17:15:00-04:00
+LastUpdated: 2026-05-11T18:25:00-04:00
 WhatFor: Use this before publishing or consuming the VM runtime package family from standalone applications.
 WhenToUse: When working on os-scripting, runtime surface packages, VM-backed examples, or wesen-os migration from local HyperCard aliases to public go-go-os packages.
 ---
+
 
 
 # Public VM Runtime Packages and Staged Consumer Examples
@@ -823,6 +832,35 @@ Browser-smoke:
 - stage 08 runs a VM event handler and visibly updates state,
 - stage 09 renders the VM Kanban surface,
 - console has no package-resolution or QuickJS initialization errors.
+
+
+
+### Vite dev-server dependency optimization note
+
+The published VM packages import `.vm.js?raw` assets from package code. Vite production builds handle these imports, but Vite dev dependency optimization can hand package code to esbuild before Vite's raw-import plugin handles the query. The symptom is an error like:
+
+```text
+No matching export in "node_modules/@go-go-golems/os-scripting/plugin-runtime/stack-bootstrap.vm.js?raw" for import "default"
+```
+
+Standalone Vite consumers should exclude the VM runtime packages from dependency optimization:
+
+```ts
+const vmRuntimePackages = [
+  '@go-go-golems/os-scripting',
+  '@go-go-golems/os-ui-cards',
+  '@go-go-golems/os-kanban',
+];
+
+export default defineConfig({
+  optimizeDeps: {
+    exclude: vmRuntimePackages,
+    include: ['debug'],
+  },
+});
+```
+
+The `debug` include is necessary because excluded VM packages import published code that depends on `debug`; without prebundling, Vite may serve the CommonJS browser file directly and hit `ReferenceError: exports is not defined`.
 
 ## Testing and Validation Strategy
 

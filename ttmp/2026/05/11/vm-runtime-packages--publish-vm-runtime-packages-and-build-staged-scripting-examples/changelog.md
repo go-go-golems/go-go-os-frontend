@@ -40,3 +40,15 @@ Published VM package family to public npm using the automation token from .envrc
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-scripting/package.json — published os-scripting@0.1.0
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-ui-cards/package.json — published os-ui-cards@0.1.0
 
+
+## 2026-05-11
+
+Updated standalone demo with public VM package dependencies and stages 07-09; validated typecheck, build, Storybook build, and browser smoke (demo commit 68662eb).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/2026-05-11--npm-go-go-os-test/examples/07-vm-ui-card/src/uiCardBundle.vm.js — minimal QuickJS ui.card.v1 bundle
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/2026-05-11--npm-go-go-os-test/examples/08-vm-events-and-intents/src/eventsBundle.vm.js — VM event handler and runtime action bundle
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/2026-05-11--npm-go-go-os-test/examples/09-vm-kanban-runtime/src/kanbanBundle.vm.js — VM-authored kanban.v1 bundle
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/2026-05-11--npm-go-go-os-test/vite.config.ts — consumer Vite config for raw VM package imports
+

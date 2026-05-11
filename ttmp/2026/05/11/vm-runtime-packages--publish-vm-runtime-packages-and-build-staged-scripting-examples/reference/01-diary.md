@@ -14,6 +14,16 @@ DocType: reference
 Intent: long-term
 Owners: []
 RelatedFiles:
+    - Path: ../../../../../../../2026-05-11--npm-go-go-os-test/examples/07-vm-ui-card/src/VmUiCardExample.tsx
+      Note: stage 07 VM UI card wrapper
+    - Path: ../../../../../../../2026-05-11--npm-go-go-os-test/examples/08-vm-events-and-intents/src/VmEventsAndIntentsExample.tsx
+      Note: stage 08 VM events wrapper
+    - Path: ../../../../../../../2026-05-11--npm-go-go-os-test/examples/09-vm-kanban-runtime/src/VmKanbanRuntimeExample.tsx
+      Note: stage 09 VM Kanban wrapper
+    - Path: ../../../../../../../2026-05-11--npm-go-go-os-test/package.json
+      Note: registry dependencies for published VM packages
+    - Path: ../../../../../../../2026-05-11--npm-go-go-os-test/src/exampleRegistry.ts
+      Note: registered stages 07-09
     - Path: packages/os-chat/README.md
       Note: consumer documentation for chat support package
     - Path: packages/os-chat/package.json
@@ -36,10 +46,11 @@ RelatedFiles:
       Note: runtime UI package metadata
 ExternalSources: []
 Summary: Chronological implementation diary for publishing the QuickJS VM runtime package family and adding staged VM examples to the standalone demo app.
-LastUpdated: 2026-05-11T17:45:00-04:00
+LastUpdated: 2026-05-11T18:25:00-04:00
 WhatFor: Use this to understand what was changed, why it changed, what failed, and how to continue the VM package publication work.
 WhenToUse: Before reviewing or continuing the vm-runtime-packages ticket.
 ---
+
 
 
 
@@ -422,4 +433,169 @@ Published package versions:
 @go-go-golems/os-scripting@0.1.0
 @go-go-golems/os-ui-cards@0.1.0
 @go-go-golems/os-kanban@0.1.0
+```
+
+
+## Step 4: Added staged VM examples to the standalone npm demo
+
+I updated the standalone demo app to consume the newly published VM package family from npm and added stages 07 through 09. These stages teach the VM runtime progressively: first a minimal `ui.card.v1` surface, then VM event handlers and runtime actions, then the higher-level `kanban.v1` runtime package.
+
+The implementation also captured an important consumer configuration requirement for Vite dev servers. Published VM packages contain `.vm.js?raw` imports; Vite production builds handle them, but Vite dependency optimization must exclude the VM packages so raw imports are processed correctly during dev.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** After publishing, update the external demo to install from npm and add progressively more advanced VM examples with Storybook stories.
+
+**Inferred user intent:** Give consumers a hands-on path from basic runtime registration to VM-authored UI and Kanban surfaces.
+
+**Commit (code):** `68662eb` — "Add VM runtime package examples"
+
+### What I did
+
+In the standalone demo repository, I installed public npm dependencies:
+
+```text
+@go-go-golems/os-chat@^0.1.0
+@go-go-golems/os-confirm@^0.1.0
+@go-go-golems/os-scripting@^0.1.0
+@go-go-golems/os-ui-cards@^0.1.0
+@go-go-golems/os-kanban@^0.1.0
+```
+
+I added shared VM example infrastructure:
+
+```text
+src/raw-imports.d.ts
+examples/shared/src/runtimePackages.ts
+examples/shared/src/VmExampleHost.tsx
+```
+
+I added three staged examples:
+
+```text
+examples/07-vm-ui-card/src/*
+examples/08-vm-events-and-intents/src/*
+examples/09-vm-kanban-runtime/src/*
+```
+
+I updated:
+
+```text
+src/exampleRegistry.ts
+README.md
+vite.config.ts
+.storybook/main.ts
+examples/shared/src/index.ts
+examples/shared/src/exampleFrame.css
+```
+
+Validation commands passed:
+
+```bash
+npm ls @go-go-golems/os-scripting @go-go-golems/os-ui-cards @go-go-golems/os-kanban
+npm run typecheck
+npm run build
+npm run build-storybook
+```
+
+Browser smoke passed from a fresh Vite dev server:
+
+- stage 07 displayed `Hello from QuickJS`,
+- stage 08 displayed `Count stored in runtime surface draft: 0`, then clicking `Increment in VM` updated it to `1`,
+- stage 09 displayed `VM-authored Kanban`,
+- console had no errors after Vite config fixes.
+
+### Why
+
+- The published packages need a real standalone consumer proof, not only package-local tests.
+- The examples demonstrate the conceptual ladder: registration, rendering, event handling, action routing, and higher-level runtime packages.
+- Storybook stories keep the component/example workflow consistent with previous stages.
+
+### What worked
+
+- Registry installs deduped correctly:
+
+```text
+@go-go-golems/os-kanban@0.1.0
+├── @go-go-golems/os-scripting@0.1.0 deduped
+└── @go-go-golems/os-ui-cards@0.1.0 deduped
+```
+
+- Production Vite build succeeded and emitted QuickJS WASM assets.
+- Storybook production build succeeded.
+- Runtime rendering and event dispatch worked in the browser.
+
+### What didn't work
+
+- Initial Vite dev startup failed with raw-import errors from published VM packages:
+
+```text
+No matching export in "node_modules/@go-go-golems/os-kanban/runtime-packages/kanban.package.vm.js?raw" for import "default"
+No matching export in "node_modules/@go-go-golems/os-scripting/plugin-runtime/stack-bootstrap.vm.js?raw" for import "default"
+No matching export in "node_modules/@go-go-golems/os-ui-cards/runtime-packages/ui.package.vm.js?raw" for import "default"
+```
+
+- After excluding the VM packages from Vite optimization, the browser hit:
+
+```text
+ReferenceError: exports is not defined
+    at node_modules/debug/src/browser.js
+```
+
+- Including `debug` in Vite optimization fixed the CommonJS browser-file issue.
+
+### What I learned
+
+- Published packages that rely on Vite `?raw` imports need explicit dev-server guidance. Production builds can work while dev optimization fails.
+- Excluding a package from optimization can expose CommonJS dependencies that previously worked only because they were prebundled.
+- The VM examples should document bundler setup, not just runtime setup.
+
+### What was tricky to build
+
+- The tricky part was separating package correctness from consumer bundler behavior. The packages were published correctly and production builds worked, but Vite dev mode prebundled raw imports incorrectly until the packages were excluded.
+- Runtime examples also require store setup. `VmExampleHost` centralizes `createAppStore`, runtime package registration, and `RuntimeSurfaceSessionHost` so each stage can focus on the VM bundle itself.
+
+### What warrants a second pair of eyes
+
+- Review whether the package READMEs should include the Vite `optimizeDeps` note discovered here.
+- Review whether a future package patch should remove `?raw` imports from published package JS to avoid requiring consumer Vite config.
+- Review the VM action examples for compatibility with the intended public runtime action schema.
+
+### What should be done in the future
+
+- Add Playwright regression scripts for stages 07-09.
+- Consider patching `os-scripting`, `os-ui-cards`, and `os-kanban` so published packages expose prelude strings without relying on Vite `?raw` behavior.
+
+### Code review instructions
+
+- In the demo repo, start with `examples/shared/src/VmExampleHost.tsx` and `examples/shared/src/runtimePackages.ts`.
+- Review each `*.vm.js` bundle before the React wrapper.
+- Validate with:
+
+```bash
+npm run typecheck
+npm run build
+npm run build-storybook
+npm run dev -- --host 127.0.0.1 --force
+```
+
+- Browser-check stages 07, 08, and 09.
+
+### Technical details
+
+Vite config added in the demo:
+
+```ts
+const vmRuntimePackages = [
+  '@go-go-golems/os-scripting',
+  '@go-go-golems/os-ui-cards',
+  '@go-go-golems/os-kanban',
+];
+
+optimizeDeps: {
+  exclude: vmRuntimePackages,
+  include: ['debug'],
+}
 ```

@@ -11,10 +11,10 @@
 - [x] 7. Publish `@go-go-golems/os-scripting@0.1.0` and verify on npmjs.
 - [x] 8. Publish `@go-go-golems/os-ui-cards@0.1.0` and verify on npmjs.
 - [x] 9. Publish `@go-go-golems/os-kanban@0.1.0` and verify on npmjs.
-- [ ] 10. Update the standalone demo app to consume the published VM package family from npm.
-- [ ] 11. Add shared VM runtime package registration utilities to the demo app.
-- [ ] 12. Add stage `07 VM UI card` showing a minimal QuickJS-rendered `ui.card.v1` surface.
-- [ ] 13. Add stage `08 VM events and intents` showing handler execution and visible host state changes.
-- [ ] 14. Add stage `09 VM Kanban runtime` showing the higher-level `kanban.v1` runtime package.
-- [ ] 15. Validate demo typecheck, production build, Storybook build, dependency dedupe, and browser smoke for stages 07-09.
+- [x] 10. Update the standalone demo app to consume the published VM package family from npm.
+- [x] 11. Add shared VM runtime package registration utilities to the demo app.
+- [x] 12. Add stage `07 VM UI card` showing a minimal QuickJS-rendered `ui.card.v1` surface.
+- [x] 13. Add stage `08 VM events and intents` showing handler execution and visible host state changes.
+- [x] 14. Add stage `09 VM Kanban runtime` showing the higher-level `kanban.v1` runtime package.
+- [x] 15. Validate demo typecheck, production build, Storybook build, dependency dedupe, and browser smoke for stages 07-09.
 - [ ] 16. Update diary, changelog, file relations, docmgr validation, and reMarkable upload.
