@@ -11,6 +11,12 @@ npm install @go-go-golems/os-scripting @go-go-golems/os-ui-cards
 npm install react react-dom react-redux @reduxjs/toolkit
 ```
 
+## Bundler note
+
+Starting with `@go-go-golems/os-ui-cards@0.1.1`, the package's VM-side `ui` prelude is shipped as a generated JavaScript string module. Consumers do **not** need to exclude this package from Vite dependency optimization.
+
+You may still import your own app-local VM bundles with `?raw`; that is an application concern, not a package workaround.
+
 ## Main exports
 
 ```ts
@@ -62,8 +68,7 @@ defineRuntimeBundle(({ ui }) => ({
       handlers: {
         notify(ctx) {
           ctx.dispatch({
-            scope: 'system',
-            command: 'notify',
+            type: 'notify.show',
             payload: { message: 'Hello from the VM' },
           });
         },
@@ -72,6 +77,8 @@ defineRuntimeBundle(({ ui }) => ({
   },
 }));
 ```
+
+If a bundle dispatches `notify.show`, its host `RuntimeBundleDefinition.plugin.capabilities.system` must include `'notify.show'`, and the React host must render toast/notification chrome from the same Redux provider.
 
 ## Surface contract
 

@@ -13,6 +13,28 @@ npm install react react-dom react-redux @reduxjs/toolkit
 
 `react`, `react-dom`, `react-redux`, and `@reduxjs/toolkit` are peer dependencies.
 
+## Bundler note
+
+Starting with `@go-go-golems/os-scripting@0.1.1`, package-internal QuickJS bootstrap code is shipped as ordinary generated JavaScript string modules. Consumers do **not** need package-specific Vite dependency-optimization workarounds such as:
+
+```ts
+optimizeDeps: {
+  exclude: ['@go-go-golems/os-scripting'],
+  include: ['debug'],
+}
+```
+
+If your own application imports local VM bundle files with Vite raw imports, for example `import code from './bundle.vm.js?raw'`, keep a local declaration such as:
+
+```ts
+declare module '*.vm.js?raw' {
+  const source: string;
+  export default source;
+}
+```
+
+That declaration is for your app-authored VM bundles only; it is not required because of package internals.
+
 ## Main exports
 
 ```ts
@@ -65,24 +87,41 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 }
 ```
 
-Use `createAppStore` when rendering VM surfaces. It includes `runtimeSessions`, runtime lifecycle middleware, and artifact projection middleware. For shell-only apps that never render VM surfaces, `createLauncherStore` from `@go-go-golems/os-shell` is lighter.
+Use `createAppStore` when rendering VM surfaces. It includes `runtimeSessions`, `notifications`, runtime lifecycle middleware, and artifact projection middleware. For shell-only apps that never render VM surfaces, `createLauncherStore` from `@go-go-golems/os-shell` is lighter.
 
 ## Minimal surface host
 
 ```tsx
-import { RuntimeSurfaceSessionHost } from '@go-go-golems/os-scripting';
+import { clearToast, selectToast, Toast } from '@go-go-golems/os-core';
+import { RuntimeSurfaceSessionHost, createAppStore } from '@go-go-golems/os-scripting';
 import type { RuntimeBundleDefinition } from '@go-go-golems/os-shell';
+import { Provider, useDispatch, useSelector } from 'react-redux';
+
+const { store } = createAppStore({});
+
+function RuntimeToastHost() {
+  const dispatch = useDispatch();
+  const toast = useSelector((state) => selectToast(state as any));
+
+  if (!toast) return null;
+  return <Toast message={toast} onDone={() => dispatch(clearToast())} />;
+}
 
 export function RuntimeWindow({ bundle }: { bundle: RuntimeBundleDefinition }) {
   return (
-    <RuntimeSurfaceSessionHost
-      windowId="window:demo"
-      sessionId="session:demo"
-      bundle={bundle}
-    />
+    <Provider store={store}>
+      <RuntimeSurfaceSessionHost
+        windowId="window:demo"
+        sessionId="session:demo"
+        bundle={bundle}
+      />
+      <RuntimeToastHost />
+    </Provider>
   );
 }
 ```
+
+`RuntimeSurfaceSessionHost` routes host effects such as `notify.show` into Redux. Mount host chrome such as `Toast` inside the same `Provider` if your runtime bundles use notification capabilities.
 
 ## Runtime bundle shape
 
@@ -100,7 +139,7 @@ export const BUNDLE: RuntimeBundleDefinition = {
   plugin: {
     packageIds: ['ui'],
     bundleCode,
-    capabilities: { domain: [], system: [] },
+    capabilities: { domain: [], system: ['notify.show'] },
   },
   surfaces: {
     home: {
@@ -128,7 +167,16 @@ defineRuntimeBundle(({ ui }) => ({
         return ui.panel([
           ui.text('Hello from QuickJS'),
           ui.text('Session: ' + state.self.sessionId),
+          ui.button('Notify host', { onClick: { handler: 'notify' } }),
         ]);
+      },
+      handlers: {
+        notify(ctx) {
+          ctx.dispatch({
+            type: 'notify.show',
+            payload: { message: 'Hello from the VM' },
+          });
+        },
       },
     },
   },
