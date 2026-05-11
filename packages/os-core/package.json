@@ -70,7 +70,9 @@
   ],
   "sideEffects": [
     "**/*.css",
+    "./desktop-theme-macos1.js",
     "./theme/index.js",
+    "./theme/*.js",
     "./theme/*.css"
   ]
 }

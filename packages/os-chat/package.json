@@ -74,6 +74,8 @@
     "go-go-golems"
   ],
   "sideEffects": [
-    "**/*.css"
+    "**/*.css",
+    "./theme/index.js",
+    "./theme/*.js"
   ]
 }
