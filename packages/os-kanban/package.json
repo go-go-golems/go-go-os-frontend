@@ -1,6 +1,6 @@
 {
   "name": "@go-go-golems/os-kanban",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Kanban runtime modules and host registration helpers for go-go-os.",
   "private": false,
   "type": "module",
