@@ -37,3 +37,12 @@ Published @go-go-golems/os-shell@0.1.0 and revalidated the demo from the public 
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/ttmp/2026/05/11/os-shell-public-package--extract-and-publish-public-os-shell-package/reference/01-diary.md — publish and registry validation notes
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/ttmp/2026/05/11/os-shell-public-package--extract-and-publish-public-os-shell-package/tasks.md — completed extraction and publishing checklist
 
+
+## 2026-05-11
+
+Retroactively reformatted the diary to the strict diary skill structure with prompt context, failures, tricky parts, review notes, and validation commands.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/ttmp/2026/05/11/os-shell-public-package--extract-and-publish-public-os-shell-package/reference/01-diary.md — strict diary format
+
