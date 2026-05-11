@@ -15,6 +15,8 @@ npm install react react-dom react-redux @reduxjs/toolkit
 
 Starting with `@go-go-golems/os-kanban@0.1.1`, the package's VM-side Kanban prelude is shipped as a generated JavaScript string module. Consumers do **not** need package-specific Vite dependency-optimization workarounds such as excluding `@go-go-golems/os-kanban`, `@go-go-golems/os-ui-cards`, or `@go-go-golems/os-scripting`.
 
+Starting with `@go-go-golems/os-kanban@0.1.3`, the package metadata also preserves `@go-go-golems/os-kanban/theme` as a production-build side effect, so Vite/Rollup builds keep the Kanban CSS when consumers import the theme entry.
+
 If your app imports its own local `*.vm.js?raw` files, keep the raw-import typing in your app. Published package internals no longer require special Vite config.
 
 ## Main exports
