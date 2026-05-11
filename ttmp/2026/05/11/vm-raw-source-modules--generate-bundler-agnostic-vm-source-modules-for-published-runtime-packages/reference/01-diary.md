@@ -15,9 +15,17 @@ Intent: long-term
 Owners: []
 RelatedFiles:
     - Path: ../../../../../../../2026-05-11--npm-go-go-os-test/.storybook/main.ts
-      Note: Storybook workaround to remove after patch
+      Note: |-
+        Storybook workaround to remove after patch
+        removed Storybook VM package optimizeDeps workaround
+    - Path: ../../../../../../../2026-05-11--npm-go-go-os-test/README.md
+      Note: documents no package-internal workaround needed after 0.1.1
+    - Path: ../../../../../../../2026-05-11--npm-go-go-os-test/package.json
+      Note: demo consumes VM patch versions 0.1.1
     - Path: ../../../../../../../2026-05-11--npm-go-go-os-test/vite.config.ts
-      Note: consumer workaround to remove after patch
+      Note: |-
+        consumer workaround to remove after patch
+        removed VM package optimizeDeps workaround
     - Path: package.json
       Note: root scripts for generating/checking VM sources
     - Path: packages/os-kanban/src/runtime-packages/kanban.package.vm.js
@@ -36,10 +44,11 @@ RelatedFiles:
       Note: generator and check mode for VM source string modules
 ExternalSources: []
 Summary: Chronological implementation diary for replacing published VM package ?raw imports with generated TypeScript source modules.
-LastUpdated: 2026-05-11T19:05:00-04:00
+LastUpdated: 2026-05-11T19:35:00-04:00
 WhatFor: Use this to continue or review the Option A raw-source module fix for published VM packages.
 WhenToUse: Before changing VM prelude imports, generation scripts, package patch versions, or demo Vite workaround configuration.
 ---
+
 
 
 
@@ -261,4 +270,145 @@ The generated modules use this pattern:
 const source = "...";
 
 export default source;
+```
+
+
+## Step 3: Published patch packages and removed the demo Vite workaround
+
+I finished the Option A patch by bumping the three VM runtime packages to `0.1.1`, building and inspecting dist artifacts, publishing the patches to npm, and updating the standalone demo to consume the new patch versions. After that, I removed the package-specific Vite and Storybook `optimizeDeps` workaround from the demo and revalidated stages 07 through 09.
+
+This proves the patch goal: consumers no longer need to exclude `@go-go-golems/os-scripting`, `@go-go-golems/os-ui-cards`, or `@go-go-golems/os-kanban` from Vite dependency optimization just to consume published package internals.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 2)
+
+**Assistant interpretation:** Continue implementation through package publication, demo cleanup, validation, docs, and commits.
+
+**Inferred user intent:** Complete the Option A fix end-to-end, not just source changes.
+
+**Commit (code):** `0aacc8e` — "Bump VM packages for raw source patch"; demo commit `23da0e9` — "Consume VM raw source patch packages"
+
+### What I did
+
+- Bumped packages:
+  - `@go-go-golems/os-scripting` from `0.1.0` to `0.1.1`
+  - `@go-go-golems/os-ui-cards` from `0.1.0` to `0.1.1`
+  - `@go-go-golems/os-kanban` from `0.1.0` to `0.1.1`
+- Built dist artifacts:
+
+```bash
+npm run build:dist -w packages/os-scripting
+npm run build:dist -w packages/os-ui-cards
+npm run build:dist -w packages/os-kanban
+```
+
+- Verified runtime-critical raw imports were absent from dist:
+
+```bash
+rg -n "stack-bootstrap\.vm\.js\?raw|ui\.package\.vm\.js\?raw|kanban\.package\.vm\.js\?raw" packages/os-scripting/dist packages/os-ui-cards/dist packages/os-kanban/dist
+```
+
+- Dry-ran and published:
+
+```text
+@go-go-golems/os-scripting@0.1.1
+@go-go-golems/os-ui-cards@0.1.1
+@go-go-golems/os-kanban@0.1.1
+```
+
+- Verified npmjs has `latest: 0.1.1` for all three packages using a temporary npm userconfig that points the scope at npmjs.
+- Updated demo dependencies to `^0.1.1`.
+- Removed workaround config from:
+  - `2026-05-11--npm-go-go-os-test/vite.config.ts`
+  - `2026-05-11--npm-go-go-os-test/.storybook/main.ts`
+- Updated demo README to explain that published package internals no longer need a Vite workaround.
+- Validated demo:
+
+```bash
+rm -rf node_modules/.vite
+npm ls @go-go-golems/os-scripting @go-go-golems/os-ui-cards @go-go-golems/os-kanban
+npm run typecheck
+npm run build
+npm run build-storybook
+npm run dev -- --host 127.0.0.1 --force
+```
+
+- Browser-smoked stages 07-09.
+
+### Why
+
+- Source changes alone are not enough; the package fix only matters after dist artifacts are published and a clean consumer app can remove the workaround.
+- The demo needed to prove Vite dev startup specifically, because that is where the original `?raw` package-import problem appeared.
+
+### What worked
+
+- Dry-run publish showed generated modules included in package tarballs:
+  - `plugin-runtime/stackBootstrapSource.generated.js`
+  - `runtime-packages/uiPackageSource.generated.js`
+  - `runtime-packages/kanbanPackageSource.generated.js`
+- Patch package publishes succeeded using the existing `.envrc` `NPM_TOKEN` through a temporary npm config.
+- Demo dependency tree deduped to `0.1.1` for all three VM packages.
+- Demo typecheck, production build, Storybook build, and Vite dev startup passed without the workaround.
+- Browser smoke passed:
+  - Stage 07 displayed `Hello from QuickJS`.
+  - Stage 08 incremented draft state from `0` to `1`.
+  - Stage 09 displayed `VM-authored Kanban`.
+
+### What didn't work
+
+- A plain `npm view` was still affected by the global/home npm scope config that points `@go-go-golems` at GitHub Packages, causing:
+
+```text
+npm error code E403
+npm error 403 Forbidden - GET https://npm.pkg.github.com/@go-go-golems%2fos-scripting
+```
+
+- Using `--registry https://registry.npmjs.org/` alone was not enough in that shell because the scoped registry config still won. I used a temporary `NPM_CONFIG_USERCONFIG` with `@go-go-golems:registry=https://registry.npmjs.org/` to verify npmjs.
+- Browser console still reports `/favicon.ico` 404. This is unrelated to the VM package patch.
+
+### What I learned
+
+- For scoped packages, npm's scoped registry config can override explicit registry flags in surprising ways. Verification should use a temporary npm userconfig when the home config points the scope elsewhere.
+- The package patch fixed the original Vite dev optimization failure: the demo no longer needs `optimizeDeps.exclude` for the VM package family.
+
+### What was tricky to build
+
+- The tricky part was validating the absence of a workaround. It was not enough to run production builds; I had to clear `node_modules/.vite`, start the dev server with `--force`, and smoke stages 07-09 in the browser.
+- Another sharp edge was npm verification. Because global config still points `@go-go-golems` to GitHub Packages, publication verification needed explicit clean npm userconfig rather than relying on normal `npm view` commands.
+
+### What warrants a second pair of eyes
+
+- Review whether generated source modules should be included in package tarballs but `.vm.js` source assets should remain too. Keeping both is useful for inspection but duplicates a little source text.
+- Review whether the root `check:vm-sources` script should be wired into CI.
+
+### What should be done in the future
+
+- Add a CI/release checklist item to run `npm run check:vm-sources` before package builds.
+- Consider adding a small scripted browser regression for demo stages 07-09.
+
+### Code review instructions
+
+- Review package source commit `9246f3a` first, then version bump commit `0aacc8e`.
+- Review demo commit `23da0e9` to confirm the workaround was removed rather than just hidden.
+- Validate with the commands listed above.
+
+### Technical details
+
+Published patch versions:
+
+```text
+@go-go-golems/os-scripting@0.1.1
+@go-go-golems/os-ui-cards@0.1.1
+@go-go-golems/os-kanban@0.1.1
+```
+
+Demo dependency tree after update:
+
+```text
+@go-go-golems/os-kanban@0.1.1
+├── @go-go-golems/os-scripting@0.1.1 deduped
+└── @go-go-golems/os-ui-cards@0.1.1 deduped
+@go-go-golems/os-scripting@0.1.1
+@go-go-golems/os-ui-cards@0.1.1
 ```

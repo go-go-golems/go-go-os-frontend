@@ -30,7 +30,7 @@ RelatedFiles:
       Note: current package dist builder copies .vm.js assets but does not inline raw imports
 ExternalSources: []
 Summary: Design and implementation guide for replacing published Vite ?raw VM imports with generated TypeScript string modules.
-LastUpdated: 2026-05-11T18:45:00-04:00
+LastUpdated: 2026-05-11T19:35:00-04:00
 WhatFor: Use this to implement the Option A fix that makes os-scripting, os-ui-cards, and os-kanban easier to consume from any bundler.
 WhenToUse: Before changing VM prelude imports, package build scripts, or the standalone demo Vite workaround.
 ---
@@ -691,3 +691,44 @@ packages/os-kanban/package.json
 2026-05-11--npm-go-go-os-test/.storybook/main.ts
 2026-05-11--npm-go-go-os-test/README.md
 ```
+
+
+## Implementation Outcome
+
+The Option A fix was implemented and published as patch versions:
+
+```text
+@go-go-golems/os-scripting@0.1.1
+@go-go-golems/os-ui-cards@0.1.1
+@go-go-golems/os-kanban@0.1.1
+```
+
+The generated modules were added and package runtime imports now use them instead of Vite raw-query imports. The standalone demo was updated to consume the patch versions and no longer needs package-specific `optimizeDeps.exclude` / `include: ['debug']` configuration. The demo still keeps `src/raw-imports.d.ts` because its own examples intentionally import local VM bundles with `?raw`.
+
+Validation completed:
+
+```bash
+npm run check:vm-sources
+npm run typecheck -w packages/os-scripting
+npm test -w packages/os-scripting
+npm run typecheck -w packages/os-ui-cards
+npm test -w packages/os-ui-cards
+npm run typecheck -w packages/os-kanban
+npm test -w packages/os-kanban
+npm run build:dist -w packages/os-scripting
+npm run build:dist -w packages/os-ui-cards
+npm run build:dist -w packages/os-kanban
+```
+
+Standalone demo validation completed after removing the workaround:
+
+```bash
+rm -rf node_modules/.vite
+npm ls @go-go-golems/os-scripting @go-go-golems/os-ui-cards @go-go-golems/os-kanban
+npm run typecheck
+npm run build
+npm run build-storybook
+npm run dev -- --host 127.0.0.1 --force
+```
+
+Browser smoke verified stages 07, 08, and 09. The only browser console error was the pre-existing harmless `/favicon.ico` 404.

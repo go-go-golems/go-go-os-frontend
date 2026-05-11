@@ -27,3 +27,15 @@ Implemented generator, generated VM source modules, replaced public runtime ?raw
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-ui-cards/src/runtimeRegistration.tsx — imports generated ui prelude
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/scripts/packages/generate-vm-source-modules.mjs — source module generator
 
+
+## 2026-05-11
+
+Published VM raw-source patch packages, removed the standalone demo Vite workaround, and validated stages 07-09 (package commit 0aacc8e, demo commit 23da0e9).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/2026-05-11--npm-go-go-os-test/vite.config.ts — workaround removed after patch validation
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-kanban/package.json — published os-kanban@0.1.1
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-scripting/package.json — published os-scripting@0.1.1
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-ui-cards/package.json — published os-ui-cards@0.1.1
+
