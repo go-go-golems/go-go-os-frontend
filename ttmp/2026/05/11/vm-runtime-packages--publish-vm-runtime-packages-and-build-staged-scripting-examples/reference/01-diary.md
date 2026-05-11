@@ -36,7 +36,7 @@ RelatedFiles:
       Note: runtime UI package metadata
 ExternalSources: []
 Summary: Chronological implementation diary for publishing the QuickJS VM runtime package family and adding staged VM examples to the standalone demo app.
-LastUpdated: 2026-05-11T17:35:00-04:00
+LastUpdated: 2026-05-11T17:45:00-04:00
 WhatFor: Use this to understand what was changed, why it changed, what failed, and how to continue the VM package publication work.
 WhenToUse: Before reviewing or continuing the vm-runtime-packages ticket.
 ---
@@ -302,4 +302,124 @@ The generated dist packages had public publish config and copied READMEs. VM ass
 packages/os-scripting/dist/plugin-runtime/stack-bootstrap.vm.js
 packages/os-ui-cards/dist/runtime-packages/ui.package.vm.js
 packages/os-kanban/dist/runtime-packages/kanban.package.vm.js
+```
+
+
+## Step 3: Published the VM package family to public npm
+
+I published the five VM-wave packages in dependency order using the `NPM_TOKEN` from the workspace `.envrc`. The first publish attempt used the default npm auth path and failed with an OTP requirement; using a temporary npm userconfig that references the `.envrc` token allowed the publishes to proceed without exposing the token in the repository or terminal output.
+
+The result is that the VM runtime package family is now public on npm. This unblocks the standalone demo app from consuming `os-scripting`, `os-ui-cards`, and `os-kanban` as registry packages rather than local workspace aliases.
+
+### Prompt Context
+
+**User prompt (verbatim):** "what about the token in .envrc"
+
+**Assistant interpretation:** Use the already-loaded `NPM_TOKEN` from `.envrc` instead of asking for an interactive npm OTP code.
+
+**Inferred user intent:** Continue publication non-interactively through the existing automation token and avoid manual OTP flow.
+
+**Commit (code):** pending at time of step.
+
+### What I did
+
+- Confirmed `.envrc` exports `NPM_TOKEN` without printing its value.
+- Created a temporary npm userconfig outside the repo with:
+
+```text
+@go-go-golems:registry=https://registry.npmjs.org/
+//registry.npmjs.org/:_authToken=${NPM_TOKEN}
+access=public
+```
+
+- Verified the token resolves to npm user `wesen3000`.
+- Published in dependency order:
+
+```bash
+npm publish packages/os-chat/dist --access public --registry https://registry.npmjs.org/
+npm publish packages/os-confirm/dist --access public --registry https://registry.npmjs.org/
+npm publish packages/os-scripting/dist --access public --registry https://registry.npmjs.org/
+npm publish packages/os-ui-cards/dist --access public --registry https://registry.npmjs.org/
+npm publish packages/os-kanban/dist --access public --registry https://registry.npmjs.org/
+```
+
+- Verified published versions:
+
+```bash
+npm view @go-go-golems/os-chat version --registry https://registry.npmjs.org/
+npm view @go-go-golems/os-confirm version --registry https://registry.npmjs.org/
+npm view @go-go-golems/os-scripting version --registry https://registry.npmjs.org/
+npm view @go-go-golems/os-ui-cards version --registry https://registry.npmjs.org/
+npm view @go-go-golems/os-kanban version --registry https://registry.npmjs.org/
+```
+
+### Why
+
+- The default npm token path triggered an interactive OTP challenge:
+
+```text
+npm error code EOTP
+npm error This operation requires a one-time password from your authenticator.
+```
+
+- The workspace `.envrc` token was intended for automation use and could publish without a manual OTP.
+- A temporary userconfig avoids writing secrets into tracked `.npmrc` files.
+
+### What worked
+
+- All five publishes completed successfully.
+- `npm view` confirmed all five packages are available on public npm:
+
+```text
+@go-go-golems/os-chat 0.1.0
+@go-go-golems/os-confirm 0.1.0
+@go-go-golems/os-scripting 0.1.0
+@go-go-golems/os-ui-cards 0.1.0
+@go-go-golems/os-kanban 0.1.0
+```
+
+### What didn't work
+
+- Publishing with the default npm config failed with `EOTP` even though `npm whoami` succeeded. That meant authentication existed, but it was not the automation-token path needed for non-interactive publication.
+
+### What I learned
+
+- `NPM_TOKEN` in `.envrc` is not automatically used by npm unless npm config references it. The safe pattern is to use `NPM_CONFIG_USERCONFIG` with a temporary `.npmrc` that expands `${NPM_TOKEN}`.
+- `npm whoami` can succeed while `npm publish` still requires OTP, depending on which token/config path is active.
+
+### What was tricky to build
+
+- The main sharp edge was avoiding secret leakage. I inspected only variable names and wrote a temporary npm config that references `${NPM_TOKEN}` rather than printing the token value.
+- The earlier home npm config also contained npm auth, so the successful `whoami` result alone was not proof that the `.envrc` token was being used.
+
+### What warrants a second pair of eyes
+
+- Review whether future publication docs should standardize on the temporary `NPM_CONFIG_USERCONFIG` pattern.
+- Review npm token permissions and expiration policy so future package waves do not accidentally depend on an interactive user token.
+
+### What should be done in the future
+
+- Add release automation or Trusted Publishers so local publication no longer depends on hand-managed tokens.
+- Continue with the standalone demo examples that consume these newly published packages.
+
+### Code review instructions
+
+- Verify packages with explicit npmjs registry:
+
+```bash
+npm view @go-go-golems/os-scripting version --registry https://registry.npmjs.org/
+```
+
+- Confirm no npm token values were written to repository files.
+
+### Technical details
+
+Published package versions:
+
+```text
+@go-go-golems/os-chat@0.1.0
+@go-go-golems/os-confirm@0.1.0
+@go-go-golems/os-scripting@0.1.0
+@go-go-golems/os-ui-cards@0.1.0
+@go-go-golems/os-kanban@0.1.0
 ```
