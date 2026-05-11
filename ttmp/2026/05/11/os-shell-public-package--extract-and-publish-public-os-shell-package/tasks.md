@@ -10,9 +10,9 @@
 - [x] Update `os-shell` README for public consumers.
 - [x] Build and inspect `packages/os-shell/dist`.
 - [x] Validate `os-shell` tests/typecheck.
-- [ ] Install a local artifact of `os-shell` into the demo project before publishing.
-- [ ] Add `examples/05-window-manager-shell` to the demo project.
-- [ ] Validate demo typecheck, production build, and Storybook build before publishing.
+- [x] Install a local artifact of `os-shell` into the demo project before publishing.
+- [x] Add `examples/05-window-manager-shell` to the demo project.
+- [x] Validate demo typecheck, production build, and Storybook build before publishing.
 - [ ] Publish `@go-go-golems/os-shell` to npm.
 - [ ] Reinstall/verify the published package from npm in the demo project.
 - [ ] Update changelog/diary and commit at appropriate intervals.

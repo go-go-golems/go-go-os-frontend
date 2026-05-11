@@ -17,3 +17,13 @@ Made os-shell publishable, removed private os-scripting dependency, added deskto
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-shell/src/desktop-react.ts — public desktop React boundary re-export
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-shell/src/store/createLauncherStore.ts — public shell store factory without private os-scripting dependency
 
+
+## 2026-05-11
+
+Built the demo project against a local os-shell tarball before publishing and added the stage 05 window-manager shell example.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/../2026-05-11--npm-go-go-os-test/examples/05-window-manager-shell/src/WindowManagerShellExample.tsx — consumer stage 05 example using os-shell
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-shell/src/index.ts — root type re-exports for shell bundle definitions
+

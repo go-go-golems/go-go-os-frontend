@@ -84,3 +84,37 @@ The first public package does not physically move all shell implementation files
 ### Next step
 
 Install the local os-shell artifact into the standalone demo project and build stage 05 before publishing.
+
+
+## Step 3: Built the demo example against a local os-shell artifact before publishing
+
+### What I did
+
+- Added `RuntimeBundleDefinition` and `RuntimeSurfaceMeta` type re-exports from the `os-shell` root entrypoint so consumers can type `DesktopShell` bundles without importing from `os-core` directly.
+- Rebuilt `packages/os-shell/dist`.
+- Packed the dist artifact with `npm pack` into `/tmp/go-go-golems-os-shell-0.1.0.tgz`.
+- Installed that tarball into the standalone demo project before publication.
+- Added `examples/05-window-manager-shell` in the demo project.
+
+### Demo validation before publishing
+
+In `2026-05-11--npm-go-go-os-test`:
+
+```bash
+npm run typecheck
+npm run build
+npm run build-storybook
+npm run dev -- --host 127.0.0.1
+```
+
+Results:
+
+- Typecheck passed.
+- Vite production build passed.
+- Storybook production build passed.
+- Browser smoke passed for the new `05 Window manager shell` stage.
+- Browser console only showed the existing harmless `/favicon.ico` 404.
+
+### Important caveat
+
+At this stage, the demo project temporarily points `@go-go-golems/os-shell` at the local tarball. After npm publication, it must be switched to `^0.1.0` and revalidated from the public registry.

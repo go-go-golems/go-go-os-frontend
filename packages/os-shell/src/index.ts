@@ -36,6 +36,7 @@ export {
 } from './runtime/renderAppWindow';
 export * from './desktop-core';
 export * from './desktop-react';
+export type { RuntimeBundleDefinition, RuntimeSurfaceMeta } from '@go-go-golems/os-core';
 export {
   SHELL_CORE_REDUCER_KEYS,
   collectModuleReducers,
