@@ -50,3 +50,13 @@ Published README/documentation patch releases for VM packages with no-workaround
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-scripting/README.md — public npm README now documents generated source modules and toast host pattern
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-ui-cards/README.md — public npm README now uses current notify.show action shape
 
+
+## 2026-05-11
+
+Wired check:vm-sources into platform CI and canary publish workflows (commit f4f445b).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/.github/workflows/launcher-ci.yml — Runs generated-source check before platform build
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/.github/workflows/publish-github-package-canary.yml — Runs generated-source check before publish artifact build
+

@@ -26,6 +26,10 @@ RelatedFiles:
       Note: |-
         consumer workaround to remove after patch
         removed VM package optimizeDeps workaround
+    - Path: .github/workflows/launcher-ci.yml
+      Note: CI gate for stale generated VM source modules (commit f4f445b)
+    - Path: .github/workflows/publish-github-package-canary.yml
+      Note: Canary publish gate for stale generated VM source modules (commit f4f445b)
     - Path: package.json
       Note: root scripts for generating/checking VM sources
     - Path: packages/os-kanban/README.md
@@ -53,13 +57,16 @@ RelatedFiles:
     - Path: packages/os-ui-cards/src/runtime-packages/uiPackageSource.generated.ts
       Note: generated UI runtime prelude string
     - Path: scripts/packages/generate-vm-source-modules.mjs
-      Note: generator and check mode for VM source string modules
+      Note: |-
+        generator and check mode for VM source string modules
+        Check script executed by the new workflow steps
 ExternalSources: []
 Summary: Chronological implementation diary for replacing published VM package ?raw imports with generated TypeScript source modules.
 LastUpdated: 2026-05-11T21:55:00-04:00
 WhatFor: Use this to continue or review the Option A raw-source module fix for published VM packages.
 WhenToUse: Before changing VM prelude imports, generation scripts, package patch versions, or demo Vite workaround configuration.
 ---
+
 
 
 
@@ -557,3 +564,80 @@ Published versions:
 ```
 
 The generated-source-module contract is unchanged from `0.1.1`; this step only updates public package documentation and version metadata.
+
+## Step 5: Wired generated VM source checks into CI and canary publishing
+
+I added the committed VM source-module freshness check to both the platform CI workflow and the GitHub Packages canary publish workflow. This makes the Option A generated-source invariant visible before package builds and before publish smoke tests, instead of relying on a human to remember `check:vm-sources` locally.
+
+This is a small workflow change, but it protects the central package contract from this ticket: the readable `.vm.js` files remain the source of truth, and the generated TypeScript source-string modules must stay in sync before packages are built or published.
+
+### Prompt Context
+
+**User prompt (verbatim):** "continue, keep diary, commit at appropriate intervals. Once you get to the dashboardUX, stop and let me know"
+
+**Assistant interpretation:** Continue through the remaining package/demo hardening follow-ups, keep the relevant docmgr diary current, and make focused commits. Stop if a follow-up reaches an area named `dashboardUX`.
+
+**Inferred user intent:** Move from manual validation toward repeatable CI/release checks while preserving a reviewable implementation trail.
+
+**Commit (code):** f4f445b — "CI: check generated VM source modules"
+
+### What I did
+- Updated `.github/workflows/launcher-ci.yml` to run `pnpm run check:vm-sources` after dependency installation and before the platform build.
+- Updated `.github/workflows/publish-github-package-canary.yml` to run `pnpm run check:vm-sources` before building publish artifacts.
+- Validated locally with:
+
+```bash
+pnpm run check:vm-sources
+```
+
+### Why
+- The generated VM source modules are committed files and can go stale when a source `.vm.js` runtime prelude changes.
+- CI should fail before build/publish when generated files are stale.
+- The canary publish workflow is a release-adjacent path, so it should enforce the same invariant before producing artifacts.
+
+### What worked
+- `pnpm run check:vm-sources` reported:
+
+```text
+VM source modules are up to date.
+```
+
+- The workflow change is minimal and does not alter build or package scripts.
+
+### What didn't work
+- N/A
+
+### What I learned
+- The platform CI and canary publish workflow were the two existing workflow-level gates for this repository.
+- The check belongs before package artifact generation, not after, because stale generated source should block artifacts from being created.
+
+### What was tricky to build
+- The canary workflow still uses `npm run ... -w` for per-package scripts after installing with pnpm. I kept the new root generated-source check as `pnpm run check:vm-sources` to match the root workflow install/run style and avoid changing unrelated publish semantics.
+
+### What warrants a second pair of eyes
+- Confirm whether future public npm publishing automation should share this GitHub Packages canary workflow or have a separate npmjs workflow with the same generated-source gate.
+
+### What should be done in the future
+- Add the same `check:vm-sources` step to any future npmjs.org release workflow.
+- Consider adding a prepack guard if package publishing ever happens outside GitHub Actions.
+
+### Code review instructions
+- Review `.github/workflows/launcher-ci.yml` first to see the platform CI gate.
+- Review `.github/workflows/publish-github-package-canary.yml` to confirm the gate runs before `Build publish artifacts`.
+- Validate with:
+
+```bash
+pnpm run check:vm-sources
+```
+
+### Technical details
+- The gate executes:
+
+```bash
+node scripts/packages/generate-vm-source-modules.mjs --check
+```
+
+- The script compares generated output for:
+  - `packages/os-scripting/src/plugin-runtime/stackBootstrapSource.generated.ts`
+  - `packages/os-ui-cards/src/runtime-packages/uiPackageSource.generated.ts`
+  - `packages/os-kanban/src/runtime-packages/kanbanPackageSource.generated.ts`
