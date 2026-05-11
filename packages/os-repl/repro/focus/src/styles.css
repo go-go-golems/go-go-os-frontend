@@ -1,0 +1,34 @@
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #d9d9d9;
+  color: #111;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.focus-repro {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+}
+
+.focus-repro h1,
+.focus-repro p {
+  margin: 0;
+}
+
+.focus-repro__terminal {
+  width: min(900px, calc(100vw - 48px));
+  height: 560px;
+  border: 2px solid currentColor;
+  background: #111;
+}
+
+.focus-repro__terminal [data-part='repl'] {
+  height: 560px;
+}

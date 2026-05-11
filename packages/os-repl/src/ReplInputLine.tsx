@@ -38,7 +38,7 @@ export function ReplInputLine({
           value={input}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={onKeyDown}
-          disabled={disabled}
+          aria-disabled={disabled || undefined}
           spellCheck={false}
           autoComplete="off"
           autoCapitalize="off"

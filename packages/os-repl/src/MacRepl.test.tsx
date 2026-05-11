@@ -62,6 +62,47 @@ describe('MacRepl', () => {
     expect(text).toContain('result:1 + 2');
   });
 
+  it('keeps the input focused after submitting a command', async () => {
+    const driver: ReplDriver = {
+      async execute(raw) {
+        await Promise.resolve();
+        return {
+          lines: [{ type: 'output', text: `result:${raw}` }],
+        };
+      },
+    };
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const root = createRoot(container);
+    roots.push(root);
+
+    await act(async () => {
+      root.render(<MacRepl driver={driver} prompt="js>" />);
+    });
+
+    const input = container.querySelector('input');
+    expect(input).not.toBeNull();
+
+    input!.focus();
+    expect(document.activeElement).toBe(input);
+
+    await act(async () => {
+      const valueSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        'value',
+      )?.set;
+      valueSetter?.call(input, 'status');
+      input!.dispatchEvent(new Event('input', { bubbles: true }));
+      input!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    });
+
+    expect(container.textContent).toContain('result:status');
+    expect(document.activeElement).toBe(input);
+  });
+
   it('uses REPL_PROMPT from driver env vars when provided', async () => {
     const driver: ReplDriver = {
       execute() {
