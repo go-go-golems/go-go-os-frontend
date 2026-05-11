@@ -97,6 +97,9 @@ jobs:
             fi
           done
 
+      - name: Check generated VM source modules
+        run: pnpm run check:vm-sources
+
       - name: Build publish artifacts
         run: |
           IFS=',' read -r -a PACKAGE_DIRS <<< "${{ steps.package_set.outputs.package_dirs }}"

@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Check generated VM source modules
+        run: pnpm run check:vm-sources
+
       - name: Build frontend platform packages/apps
         run: pnpm run build
 
