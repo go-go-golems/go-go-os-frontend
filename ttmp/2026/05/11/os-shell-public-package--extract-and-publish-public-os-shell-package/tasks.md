@@ -4,12 +4,12 @@
 
 - [x] Create docmgr ticket for the public `os-shell` extraction/publishing effort.
 - [x] Write design and implementation guide for the package boundary.
-- [ ] Update `packages/os-shell/package.json` for public npm publishing.
-- [ ] Remove the private `@go-go-golems/os-scripting` runtime dependency from `os-shell`.
-- [ ] Export desktop/window-manager APIs from `@go-go-golems/os-shell`.
-- [ ] Update `os-shell` README for public consumers.
-- [ ] Build and inspect `packages/os-shell/dist`.
-- [ ] Validate `os-shell` tests/typecheck.
+- [x] Update `packages/os-shell/package.json` for public npm publishing.
+- [x] Remove the private `@go-go-golems/os-scripting` runtime dependency from `os-shell`.
+- [x] Export desktop/window-manager APIs from `@go-go-golems/os-shell`.
+- [x] Update `os-shell` README for public consumers.
+- [x] Build and inspect `packages/os-shell/dist`.
+- [x] Validate `os-shell` tests/typecheck.
 - [ ] Install a local artifact of `os-shell` into the demo project before publishing.
 - [ ] Add `examples/05-window-manager-shell` to the demo project.
 - [ ] Validate demo typecheck, production build, and Storybook build before publishing.

@@ -1,8 +1,8 @@
 {
   "name": "@go-go-golems/os-shell",
   "version": "0.1.0",
-  "description": "App manifests, launch surfaces, and app-registry helpers for go-go-os.",
-  "private": true,
+  "description": "Public desktop shell, launcher, app-registry, and window-manager APIs for go-go-os React apps.",
+  "private": false,
   "type": "module",
   "license": "MIT",
   "author": "Manuel Odendahl",
@@ -24,7 +24,7 @@
     "README.md"
   ],
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "exports": {
     ".": "./src/index.ts",
@@ -32,7 +32,15 @@
     "./contracts/launchableAppModule": "./src/contracts/launchableAppModule.ts",
     "./contracts/launcherHostContext": "./src/contracts/launcherHostContext.ts",
     "./contracts/launcherRenderContext": "./src/contracts/launcherRenderContext.ts",
-    "./runtime/appKey": "./src/runtime/appKey.ts"
+    "./runtime/appKey": "./src/runtime/appKey.ts",
+    "./desktop-core": "./src/desktop-core.ts",
+    "./desktop-react": "./src/desktop-react.ts",
+    "./windowing": "./src/windowing.ts",
+    "./store/createLauncherStore": "./src/store/createLauncherStore.ts",
+    "./runtime/buildLauncherContributions": "./src/runtime/buildLauncherContributions.ts",
+    "./runtime/buildLauncherIcons": "./src/runtime/buildLauncherIcons.ts",
+    "./runtime/renderAppWindow": "./src/runtime/renderAppWindow.ts",
+    "./registry/createAppRegistry": "./src/registry/createAppRegistry.ts"
   },
   "main": "src/index.ts",
   "types": "src/index.ts",
@@ -45,12 +53,12 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@go-go-golems/os-core": "workspace:*",
-    "@go-go-golems/os-scripting": "workspace:*"
+    "@go-go-golems/os-core": "workspace:*"
   },
   "peerDependencies": {
     "@reduxjs/toolkit": "^2.0.0",
     "react": "^18 || ^19",
+    "react-dom": "^18 || ^19",
     "react-redux": "^9.0.0"
   },
   "devDependencies": {
@@ -58,5 +66,16 @@
     "@types/react-dom": "^19.2.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
-  }
+  },
+  "keywords": [
+    "react",
+    "desktop",
+    "shell",
+    "window-manager",
+    "launcher",
+    "go-go-golems"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ]
 }

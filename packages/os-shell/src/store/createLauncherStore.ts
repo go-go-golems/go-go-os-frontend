@@ -1,9 +1,34 @@
-import { CORE_APP_REDUCER_KEYS, type CreateAppStoreOptions, createAppStore } from '@go-go-golems/os-scripting';
-import type { Reducer } from '@reduxjs/toolkit';
+import { configureStore, type Reducer } from '@reduxjs/toolkit';
+import {
+  createReduxPerfMiddleware,
+  debugReducer,
+  initDiagnostics,
+  notificationsReducer,
+  startFrameMonitor,
+} from '@go-go-golems/os-core';
+import { windowingReducer } from '@go-go-golems/os-core/desktop-core';
 import type { AppStateKey } from '../contracts/appManifest';
 import type { LaunchableAppModule } from '../contracts/launchableAppModule';
 
-const ENGINE_CORE_REDUCER_KEYS = new Set<string>(CORE_APP_REDUCER_KEYS);
+export const SHELL_CORE_REDUCER_KEYS = [
+  'pluginCardRuntime',
+  'runtimeSessions',
+  'windowing',
+  'notifications',
+  'debug',
+  'hypercardArtifacts',
+] as const;
+
+const ENGINE_CORE_REDUCER_KEYS = new Set<string>(SHELL_CORE_REDUCER_KEYS);
+
+export interface CreateLauncherStoreOptions {
+  /** Enable Redux throughput/FPS diagnostics middleware. Default: false. */
+  enableReduxDiagnostics?: boolean;
+  /** Rolling window duration in ms for diagnostics aggregation. Default: 5000. */
+  diagnosticsWindowMs?: number;
+  /** Extra reducers shared by the host app and all launched modules. */
+  sharedReducers?: Record<string, Reducer>;
+}
 
 export function collectModuleReducers(modules: readonly LaunchableAppModule[]): Record<string, Reducer> {
   const seen = new Set<string>();
@@ -27,10 +52,6 @@ export function collectModuleReducers(modules: readonly LaunchableAppModule[]): 
   }
 
   return reducers;
-}
-
-export interface CreateLauncherStoreOptions extends CreateAppStoreOptions {
-  sharedReducers?: Record<string, Reducer>;
 }
 
 function assertValidReducerKey(key: string, seen: Set<string>): void {
@@ -63,10 +84,50 @@ function mergeLauncherReducers(
 }
 
 export function createLauncherStore(modules: readonly LaunchableAppModule[], options: CreateLauncherStoreOptions = {}) {
-  const { sharedReducers = {}, ...storeOptions } = options;
+  const { sharedReducers = {}, enableReduxDiagnostics = false, diagnosticsWindowMs = 5000 } = options;
   const moduleReducers = collectModuleReducers(modules);
-  const reducers = mergeLauncherReducers(moduleReducers, sharedReducers);
-  return createAppStore(reducers, storeOptions);
+  const domainReducers = mergeLauncherReducers(moduleReducers, sharedReducers);
+
+  if (enableReduxDiagnostics) {
+    initDiagnostics({ windowMs: diagnosticsWindowMs });
+  }
+
+  const perfMiddleware = enableReduxDiagnostics ? createReduxPerfMiddleware({ windowMs: diagnosticsWindowMs }) : null;
+  const reducer = {
+    windowing: windowingReducer,
+    notifications: notificationsReducer,
+    debug: debugReducer,
+    ...domainReducers,
+  };
+
+  function createStore() {
+    const store = configureStore({
+      reducer,
+      middleware: (getDefault) => (perfMiddleware ? getDefault().concat(perfMiddleware) : getDefault()),
+    });
+
+    if (enableReduxDiagnostics && typeof requestAnimationFrame !== 'undefined') {
+      startFrameMonitor();
+    }
+
+    return store;
+  }
+
+  const store = createStore();
+
+  type AppStore = ReturnType<typeof createStore>;
+  type RootState = ReturnType<AppStore['getState']>;
+  type AppDispatch = AppStore['dispatch'];
+
+  return {
+    store,
+    createStore,
+  } as {
+    store: AppStore;
+    createStore: () => AppStore;
+    RootState: RootState;
+    AppDispatch: AppDispatch;
+  };
 }
 
 export function selectModuleState<TSlice = unknown>(state: unknown, stateKey: AppStateKey): TSlice | undefined {

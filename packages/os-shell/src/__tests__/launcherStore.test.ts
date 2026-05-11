@@ -28,17 +28,17 @@ function moduleWithState(appId: string, stateKey: `app_${string}`): LaunchableAp
 }
 
 describe('createLauncherStore', () => {
-  it('creates one global store with engine reducers plus app reducers', () => {
+  it('creates one global store with public shell reducers plus app reducers', () => {
     const inventoryModule = moduleWithState('inventory', 'app_inventory');
     const launcher = createLauncherStore([inventoryModule]);
 
     const state = launcher.store.getState() as Record<string, unknown>;
     expect(state).toHaveProperty('windowing');
-    expect(state).toHaveProperty('runtimeSessions');
     expect(state).toHaveProperty('notifications');
     expect(state).toHaveProperty('debug');
-    expect(state).toHaveProperty('hypercardArtifacts');
     expect(state).toHaveProperty('app_inventory');
+    expect(state).not.toHaveProperty('runtimeSessions');
+    expect(state).not.toHaveProperty('hypercardArtifacts');
 
     expect(selectModuleState<{ count: number }>(state, 'app_inventory')).toEqual({ count: 1 });
   });

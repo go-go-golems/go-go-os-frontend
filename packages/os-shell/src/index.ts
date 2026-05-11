@@ -34,9 +34,13 @@ export {
   type RenderAppWindowOptions,
   renderAppWindow,
 } from './runtime/renderAppWindow';
+export * from './desktop-core';
+export * from './desktop-react';
 export {
+  SHELL_CORE_REDUCER_KEYS,
   collectModuleReducers,
   createLauncherStore,
   createModuleSelector,
   selectModuleState,
+  type CreateLauncherStoreOptions,
 } from './store/createLauncherStore';

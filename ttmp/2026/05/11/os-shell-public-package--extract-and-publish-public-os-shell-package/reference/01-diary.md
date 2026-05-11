@@ -13,7 +13,7 @@ Owners: []
 RelatedFiles: []
 ExternalSources: []
 Summary: "Chronological diary for extracting and publishing the public @go-go-golems/os-shell package."
-LastUpdated: 2026-05-11T17:20:00-04:00
+LastUpdated: 2026-05-11T17:25:00-04:00
 WhatFor: "Records implementation steps, validation, failures, commits, and publish results."
 WhenToUse: "Use while reviewing or continuing the os-shell publication work."
 ---
@@ -39,3 +39,48 @@ WhenToUse: "Use while reviewing or continuing the os-shell publication work."
 ### Next step
 
 Update package metadata and remove private package dependencies from the public shell package.
+
+
+## Step 2: Made os-shell publishable and decoupled from private scripting runtime
+
+### What I changed
+
+- Set `packages/os-shell/package.json` to `private: false`.
+- Switched `publishConfig` from GitHub Packages to public npm access.
+- Removed the runtime dependency on private `@go-go-golems/os-scripting`.
+- Added public shell/window-manager entrypoints:
+  - `./desktop-core`
+  - `./desktop-react`
+  - `./windowing`
+  - `./store/createLauncherStore`
+  - runtime and registry helper subpaths.
+- Added `src/desktop-core.ts`, `src/desktop-react.ts`, and `src/windowing.ts` to make `@go-go-golems/os-shell` the preferred import boundary.
+- Reimplemented `createLauncherStore()` using public dependencies only:
+  - `@reduxjs/toolkit`
+  - `@go-go-golems/os-core`
+- Updated tests to assert the public shell store shape instead of the private scripting store shape.
+- Rewrote `packages/os-shell/README.md` for npm consumers.
+
+### Validation
+
+```bash
+npm run typecheck -w packages/os-shell
+npm test -w packages/os-shell
+npm run build:dist -w packages/os-shell
+```
+
+Results:
+
+- Typecheck passed.
+- 5 test files passed.
+- 23 tests passed.
+- `dist/package.json` rewrote `@go-go-golems/os-core` from `workspace:*` to `0.1.1`.
+- `dist/package.json` has `publishConfig.access = public`.
+
+### Boundary decision
+
+The first public package does not physically move all shell implementation files out of `os-core`. Instead, it establishes `@go-go-golems/os-shell` as the public import boundary and delegates to the existing implementation. This avoids destabilizing existing apps while giving consumers the correct package to install and import.
+
+### Next step
+
+Install the local os-shell artifact into the standalone demo project and build stage 05 before publishing.
