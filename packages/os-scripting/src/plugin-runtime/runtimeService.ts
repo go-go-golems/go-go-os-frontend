@@ -9,7 +9,7 @@ import type {
   SessionId,
   StackId,
 } from './contracts';
-import stackBootstrapSource from './stack-bootstrap.vm.js?raw';
+import stackBootstrapSource from './stackBootstrapSource.generated';
 import { toJsLiteral } from './quickJsSessionCore';
 import { JsSessionService, type JsEvalResult, type JsSessionServiceOptions } from './jsSessionService';
 

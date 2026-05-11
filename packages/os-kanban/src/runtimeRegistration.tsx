@@ -1,4 +1,4 @@
-import kanbanPackagePrelude from './runtime-packages/kanban.package.vm.js?raw';
+import kanbanPackagePrelude from './runtime-packages/kanbanPackageSource.generated';
 import { KANBAN_RUNTIME_DOCS_METADATA } from './docsMetadata';
 import {
   type RuntimePackageDefinition,
