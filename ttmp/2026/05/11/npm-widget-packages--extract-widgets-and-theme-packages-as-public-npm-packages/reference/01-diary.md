@@ -11,13 +11,18 @@ Topics:
 DocType: reference
 Intent: long-term
 Owners: []
-RelatedFiles: []
+RelatedFiles:
+    - Path: packages/os-chat/package.json
+      Note: Theme JavaScript side-effect metadata for os-chat (commit 6af07b9)
+    - Path: packages/os-core/package.json
+      Note: Theme JavaScript side-effect metadata for os-core (commit 6af07b9)
 ExternalSources: []
-Summary: "Chronological investigation diary for extracting go-go-os-frontend widget and theme packages for public npm reuse."
+Summary: Chronological investigation diary for extracting go-go-os-frontend widget and theme packages for public npm reuse.
 LastUpdated: 2026-05-11T18:20:00-04:00
-WhatFor: "Use this to understand what was inspected, what failed, and how to continue the package extraction work."
-WhenToUse: "Before implementing or reviewing the public npm packaging changes."
+WhatFor: Use this to understand what was inspected, what failed, and how to continue the package extraction work.
+WhenToUse: Before implementing or reviewing the public npm packaging changes.
 ---
+
 
 # Diary
 
@@ -822,4 +827,107 @@ Relevant commits:
 ```text
 892b7db Fix os-repl input focus after submit
 131b095 Bump os-widgets for repl focus fix
+```
+
+## Step 10: Audited theme entrypoint side-effect metadata
+
+I audited the published package theme entrypoints after the production Kanban CSS failure showed that CSS-only side-effect metadata is not enough when the public theme export is a JavaScript module that imports CSS. The audit found that `os-chat` had the same risk pattern, and `os-core` also had a JavaScript `desktop-theme-macos1` theme entry that should be preserved explicitly.
+
+The change updates package metadata only. It does not change component source, CSS contents, or runtime behavior; it makes production bundlers retain public theme-loading modules that exist for their import side effects.
+
+### Prompt Context
+
+**User prompt (verbatim):** "continue, keep diary, commit at appropriate intervals. Once you get to the dashboardUX, stop and let me know"
+
+**Assistant interpretation:** Continue through the package hardening follow-ups, keep diary updates, and stop if work reaches a `dashboardUX` area.
+
+**Inferred user intent:** Address known package-publication sharp edges incrementally while documenting each validation and metadata fix.
+
+**Commit (code):** 6af07b9 — "Preserve theme entry side effects"
+
+### What I did
+- Audited packages with theme exports and side-effect metadata.
+- Updated `packages/os-chat/package.json` so the public `./theme` entry is preserved:
+  - `./theme/index.js`
+  - `./theme/*.js`
+- Updated `packages/os-core/package.json` so public theme-loading JavaScript entries are preserved:
+  - `./desktop-theme-macos1.js`
+  - `./theme/index.js`
+  - `./theme/*.js`
+  - existing CSS side-effect entries remain.
+- Built dist artifacts locally for the touched packages to confirm the generated `dist/package.json` metadata contains the expected `sideEffects` entries.
+
+### Why
+- `os-kanban` previously lost production CSS because the JS theme entry was tree-shaken before its CSS import executed.
+- `os-chat/src/theme/index.ts` imports `../chat/theme/chat.css`, so its dist `theme/index.js` has the same side-effect shape.
+- `os-core/src/desktop-theme-macos1.ts` imports a CSS theme layer and is intentionally consumed for its side effect.
+
+### What worked
+- The audit identified two metadata-only fixes before they caused another deployed-site failure.
+- Local `build:dist` for `@go-go-golems/os-core` and `@go-go-golems/os-chat` copied the updated side-effect metadata into each package's `dist/package.json`.
+
+### What didn't work
+- My first validation command used npm workspace syntax with pnpm:
+
+```bash
+pnpm run build:dist -w packages/os-core
+```
+
+- pnpm reported:
+
+```text
+ERR_PNPM_NO_SCRIPT Missing script: build:dist
+```
+
+- I corrected the command to pnpm filter syntax:
+
+```bash
+pnpm --filter @go-go-golems/os-core run build:dist
+pnpm --filter @go-go-golems/os-chat run build:dist
+```
+
+### What I learned
+- The theme-side-effect audit should check both `./theme` exports and any other named theme exports, such as `./desktop-theme-macos1`.
+- A package can be safe in development and unsafe in production if its theme entry is represented as a JavaScript module but package metadata only marks raw CSS files as side effects.
+
+### What was tricky to build
+- The source `package.json` exports point at TypeScript files, while published artifacts expose JavaScript. `sideEffects` needs to protect the published JavaScript paths because bundlers evaluate the built package contents.
+
+### What warrants a second pair of eyes
+- Confirm whether any future package exports theme-like JavaScript entrypoints outside the `./theme` naming convention.
+- Confirm whether `os-core` should also include more precise nested theme JS globs if new generated theme modules are added later.
+
+### What should be done in the future
+- Publish patch versions for `@go-go-golems/os-core` and `@go-go-golems/os-chat` if consumers begin using those theme entries in production builds.
+- Consider adding a small metadata-audit script that fails when an export named `./theme` maps to a JS module but `sideEffects` does not preserve the corresponding built JS entry.
+
+### Code review instructions
+- Review only package metadata:
+  - `packages/os-core/package.json`
+  - `packages/os-chat/package.json`
+- Validate metadata propagation with:
+
+```bash
+pnpm --filter @go-go-golems/os-core run build:dist
+pnpm --filter @go-go-golems/os-chat run build:dist
+node -e "for (const p of ['packages/os-core/dist/package.json','packages/os-chat/dist/package.json']) console.log(p, require('./'+p).sideEffects)"
+```
+
+### Technical details
+- `os-chat` now uses:
+
+```json
+"sideEffects": [
+  "**/*.css",
+  "./theme/index.js",
+  "./theme/*.js"
+]
+```
+
+- `os-core` now includes:
+
+```json
+"./desktop-theme-macos1.js",
+"./theme/index.js",
+"./theme/*.js"
 ```

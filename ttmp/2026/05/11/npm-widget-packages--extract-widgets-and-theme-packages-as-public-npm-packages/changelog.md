@@ -112,3 +112,13 @@ Fixed os-repl input focus after submit, added a package-local repro and regressi
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-repl/src/ReplInputLine.tsx — uses aria-disabled instead of disabled so submit does not blur the input
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-widgets/package.json — patch bump to consume fixed os-repl
 
+
+## 2026-05-11
+
+Audited theme entrypoints and preserved JavaScript theme side effects for os-core and os-chat (commit 6af07b9).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-chat/package.json — Preserves theme JS side effects
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-core/package.json — Preserves desktop-theme-macos1 and theme JS side effects
+
