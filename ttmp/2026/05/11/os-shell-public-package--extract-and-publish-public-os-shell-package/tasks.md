@@ -13,6 +13,6 @@
 - [x] Install a local artifact of `os-shell` into the demo project before publishing.
 - [x] Add `examples/05-window-manager-shell` to the demo project.
 - [x] Validate demo typecheck, production build, and Storybook build before publishing.
-- [ ] Publish `@go-go-golems/os-shell` to npm.
-- [ ] Reinstall/verify the published package from npm in the demo project.
-- [ ] Update changelog/diary and commit at appropriate intervals.
+- [x] Publish `@go-go-golems/os-shell` to npm.
+- [x] Reinstall/verify the published package from npm in the demo project.
+- [x] Update changelog/diary and commit at appropriate intervals.

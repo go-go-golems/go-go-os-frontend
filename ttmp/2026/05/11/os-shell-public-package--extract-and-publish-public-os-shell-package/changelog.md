@@ -27,3 +27,13 @@ Built the demo project against a local os-shell tarball before publishing and ad
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/../2026-05-11--npm-go-go-os-test/examples/05-window-manager-shell/src/WindowManagerShellExample.tsx — consumer stage 05 example using os-shell
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-shell/src/index.ts — root type re-exports for shell bundle definitions
 
+
+## 2026-05-11
+
+Published @go-go-golems/os-shell@0.1.0 and revalidated the demo from the public npm dependency.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/ttmp/2026/05/11/os-shell-public-package--extract-and-publish-public-os-shell-package/reference/01-diary.md — publish and registry validation notes
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/ttmp/2026/05/11/os-shell-public-package--extract-and-publish-public-os-shell-package/tasks.md — completed extraction and publishing checklist
+

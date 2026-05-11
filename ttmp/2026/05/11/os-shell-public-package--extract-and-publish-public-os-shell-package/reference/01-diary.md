@@ -118,3 +118,47 @@ Results:
 ### Important caveat
 
 At this stage, the demo project temporarily points `@go-go-golems/os-shell` at the local tarball. After npm publication, it must be switched to `^0.1.0` and revalidated from the public registry.
+
+
+## Step 4: Published os-shell and revalidated from npm
+
+### Publish command
+
+```bash
+npm run build:dist -w packages/os-shell
+npm publish --access public ./packages/os-shell/dist
+```
+
+### Published package
+
+```text
+@go-go-golems/os-shell@0.1.0
+```
+
+The first unauthenticated `npm view` check briefly returned 404 because the package was newly published and local/global npm scope configuration also points `@go-go-golems` at GitHub Packages outside repo-local `.npmrc` contexts. An authenticated npmjs-registry check returned `0.1.0`, and a second publish attempt confirmed the version already existed.
+
+### Registry consumer validation
+
+After publication, I switched the standalone demo dependency from the local tarball to:
+
+```json
+"@go-go-golems/os-shell": "^0.1.0"
+```
+
+Then I revalidated the demo project:
+
+```bash
+npm run typecheck
+npm run build
+npm run build-storybook
+npm run dev -- --host 127.0.0.1
+```
+
+Browser smoke opened the root app and selected `05 Window manager shell`. The stage rendered with no browser console errors.
+
+### Commits
+
+- `6103327 Plan public os-shell package`
+- `8aa7aaa Make os-shell publishable`
+- `ed765bc Validate os-shell with demo artifact`
+- demo example commit pending in the consumer repo at time of this diary entry.
