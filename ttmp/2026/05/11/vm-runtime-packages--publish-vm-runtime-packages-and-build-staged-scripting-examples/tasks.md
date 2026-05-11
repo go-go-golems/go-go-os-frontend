@@ -2,10 +2,10 @@
 
 ## TODO
 
-- [ ] 1. Baseline VM package validation passes for source, tests, and current dist builds.
-- [ ] 2. Package metadata for `os-chat`, `os-confirm`, `os-scripting`, `os-ui-cards`, and `os-kanban` is public-npm ready.
-- [ ] 3. Consumer-focused READMEs exist for all five VM package wave packages.
-- [ ] 4. Dist builds for all five packages have correct package metadata, rewritten dependencies, copied READMEs, and copied `.vm.js` assets.
+- [x] 1. Baseline VM package validation passes for source, tests, and current dist builds.
+- [x] 2. Package metadata for `os-chat`, `os-confirm`, `os-scripting`, `os-ui-cards`, and `os-kanban` is public-npm ready.
+- [x] 3. Consumer-focused READMEs exist for all five VM package wave packages.
+- [x] 4. Dist builds for all five packages have correct package metadata, rewritten dependencies, copied READMEs, and copied `.vm.js` assets.
 - [ ] 5. Publish `@go-go-golems/os-chat@0.1.0` and verify on npmjs.
 - [ ] 6. Publish `@go-go-golems/os-confirm@0.1.0` and verify on npmjs.
 - [ ] 7. Publish `@go-go-golems/os-scripting@0.1.0` and verify on npmjs.

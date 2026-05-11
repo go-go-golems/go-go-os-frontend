@@ -14,22 +14,33 @@ DocType: reference
 Intent: long-term
 Owners: []
 RelatedFiles:
+    - Path: packages/os-chat/README.md
+      Note: consumer documentation for chat support package
     - Path: packages/os-chat/package.json
       Note: publication candidate metadata
+    - Path: packages/os-confirm/README.md
+      Note: consumer documentation for confirm support package
     - Path: packages/os-confirm/package.json
       Note: publication candidate metadata
+    - Path: packages/os-kanban/README.md
+      Note: consumer documentation for kanban runtime package
     - Path: packages/os-kanban/package.json
       Note: runtime kanban package metadata
+    - Path: packages/os-scripting/README.md
+      Note: consumer API documentation for QuickJS runtime package
     - Path: packages/os-scripting/package.json
       Note: main VM package metadata
+    - Path: packages/os-ui-cards/README.md
+      Note: consumer documentation for ui runtime package
     - Path: packages/os-ui-cards/package.json
       Note: runtime UI package metadata
 ExternalSources: []
 Summary: Chronological implementation diary for publishing the QuickJS VM runtime package family and adding staged VM examples to the standalone demo app.
-LastUpdated: 2026-05-11T17:15:00-04:00
+LastUpdated: 2026-05-11T17:35:00-04:00
 WhatFor: Use this to understand what was changed, why it changed, what failed, and how to continue the VM package publication work.
 WhenToUse: Before reviewing or continuing the vm-runtime-packages ticket.
 ---
+
 
 
 # Diary
@@ -166,4 +177,129 @@ Initial package publication candidates:
 @go-go-golems/os-scripting@0.1.0
 @go-go-golems/os-ui-cards@0.1.0
 @go-go-golems/os-kanban@0.1.0
+```
+
+
+## Step 2: Prepared VM package metadata and README documentation
+
+I converted the five VM-wave packages from private workspace packages into public-npm-ready packages and added consumer-facing READMEs. This step did not publish yet; it made the package sources and generated dist artifacts suitable for publication.
+
+The package READMEs focus on what a standalone consumer needs: install commands, peer dependencies, core exports, runtime registration patterns, and minimal usage snippets. The scripting package README explains the stable beginner path through `createAppStore`, `RuntimeSurfaceSessionHost`, `registerRuntimePackage`, and `registerRuntimeSurfaceType`.
+
+### Prompt Context
+
+**User prompt (verbatim):** (see Step 1)
+
+**Assistant interpretation:** Prepare the package family for public npm publication and document the consumer-facing API surface before publishing.
+
+**Inferred user intent:** Make npm package pages useful and avoid publishing installable packages that users cannot understand or wire correctly.
+
+**Commit (code):** `06cc9b0` — "Prepare VM runtime packages for public npm"
+
+### What I did
+
+- Updated package metadata in:
+  - `packages/os-chat/package.json`
+  - `packages/os-confirm/package.json`
+  - `packages/os-scripting/package.json`
+  - `packages/os-ui-cards/package.json`
+  - `packages/os-kanban/package.json`
+- Changed each package from `private: true` to `private: false`.
+- Replaced GitHub Packages publish config with public npm publish config:
+
+```json
+"publishConfig": {
+  "access": "public"
+}
+```
+
+- Added package keywords and CSS side-effect metadata.
+- Added READMEs:
+  - `packages/os-chat/README.md`
+  - `packages/os-confirm/README.md`
+  - `packages/os-scripting/README.md`
+  - `packages/os-ui-cards/README.md`
+  - `packages/os-kanban/README.md`
+- Ran validation:
+
+```bash
+npm run typecheck -w packages/os-chat
+npm run typecheck -w packages/os-confirm
+npm run typecheck -w packages/os-scripting
+npm run typecheck -w packages/os-ui-cards
+npm run typecheck -w packages/os-kanban
+
+npm test -w packages/os-chat
+npm test -w packages/os-scripting
+npm test -w packages/os-ui-cards
+npm test -w packages/os-kanban
+
+npm run build:dist -w packages/os-chat
+npm run build:dist -w packages/os-confirm
+npm run build:dist -w packages/os-scripting
+npm run build:dist -w packages/os-ui-cards
+npm run build:dist -w packages/os-kanban
+```
+
+- Inspected generated `dist/package.json` files and verified that workspace dependencies were rewritten to concrete versions and READMEs were copied.
+
+### Why
+
+- npm rejects packages with `private: true`.
+- The earlier first-wave packages already use public-npm metadata; the VM wave should match that convention.
+- README files are copied by `build-dist.mjs`, so adding them before publication makes the npm package pages immediately useful.
+
+### What worked
+
+- All typecheck commands passed.
+- Tests passed for `os-chat`, `os-scripting`, `os-ui-cards`, and `os-kanban`.
+- All five `build:dist` commands passed.
+- Dist output included copied READMEs and `.vm.js` assets where expected.
+- Dist dependencies resolved to concrete package versions, for example:
+
+```text
+@go-go-golems/os-scripting -> @go-go-golems/os-chat 0.1.0, @go-go-golems/os-repl 0.1.5
+@go-go-golems/os-ui-cards -> @go-go-golems/os-scripting 0.1.0
+@go-go-golems/os-kanban -> @go-go-golems/os-ui-cards 0.1.0, @go-go-golems/os-widgets 0.1.2
+```
+
+### What didn't work
+
+- The first draft of the `os-confirm` README referenced a non-existent `ConfirmRequestPanel`; I corrected it to `ConfirmRequestWindowHost` after checking `packages/os-confirm/src/index.ts` and component exports.
+- The first draft of the `os-kanban` README used an object-style `widgets.kanban.page({...})` call; the actual VM helper accepts child nodes as variadic arguments. I corrected the example after checking `packages/os-kanban/src/runtime-packages/kanban.package.vm.js`.
+
+### What I learned
+
+- README examples must be checked against the actual exported source, especially for VM helper APIs where the TypeScript host and VM JavaScript APIs are different.
+- The package builder already handles most publication mechanics; the high-risk part is accurate consumer API documentation and dependency order.
+
+### What was tricky to build
+
+- The package family has layered dependencies that all use `workspace:*` in source. The dist builder rewrites them to exact workspace versions, so the source package versions become the published dependency contract.
+- `os-kanban` depends on `os-ui-cards`, which depends on `os-scripting`, so any version mismatch after publication would become visible as duplicate runtime registries or unknown package/surface errors in the demo.
+
+### What warrants a second pair of eyes
+
+- Review the READMEs for API accuracy, especially action shapes in scripting examples and Kanban node shapes.
+- Review whether exact dependency versions in dist artifacts are preferred for 0.1.x packages or whether future releases should use caret workspace specifiers.
+
+### What should be done in the future
+
+- Publish the packages in dependency order.
+- Add demo examples that verify the README wiring in a clean standalone app.
+
+### Code review instructions
+
+- Review each package README first, then package metadata.
+- Re-run the validation commands listed above.
+- Inspect `packages/*/dist/package.json` for the five package wave before publishing.
+
+### Technical details
+
+The generated dist packages had public publish config and copied READMEs. VM assets were copied for:
+
+```text
+packages/os-scripting/dist/plugin-runtime/stack-bootstrap.vm.js
+packages/os-ui-cards/dist/runtime-packages/ui.package.vm.js
+packages/os-kanban/dist/runtime-packages/kanban.package.vm.js
 ```
