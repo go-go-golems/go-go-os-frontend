@@ -2,7 +2,7 @@
   "name": "@go-go-golems/os-chat",
   "version": "0.1.0",
   "description": "Shared chat UI and state primitives for the go-go-os desktop runtime.",
-  "private": true,
+  "private": false,
   "type": "module",
   "license": "MIT",
   "author": "Manuel Odendahl",
@@ -24,7 +24,7 @@
     "README.md"
   ],
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "exports": {
     ".": "./src/index.ts",
@@ -65,5 +65,15 @@
     "@types/react-dom": "^19.2.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
-  }
+  },
+  "keywords": [
+    "react",
+    "chat",
+    "runtime",
+    "go-go-os",
+    "go-go-golems"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ]
 }

@@ -2,7 +2,7 @@
   "name": "@go-go-golems/os-confirm",
   "version": "0.1.0",
   "description": "plz-confirm integration components for go-go-os hosts and apps.",
-  "private": true,
+  "private": false,
   "type": "module",
   "license": "MIT",
   "author": "Manuel Odendahl",
@@ -24,7 +24,7 @@
     "README.md"
   ],
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "exports": {
     ".": "./src/index.ts"
@@ -48,5 +48,15 @@
     "@types/react-dom": "^19.2.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
-  }
+  },
+  "keywords": [
+    "react",
+    "confirmation",
+    "plz-confirm",
+    "go-go-os",
+    "go-go-golems"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ]
 }
