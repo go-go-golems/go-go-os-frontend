@@ -28,14 +28,26 @@ RelatedFiles:
         removed VM package optimizeDeps workaround
     - Path: package.json
       Note: root scripts for generating/checking VM sources
+    - Path: packages/os-kanban/README.md
+      Note: documents no package-specific Vite workaround for Kanban runtime package (commit aabda33)
+    - Path: packages/os-kanban/package.json
+      Note: docs patch version 0.1.2
     - Path: packages/os-kanban/src/runtime-packages/kanban.package.vm.js
       Note: source-of-truth Kanban runtime prelude to generate from
     - Path: packages/os-kanban/src/runtime-packages/kanbanPackageSource.generated.ts
       Note: generated Kanban runtime prelude string
+    - Path: packages/os-scripting/README.md
+      Note: documents no Vite optimizeDeps workaround and host toast chrome for notify.show (commit aabda33)
+    - Path: packages/os-scripting/package.json
+      Note: docs patch version 0.1.2
     - Path: packages/os-scripting/src/plugin-runtime/stack-bootstrap.vm.js
       Note: source-of-truth QuickJS bootstrap to generate from
     - Path: packages/os-scripting/src/plugin-runtime/stackBootstrapSource.generated.ts
       Note: generated QuickJS bootstrap source string
+    - Path: packages/os-ui-cards/README.md
+      Note: documents generated prelude modules and current notify.show action schema (commit aabda33)
+    - Path: packages/os-ui-cards/package.json
+      Note: docs patch version 0.1.2
     - Path: packages/os-ui-cards/src/runtime-packages/ui.package.vm.js
       Note: source-of-truth UI runtime prelude to generate from
     - Path: packages/os-ui-cards/src/runtime-packages/uiPackageSource.generated.ts
@@ -44,10 +56,11 @@ RelatedFiles:
       Note: generator and check mode for VM source string modules
 ExternalSources: []
 Summary: Chronological implementation diary for replacing published VM package ?raw imports with generated TypeScript source modules.
-LastUpdated: 2026-05-11T19:35:00-04:00
+LastUpdated: 2026-05-11T21:55:00-04:00
 WhatFor: Use this to continue or review the Option A raw-source module fix for published VM packages.
 WhenToUse: Before changing VM prelude imports, generation scripts, package patch versions, or demo Vite workaround configuration.
 ---
+
 
 
 
@@ -412,3 +425,135 @@ Demo dependency tree after update:
 @go-go-golems/os-scripting@0.1.1
 @go-go-golems/os-ui-cards@0.1.1
 ```
+
+
+## Step 4: Published README-only VM package follow-up releases
+
+After the raw-source patch was published, the package README pages still needed to explain the new consumer contract clearly. I updated the three README files most directly affected by the Vite raw-import fix and published documentation patch releases so npm users see the corrected guidance.
+
+The README updates now say that consumers no longer need package-specific Vite `optimizeDeps` exclusions for the VM package family. They also clarify that app-local `*.vm.js?raw` imports are still fine, and they document the host-toast pattern needed for `notify.show` runtime actions.
+
+### Prompt Context
+
+**User prompt (verbatim):** "do 4. 
+5. silence 404"
+
+**Assistant interpretation:** Complete the suggested README pass for VM packages, publish the resulting public npm package pages, and separately silence the demo favicon 404.
+
+**Inferred user intent:** Polish the public consumer experience now that the package behavior is fixed, and remove the last distracting browser-console noise.
+
+**Commit (code):** `aabda33` — "Document VM package bundler behavior"
+
+### What I did
+
+- Updated README guidance for:
+  - `packages/os-scripting/README.md`
+  - `packages/os-ui-cards/README.md`
+  - `packages/os-kanban/README.md`
+- Added bundler notes explaining that `0.1.1+` package internals use generated JavaScript string modules and do not require Vite dependency-optimization workarounds.
+- Corrected the `@go-go-golems/os-ui-cards` notification example from the older `{ scope, command }` shape to the current runtime action contract:
+
+```js
+ctx.dispatch({
+  type: 'notify.show',
+  payload: { message: 'Hello from the VM' },
+});
+```
+
+- Added `notify.show` host-chrome guidance to `@go-go-golems/os-scripting` and `@go-go-golems/os-ui-cards` docs.
+- Bumped and published README/doc patch releases:
+
+```text
+@go-go-golems/os-scripting@0.1.2
+@go-go-golems/os-ui-cards@0.1.2
+@go-go-golems/os-kanban@0.1.2
+```
+
+- Validated generated source modules and dist README copying:
+
+```bash
+npm run check:vm-sources
+npm run build:dist -w packages/os-scripting
+npm run build:dist -w packages/os-ui-cards
+npm run build:dist -w packages/os-kanban
+```
+
+- Dry-ran and published all three packages with the temporary npmjs userconfig/token workflow.
+- Verified npmjs versions and dist-tags after propagation:
+
+```text
+@go-go-golems/os-scripting latest 0.1.2
+@go-go-golems/os-ui-cards latest 0.1.2
+@go-go-golems/os-kanban latest 0.1.2
+```
+
+### Why
+
+- The previous patch fixed the actual package behavior, but public npm pages needed to explain the new behavior so consumers do not copy the temporary workaround into new apps.
+- The notification example needed to teach the current action schema and the host presenter requirement discovered while fixing stage 08.
+
+### What worked
+
+- `build-dist.mjs` copied the updated READMEs into each package's `dist/` folder.
+- Dry-run tarballs showed the updated README sizes and `0.1.2` package versions.
+- Publishing succeeded non-interactively via `NPM_TOKEN` and a temporary npm userconfig.
+- Npmjs verification showed `latest: 0.1.2` for all three packages after a short propagation delay.
+
+### What didn't work
+
+- The immediate publish command's trailing `npm view` check showed stale `latest` values for `os-scripting` and `os-ui-cards`:
+
+```text
+@go-go-golems/os-scripting 0.1.1
+@go-go-golems/os-ui-cards 0.1.1
+@go-go-golems/os-kanban 0.1.2
+```
+
+- Waiting briefly and rechecking with a clean temporary npm userconfig showed the expected `0.1.2` dist-tags for all three packages.
+
+### What I learned
+
+- Npm package-page/documentation releases can still have propagation lag even when publish succeeds.
+- README examples need to be kept in sync with runtime action schema evolution; stale docs can make a working runtime look broken to consumers.
+
+### What was tricky to build
+
+- The package behavior had already changed in `0.1.1`, but the docs release itself needed a new patch version so npm package pages update. That means this was a docs-only code commit plus a real npm release.
+- The README had to distinguish app-authored `?raw` imports from package-internal `?raw` imports. The former remains a normal Vite pattern; the latter was the thing removed from published runtime code.
+
+### What warrants a second pair of eyes
+
+- Review the `RuntimeToastHost` README snippet in `@go-go-golems/os-scripting`; it intentionally uses `state as any` to keep the public example compact.
+- Review whether `@go-go-golems/os-chat` and `@go-go-golems/os-confirm` need similar README polish in a later docs-only release.
+
+### What should be done in the future
+
+- Add a package documentation checklist before future npm releases: bundler notes, action schema examples, host chrome requirements, and minimal install snippets.
+
+### Code review instructions
+
+- Review the three README files first.
+- Confirm the corrected `notify.show` runtime action shape in `packages/os-ui-cards/README.md`.
+- Validate package docs release with:
+
+```bash
+npm run check:vm-sources
+npm run build:dist -w packages/os-scripting
+npm run build:dist -w packages/os-ui-cards
+npm run build:dist -w packages/os-kanban
+npm view @go-go-golems/os-scripting dist-tags --registry https://registry.npmjs.org/
+npm view @go-go-golems/os-ui-cards dist-tags --registry https://registry.npmjs.org/
+npm view @go-go-golems/os-kanban dist-tags --registry https://registry.npmjs.org/
+```
+
+### Technical details
+
+Published versions:
+
+```text
+@go-go-golems/os-scripting@0.1.2
+@go-go-golems/os-ui-cards@0.1.2
+@go-go-golems/os-kanban@0.1.2
+```
+
+The generated-source-module contract is unchanged from `0.1.1`; this step only updates public package documentation and version metadata.

@@ -39,3 +39,14 @@ Published VM raw-source patch packages, removed the standalone demo Vite workaro
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-scripting/package.json — published os-scripting@0.1.1
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-ui-cards/package.json — published os-ui-cards@0.1.1
 
+
+## 2026-05-11
+
+Published README/documentation patch releases for VM packages with no-workaround bundler guidance and notify.show host chrome notes (commit aabda33).
+
+### Related Files
+
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-kanban/README.md — public npm README now documents no Vite optimizeDeps workaround
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-scripting/README.md — public npm README now documents generated source modules and toast host pattern
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-ui-cards/README.md — public npm README now uses current notify.show action shape
+
