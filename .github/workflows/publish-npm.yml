@@ -64,6 +64,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+          cache: pnpm
           registry-url: 'https://registry.npmjs.org'
 
       - name: Show tool versions
@@ -86,7 +87,7 @@ jobs:
           fi
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Check generated VM source modules
         run: pnpm run check:vm-sources

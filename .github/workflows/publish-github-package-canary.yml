@@ -52,11 +52,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: pnpm
           registry-url: 'https://npm.pkg.github.com'
           scope: '@go-go-golems'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Resolve package set
         id: package_set
