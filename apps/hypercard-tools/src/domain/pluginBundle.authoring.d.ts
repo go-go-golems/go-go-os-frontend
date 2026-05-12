@@ -54,6 +54,7 @@ interface PluginHandlerContext extends PluginRenderContext {
 }
 
 interface PluginCardDef {
+  packId: string;
   render(context: PluginRenderContext): PluginUiNode;
   handlers?: Record<string, (context: PluginHandlerContext, args?: unknown) => void>;
 }

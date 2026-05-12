@@ -719,6 +719,18 @@ Important methods:
 - `eventRuntimeSurface(sessionId, surfaceId, handlerName, args, state)`
 - `disposeRuntimeSession(sessionId)`
 
+Critical authoring rule:
+
+- `packageIds` installs VM-side package APIs;
+- `packId` selects the runtime surface type for one surface;
+- one does not imply the other.
+
+This is the mistake to avoid:
+
+- `packageIds: ['ui']` does not mean a `home` surface is automatically typed as `ui.card.v1`.
+
+Every bundle-owned surface must carry an explicit `packId` that matches a registered surface type. If it does not, `loadRuntimeBundle(...)` fails during bundle initialization rather than later during render.
+
 Useful options:
 
 ```ts
@@ -786,6 +798,39 @@ Key detail:
 - bundle factories receive the merged package APIs when they run.
 
 That means a VM bundle does not import `ui` or `kanban` with JavaScript module syntax. Instead, those APIs are injected into the VM before the bundle is evaluated.
+
+Bundle authoring example:
+
+```js
+defineRuntimeBundle(({ ui }) => ({
+  id: 'demo',
+  title: 'Demo Bundle',
+  packageIds: ['ui'],
+  surfaces: {
+    home: {
+      packId: 'ui.card.v1',
+      render({ state }) {
+        return ui.panel([]);
+      },
+    },
+  },
+}));
+```
+
+Failure mode to remember:
+
+```text
+packageIds: ['ui']           // installs VM helpers
+surfaces.home.packId missing // runtime surface type is still unknown
+=> loadRuntimeBundle(...) throws
+```
+
+Minimal review checklist for new bundles:
+
+- Does every surface object declare `packId`?
+- Does that `packId` correspond to a registered runtime surface type?
+- Does the bundle also list the VM package needed by its render code in `packageIds`?
+- Is there a test that loads the bundle and renders at least one surface through `QuickJSRuntimeService`?
 
 ### 7.4 Runtime Host Components
 
