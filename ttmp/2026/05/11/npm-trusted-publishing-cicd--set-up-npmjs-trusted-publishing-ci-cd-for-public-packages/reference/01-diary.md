@@ -9,13 +9,20 @@ Topics:
 DocType: reference
 Intent: long-term
 Owners: []
-RelatedFiles: []
+RelatedFiles:
+    - Path: .github/workflows/publish-npm.yml
+      Note: Trusted Publishing workflow implementation diary target (commit e5e5fa2)
+    - Path: scripts/packages/package-sets.mjs
+      Note: Package-set diary target (commit e5e5fa2)
+    - Path: scripts/packages/publish-npm-package-set.mjs
+      Note: Publish helper diary target (commit e5e5fa2)
 ExternalSources: []
-Summary: "Chronological diary for npmjs Trusted Publishing CI/CD setup."
+Summary: Chronological diary for npmjs Trusted Publishing CI/CD setup.
 LastUpdated: 2026-05-11T20:08:19-04:00
-WhatFor: "Track setup of npmjs Trusted Publishing and GitHub Actions release workflows."
-WhenToUse: "Use when implementing or reviewing npm package CI/CD publishing."
+WhatFor: Track setup of npmjs Trusted Publishing and GitHub Actions release workflows.
+WhenToUse: Use when implementing or reviewing npm package CI/CD publishing.
 ---
+
 
 # Diary
 
@@ -199,3 +206,105 @@ go-go-golems/go-go-os-frontend
 publish-npm.yml
 npm-production
 ```
+
+## Step 3: Added the GitHub Actions Trusted Publishing workflow
+
+I implemented the repository-side Trusted Publishing pipeline. The new workflow is named exactly `publish-npm.yml`, matching the npmjs Trusted Publisher configuration that was applied to every package. It runs through `workflow_dispatch`, uses the protected `npm-production` environment, requests GitHub OIDC with `id-token: write`, validates selected packages, builds dist artifacts, runs pack smoke checks, and then publishes through a dedicated npmjs helper.
+
+This step turns the package-side npmjs trust configuration into an executable release path. The workflow defaults to dry-run mode and has an additional confirmation guard for real `latest` publishes.
+
+### Prompt Context
+
+**User prompt (verbatim):** "then work on the next task"
+
+**Assistant interpretation:** Continue from the new `npm-trusted-publishing-cicd` ticket task list and implement the next unchecked items: the Trusted Publishing workflow and package-set publish helper.
+
+**Inferred user intent:** Move from npmjs package-side setup to repository-side CI/CD implementation.
+
+**Commit (code):** e5e5fa2 — "Add npm trusted publishing workflow"
+
+### What I did
+- Added `.github/workflows/publish-npm.yml`.
+- Added `scripts/packages/publish-npm-package-set.mjs`.
+- Extended `scripts/packages/package-sets.mjs` with release-oriented package-set names:
+  - `first-wave`
+  - `shell-stack`
+  - `vm-stack`
+  - `all`
+- Kept existing package-set names for compatibility:
+  - `os-core`
+  - `os-shell-stack`
+  - `os-inventory-stack`
+- Marked the workflow/helper tasks complete in `tasks.md`.
+
+### Why
+- npmjs now trusts the exact workflow identity, but no matching workflow existed yet.
+- Publishing logic should live in a script rather than being entirely embedded in GitHub Actions shell steps.
+- The workflow needs to be safe by default because npm versions are immutable.
+
+### What worked
+- `node --check scripts/packages/publish-npm-package-set.mjs` passed.
+- Built a publish artifact for `@go-go-golems/os-core` with:
+
+```bash
+pnpm --filter @go-go-golems/os-core run build:dist
+```
+
+- Tested the helper in skip-existing dry-run mode:
+
+```bash
+node scripts/packages/publish-npm-package-set.mjs --package packages/os-core --tag latest --dry-run --skip-existing
+```
+
+- The helper detected that `@go-go-golems/os-core@0.1.1` already exists on npmjs and skipped it.
+
+### What didn't work
+- N/A for this implementation step.
+
+### What I learned
+- The existing `build-dist.mjs` already rewrites `workspace:` dependencies to each dependency package's actual version, so the npmjs helper should publish the dist manifest as built rather than rewriting internal dependency versions to the current package's version.
+- The existing GitHub Packages publishing helper has canary-specific version rewriting behavior and should not be reused directly for npmjs stable releases.
+
+### What was tricky to build
+- `workflow_dispatch` needs a safe single-package path because the first trusted-publishing test should not publish an entire package set.
+- A real `latest` publish now requires both `dry_run=false` and `confirm_latest_publish=CONFIRM_LATEST`, plus the GitHub environment approval.
+- The helper includes a second guard: real `latest` publishing requires `CONFIRM_LATEST_PUBLISH=true` in the environment.
+
+### What warrants a second pair of eyes
+- Review the GitHub Actions expression used to set `CONFIRM_LATEST_PUBLISH` in the publish step.
+- Confirm whether `vm-stack` should include `os-widgets` when publishing a new `os-kanban` version that depends on a newer `os-widgets` version.
+- Confirm GitHub Environment `npm-production` exists with required reviewers before the first real run.
+
+### What should be done in the future
+- Run the workflow in dry-run mode for a single low-risk package.
+- Bump a package version and perform the first real Trusted Publishing release.
+- Add a release runbook after the first successful publish.
+
+### Code review instructions
+- Start with `.github/workflows/publish-npm.yml` and verify:
+  - workflow filename matches npmjs settings;
+  - `environment: npm-production` is present;
+  - `permissions.id-token: write` is present;
+  - dry-run defaults to true;
+  - real `latest` publishes require confirmation.
+- Review `scripts/packages/publish-npm-package-set.mjs` for version-exists checks and publish flags.
+- Validate locally with:
+
+```bash
+node --check scripts/packages/publish-npm-package-set.mjs
+pnpm --filter @go-go-golems/os-core run build:dist
+node scripts/packages/publish-npm-package-set.mjs --package packages/os-core --tag latest --dry-run --skip-existing
+```
+
+### Technical details
+- Real publishes use npmjs registry and provenance:
+
+```bash
+npm publish packages/<pkg>/dist \
+  --access public \
+  --tag <tag> \
+  --registry=https://registry.npmjs.org/ \
+  --provenance
+```
+
+- Dry runs intentionally do not add `--provenance`; the real OIDC path is exercised by an actual publish after package version bump and environment approval.

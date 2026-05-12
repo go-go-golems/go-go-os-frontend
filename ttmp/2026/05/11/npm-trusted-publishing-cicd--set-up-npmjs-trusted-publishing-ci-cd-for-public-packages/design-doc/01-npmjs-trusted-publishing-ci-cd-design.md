@@ -11,18 +11,25 @@ RelatedFiles:
       Note: Existing CI workflow to align with npm publish validation
     - Path: .github/workflows/publish-github-package-canary.yml
       Note: Existing package publishing workflow pattern to adapt for npmjs Trusted Publishing
+    - Path: .github/workflows/publish-npm.yml
+      Note: Trusted Publishing workflow implementation (commit e5e5fa2)
     - Path: package.json
       Note: Root scripts for build:publish-v1 and check:vm-sources
     - Path: scripts/packages/generate-vm-source-modules.mjs
       Note: Generated VM source freshness check required before publication
     - Path: scripts/packages/pack-smoke.mjs
       Note: Package artifact smoke-check script that should run before npm publish
+    - Path: scripts/packages/package-sets.mjs
+      Note: Shared package-set definitions used by CI/CD (commit e5e5fa2)
+    - Path: scripts/packages/publish-npm-package-set.mjs
+      Note: npmjs package-set publish helper (commit e5e5fa2)
 ExternalSources: []
 Summary: ""
 LastUpdated: 0001-01-01T00:00:00Z
 WhatFor: ""
 WhenToUse: ""
 ---
+
 
 
 # npmjs Trusted Publishing CI/CD Design
