@@ -1,6 +1,6 @@
 {
   "name": "@go-go-golems/os-core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Reusable React desktop primitives, shell components, Redux helpers, and HyperCard-inspired theme CSS.",
   "private": false,
   "type": "module",

@@ -13,7 +13,13 @@ const allPublicPackages = [
 export const packageSets = {
   'os-core': ['packages/os-core'],
   'first-wave': ['packages/os-core', 'packages/os-repl', 'packages/os-widgets'],
-  'vm-stack': ['packages/os-core', 'packages/os-scripting', 'packages/os-ui-cards', 'packages/os-kanban'],
+  'vm-stack': [
+    'packages/os-core',
+    'packages/os-scripting',
+    'packages/os-ui-cards',
+    'packages/os-widgets',
+    'packages/os-kanban',
+  ],
   'all': allPublicPackages,
   'os-shell-stack': [
     'packages/os-core',
