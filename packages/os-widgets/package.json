@@ -1,6 +1,6 @@
 {
   "name": "@go-go-golems/os-widgets",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Reusable rich React widgets, widget primitives, Redux state helpers, and theme CSS from go-go-os.",
   "private": false,
   "type": "module",

@@ -1,6 +1,6 @@
 {
   "name": "@go-go-golems/os-scripting",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "QuickJS runtime, plugin, and REPL-session support for go-go-os.",
   "private": false,
   "type": "module",
