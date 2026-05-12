@@ -12,16 +12,23 @@ Owners: []
 RelatedFiles:
     - Path: .github/workflows/publish-npm.yml
       Note: Trusted Publishing workflow implementation diary target (commit e5e5fa2)
+    - Path: packages/os-core/package.json
+      Note: os-core 0.1.2 trusted publish version bump (commit 8d47026)
     - Path: scripts/packages/package-sets.mjs
-      Note: Package-set diary target (commit e5e5fa2)
+      Note: |-
+        Package-set diary target (commit e5e5fa2)
+        vm-stack includes os-widgets before os-kanban (commit 8d47026)
     - Path: scripts/packages/publish-npm-package-set.mjs
       Note: Publish helper diary target (commit e5e5fa2)
+    - Path: ttmp/2026/05/11/npm-trusted-publishing-cicd--set-up-npmjs-trusted-publishing-ci-cd-for-public-packages/playbooks/01-npm-trusted-publishing-release-runbook.md
+      Note: Release runbook written after first trusted publishes
 ExternalSources: []
 Summary: Chronological diary for npmjs Trusted Publishing CI/CD setup.
 LastUpdated: 2026-05-11T20:08:19-04:00
 WhatFor: Track setup of npmjs Trusted Publishing and GitHub Actions release workflows.
 WhenToUse: Use when implementing or reviewing npm package CI/CD publishing.
 ---
+
 
 
 # Diary
@@ -599,4 +606,134 @@ https://registry.npmjs.org/@go-go-golems/os-chat/-/os-chat-0.1.1.tgz
 
 ```text
 https://search.sigstore.dev/?logIndex=1513355990
+```
+
+## Step 6: Cleaned npm registry config, published os-core, and wrote the release runbook
+
+I applied the follow-up decisions from the remaining-fixes review. I cleaned the local npm scope registry so `@go-go-golems` resolves to npmjs instead of GitHub Packages, fixed the `vm-stack` package set to include `os-widgets`, published the pending `os-core@0.1.2` metadata patch through Trusted Publishing, confirmed normal CI is passing on `main`, and wrote the release runbook.
+
+This leaves the npmjs Trusted Publishing path in a usable operator state: package-side trust is configured, the workflow is on `main`, lockfile-backed installs are enabled, two real trusted publishes have succeeded, and the repeatable release process is documented.
+
+### Prompt Context
+
+**User prompt (verbatim):** "1. cleanup \n2. no need to do anything\n3. ok \n4. ok\n5. ok\n6. i don't know what you mean\n7. yes\n8. ok\n9. I don't understand\n10. push to main for now"
+
+**Assistant interpretation:** Apply the concrete follow-ups: clean local npm config, write the runbook, review/fix package sets, publish the remaining low-risk metadata patch, monitor CI, and continue pushing directly to main. Clarify confusing items in the response rather than treating them as blockers.
+
+**Inferred user intent:** Finish turning the Trusted Publishing setup into a clean, documented, working release system with the immediate package fixes published.
+
+**Commit (code):** 8d47026 — "Bump os-core and include widgets in VM stack"
+
+### What I did
+- Changed user npm config for the `@go-go-golems` scope to npmjs:
+
+```bash
+npm config set @go-go-golems:registry https://registry.npmjs.org/ --location=user
+```
+
+- Verified local npm lookup now works:
+
+```bash
+npm view @go-go-golems/os-chat@0.1.1 version --registry=https://registry.npmjs.org/
+# 0.1.1
+```
+
+- Fixed `vm-stack` in `scripts/packages/package-sets.mjs` to include `packages/os-widgets` before `packages/os-kanban`.
+- Bumped `@go-go-golems/os-core` from `0.1.1` to `0.1.2` for the theme side-effect metadata patch.
+- Locally validated `os-core`:
+
+```bash
+pnpm install --lockfile-only
+pnpm --filter @go-go-golems/os-core run typecheck
+pnpm --filter @go-go-golems/os-core run test
+pnpm --filter @go-go-golems/os-core run build:dist
+node scripts/packages/pack-smoke.mjs packages/os-core
+node scripts/packages/publish-npm-package-set.mjs --package packages/os-core --tag latest --dry-run
+```
+
+- Ran a workflow dry-run for `os-core@0.1.2`: run `25705488855`.
+- Ran the real Trusted Publishing workflow for `os-core@0.1.2`: run `25705516239`.
+- Verified registry metadata for `os-core@0.1.2` and `os-chat@0.1.1` through the npm registry API.
+- Confirmed normal `go-go-os-platform-ci` runs on `main` are passing after the lockfile commit.
+- Added `playbooks/01-npm-trusted-publishing-release-runbook.md`.
+- Marked the release runbook task complete.
+
+### Why
+- Local npm verification was confusing because user-level config pointed the scope at GitHub Packages.
+- `vm-stack` should include `os-widgets` because `os-kanban` depends on it.
+- `os-core@0.1.2` publishes the remaining theme-side-effect metadata fix.
+- A release runbook is needed now that the pipeline has been proven with real publishes.
+
+### What worked
+- Local npm config now reports:
+
+```text
+@go-go-golems:registry=https://registry.npmjs.org/
+```
+
+- `os-core` local validation passed:
+  - Storybook taxonomy check passed for 72 story files;
+  - 20 test files passed;
+  - 193 tests passed;
+  - pack smoke produced `go-go-golems-os-core-0.1.2.tgz`.
+- `os-core@0.1.2` was published through GitHub Actions Trusted Publishing.
+- Registry metadata confirms:
+
+```text
+@go-go-golems/os-core 0.1.2 GitHub Actions github
+@go-go-golems/os-chat 0.1.1 GitHub Actions github
+```
+
+- The `os-core` workflow log confirms provenance:
+
+```text
+npm notice publish Signed provenance statement with source and build information from GitHub Actions
+npm notice publish Provenance statement published to transparency log: https://search.sigstore.dev/?logIndex=1513414083
++ @go-go-golems/os-core@0.1.2
+```
+
+- Normal main CI is passing after the lockfile commit.
+
+### What didn't work
+- N/A in this step. The remaining GitHub Node 20 action warning is known and non-blocking per the user decision.
+
+### What I learned
+- After changing the user-level scope registry, normal `npm view ... --registry=https://registry.npmjs.org/` works again locally.
+- The package-set correction was important before any future `vm-stack` publish because `os-kanban` depends on `os-widgets`.
+
+### What was tricky to build
+- `os-core` is a large package, so the local dry-run output is long. The key review signals are the package name/version, tarball file count, and final dry-run/publish line.
+- The release workflow has both dry-run and real-publish guards; real latest publishes require `confirm_latest_publish=CONFIRM_LATEST`.
+
+### What warrants a second pair of eyes
+- Review `vm-stack` ordering and confirm it should publish `os-widgets` before `os-kanban` for all coordinated VM/Kanban releases.
+- Review the release runbook for operator clarity before relying on it for the next multi-package release.
+
+### What should be done in the future
+- If the public examples app should consume `os-core@0.1.2`, update its dependency and redeploy.
+- Consider whether to add a tiny script for registry API provenance verification.
+
+### Code review instructions
+- Review `scripts/packages/package-sets.mjs` for the `vm-stack` change.
+- Review `packages/os-core/package.json` for the `0.1.2` bump.
+- Review `playbooks/01-npm-trusted-publishing-release-runbook.md` as the operator entrypoint.
+- Validate published packages with:
+
+```bash
+npm view @go-go-golems/os-core@0.1.2 version --registry=https://registry.npmjs.org/
+npm view @go-go-golems/os-chat@0.1.1 version --registry=https://registry.npmjs.org/
+```
+
+### Technical details
+- Published packages with trusted provenance:
+
+```text
+@go-go-golems/os-chat@0.1.1
+@go-go-golems/os-core@0.1.2
+```
+
+- `os-core@0.1.2` provenance transparency log:
+
+```text
+https://search.sigstore.dev/?logIndex=1513414083
 ```

@@ -58,3 +58,14 @@ Committed pnpm-lock.yaml, restored frozen/cached CI installs, and published @go-
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/pnpm-lock.yaml — Tracked lockfile for deterministic pnpm CI installs
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/ttmp/2026/05/11/npm-trusted-publishing-cicd--set-up-npmjs-trusted-publishing-ci-cd-for-public-packages/reference/01-diary.md — Step 5 release diary
 
+
+## 2026-05-11
+
+Cleaned local npm scope config, fixed vm-stack package set, published @go-go-golems/os-core@0.1.2 with provenance, monitored main CI, and added the release runbook.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-core/package.json — os-core 0.1.2 version bump
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/scripts/packages/package-sets.mjs — vm-stack package-set fix
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/ttmp/2026/05/11/npm-trusted-publishing-cicd--set-up-npmjs-trusted-publishing-ci-cd-for-public-packages/playbooks/01-npm-trusted-publishing-release-runbook.md — Release runbook
+
