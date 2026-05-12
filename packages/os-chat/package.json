@@ -1,6 +1,6 @@
 {
   "name": "@go-go-golems/os-chat",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shared chat UI and state primitives for the go-go-os desktop runtime.",
   "private": false,
   "type": "module",
