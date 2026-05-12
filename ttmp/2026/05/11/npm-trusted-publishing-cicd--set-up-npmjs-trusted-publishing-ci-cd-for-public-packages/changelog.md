@@ -83,3 +83,13 @@ Published coordinated package stack for os-core@0.1.2 dependency alignment via f
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-ui-cards/package.json — Version 0.1.3 published with aligned dependencies
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-widgets/package.json — Version 0.1.3 published with aligned peers
 
+
+## 2026-05-11
+
+Published @go-go-golems/os-repl@0.1.6 through npm Trusted Publishing for provenance completeness.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-repl/package.json — Version bump to 0.1.6
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/ttmp/2026/05/11/npm-trusted-publishing-cicd--set-up-npmjs-trusted-publishing-ci-cd-for-public-packages/reference/01-diary.md — os-repl trusted publish diary entry
+

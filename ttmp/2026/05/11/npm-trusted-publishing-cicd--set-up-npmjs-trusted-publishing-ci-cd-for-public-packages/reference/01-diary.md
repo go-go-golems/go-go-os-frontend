@@ -855,3 +855,117 @@ npm view @go-go-golems/os-kanban@0.1.4 version --registry=https://registry.npmjs
   - `os-shell@0.1.1`: `1513571277`
   - `os-widgets@0.1.3`: `1513571856`
   - `os-kanban@0.1.4`: `1513572491`
+
+## Step 8: Published os-repl through Trusted Publishing for provenance completeness
+
+I published `@go-go-golems/os-repl@0.1.6` through the npm Trusted Publishing workflow. This was a provenance-completeness release: `os-repl@0.1.5` was already the current functional package and was consumed successfully, but it had been published manually before Trusted Publishing existed. Publishing `0.1.6` proves the final remaining package's current latest version can also be released through GitHub Actions OIDC with npm provenance.
+
+### Prompt Context
+
+**User prompt (verbatim):** "publish and set trusted publishing for os-repl"
+
+**Assistant interpretation:** The package-side Trusted Publisher was already configured for `os-repl`; publish a new patch version through the trusted workflow so the latest package version has trusted provenance.
+
+**Inferred user intent:** Make every public package's current latest version show GitHub Actions Trusted Publisher/provenance metadata.
+
+**Commit (code):** 9618139 — "Bump os-repl for trusted publish"
+
+### What I did
+- Bumped `packages/os-repl/package.json` from `0.1.5` to `0.1.6`.
+- Ran local validation:
+
+```bash
+pnpm install --lockfile-only
+pnpm --filter @go-go-golems/os-repl run typecheck
+pnpm --filter @go-go-golems/os-repl run test
+pnpm --filter @go-go-golems/os-repl run build:dist
+node scripts/packages/pack-smoke.mjs packages/os-repl
+node scripts/packages/publish-npm-package-set.mjs --package packages/os-repl --tag latest --dry-run
+```
+
+- Committed and pushed the version bump to `main` and `task/npm-packages-go-go-os`.
+- Ran workflow dry-run `25707491751`.
+- Ran real Trusted Publishing workflow `25707511065`.
+- Verified registry metadata from npmjs.
+
+### Why
+- `os-repl@0.1.5` was skipped in the full package-set publish because the version already existed.
+- A new patch release was needed for npmjs to record GitHub Actions as publisher and attach provenance to the latest `os-repl` package version.
+
+### What worked
+- Local `os-repl` tests passed:
+
+```text
+4 test files passed
+11 tests passed
+```
+
+- Pack smoke passed:
+
+```text
+packages/os-repl: packed go-go-golems-os-repl-0.1.6.tgz (23 entries, 10439 bytes)
+```
+
+- Real workflow publish succeeded:
+
+```text
++ @go-go-golems/os-repl@0.1.6
+```
+
+- Registry metadata now shows:
+
+```json
+{
+  "name": "GitHub Actions",
+  "email": "npm-oidc-no-reply@github.com",
+  "trustedPublisher": {
+    "id": "github"
+  }
+}
+```
+
+### What didn't work
+- N/A
+
+### What I learned
+- The package-side Trusted Publisher setup for `os-repl` was already correct; only a new package version was needed to prove the trusted path.
+
+### What was tricky to build
+- This release is intentionally a provenance-completeness release. It does not introduce a new source behavior beyond republishing the current `os-repl` package state as `0.1.6`.
+
+### What warrants a second pair of eyes
+- Decide whether downstream packages that depend on exact `os-repl@0.1.5` should be bumped later to depend on `0.1.6`. This is not urgent because `0.1.5` remains valid and the examples app directly allows `^0.1.5`.
+
+### What should be done in the future
+- If strict dependency alignment is desired, publish future `os-widgets`, `os-scripting`, and dependent package patches that reference `os-repl@0.1.6`.
+- Otherwise, leave the stack as-is; consumers can install `os-repl@0.1.6` directly.
+
+### Code review instructions
+- Review `packages/os-repl/package.json` for the version bump.
+- Review workflow runs:
+  - `25707491751` — dry-run;
+  - `25707511065` — real trusted publish.
+- Verify with:
+
+```bash
+npm view @go-go-golems/os-repl@0.1.6 version --registry=https://registry.npmjs.org/
+```
+
+### Technical details
+- Published package:
+
+```text
+@go-go-golems/os-repl@0.1.6
+```
+
+- Tarball:
+
+```text
+https://registry.npmjs.org/@go-go-golems/os-repl/-/os-repl-0.1.6.tgz
+```
+
+- Provenance transparency log:
+
+```text
+https://search.sigstore.dev/?logIndex=1513956205
+```
