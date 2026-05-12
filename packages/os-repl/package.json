@@ -1,6 +1,6 @@
 {
   "name": "@go-go-golems/os-repl",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Reusable React terminal and REPL UI components with theme CSS.",
   "private": false,
   "type": "module",
