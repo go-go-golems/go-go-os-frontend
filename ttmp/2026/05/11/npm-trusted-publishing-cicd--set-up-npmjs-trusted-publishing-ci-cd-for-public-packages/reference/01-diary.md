@@ -308,3 +308,141 @@ npm publish packages/<pkg>/dist \
 ```
 
 - Dry runs intentionally do not add `--provenance`; the real OIDC path is exercised by an actual publish after package version bump and environment approval.
+
+## Step 4: Ran the first single-package dry-run workflow
+
+I moved the new Trusted Publishing workflow onto `main` so GitHub Actions would expose it through `workflow_dispatch`, then ran the first single-package dry-run for `@go-go-golems/os-core`. The first two attempts found workflow environment/setup issues; after fixing those, the third run completed successfully and exercised the validation path through package build, pack smoke, and npmjs existing-version detection.
+
+This proves the manual workflow can be dispatched and can validate a package without publishing. It does not yet prove the final OIDC `npm publish --provenance` path because this run skipped an already-published version in dry-run mode.
+
+### Prompt Context
+
+**User prompt (verbatim):** "do it"
+
+**Assistant interpretation:** Make the workflow available on the default branch and run the next ticket task: a single-package dry-run workflow dispatch.
+
+**Inferred user intent:** Validate the new Trusted Publishing CI/CD pipeline from GitHub Actions rather than only local scripts.
+
+**Commit (code):** c07df2b — "Fix npm publish workflow install setup"
+
+**Commit (code):** 738c4c3 — "Use Node 24 for npm trusted publishing"
+
+### What I did
+- Tried to dispatch `publish-npm.yml` from the task branch; GitHub returned 404 because the workflow was not on the default branch yet.
+- Merged `origin/main` into `task/npm-packages-go-go-os`.
+- Pushed the branch HEAD to `main`, making `publish-npm.yml` visible to GitHub Actions.
+- Dispatched a single-package dry-run:
+
+```bash
+gh workflow run publish-npm.yml \
+  --repo go-go-golems/go-go-os-frontend \
+  --ref main \
+  -f package_set=single \
+  -f package_name=@go-go-golems/os-core \
+  -f npm_tag=latest \
+  -f dry_run=true \
+  -f skip_existing=true \
+  -f confirm_latest_publish=''
+```
+
+- Fixed two workflow setup failures and reran until the workflow passed.
+- Marked the single-package dry-run task complete.
+
+### Why
+- GitHub only listed the new manual workflow after the workflow file existed on `main`.
+- Running the workflow in GitHub Actions is necessary to validate environment setup, tool versions, package resolution, and CI shell behavior.
+
+### What worked
+- After the fixes, run `25705092100` passed.
+- The successful run used:
+
+```text
+node v24.14.1
+npm 11.11.0
+pnpm 10.33.4
+```
+
+- `check:vm-sources` passed:
+
+```text
+VM source modules are up to date.
+```
+
+- Pack smoke passed:
+
+```text
+packages/os-core: packed go-go-golems-os-core-0.1.1.tgz (190 entries, 80010 bytes)
+```
+
+- The publish helper correctly skipped the existing version:
+
+```text
+==> @go-go-golems/os-core@0.1.1 (packages/os-core/dist)
+@go-go-golems/os-core@0.1.1 already exists on npmjs; skipping.
+
+Publish summary:
+- @go-go-golems/os-core@0.1.1: skipped-existing
+```
+
+### What didn't work
+- Dispatch from the task branch failed because the workflow was not known to GitHub Actions yet:
+
+```text
+HTTP 404: Not Found (https://api.github.com/repos/go-go-golems/go-go-os-frontend/actions/workflows/publish-npm.yml)
+```
+
+- First run on `main` failed in `Setup Node` because `actions/setup-node` cache mode expected a committed `pnpm-lock.yaml`:
+
+```text
+Dependencies lock file is not found in /home/runner/work/go-go-os-frontend/go-go-os-frontend. Supported file patterns: pnpm-lock.yaml
+```
+
+- I removed `cache: pnpm` and changed install from `pnpm install --frozen-lockfile` to `pnpm install`, matching the existing repository CI style.
+
+- Second run failed while trying to upgrade npm under Node 22.22.2:
+
+```text
+npm error code MODULE_NOT_FOUND
+npm error Cannot find module 'promise-retry'
+```
+
+- I switched the publish workflow to Node 24 and removed the npm self-upgrade step. Node 24 provided npm 11.11.0, which is suitable for trusted publishing.
+
+### What I learned
+- This repository currently tracks `package-lock.json` but not `pnpm-lock.yaml`; workflows using pnpm should not enable setup-node's pnpm cache or frozen-lockfile mode until the pnpm lockfile is intentionally committed.
+- Node 24 is a better default for this publish workflow because it provides a recent npm without mutating npm during the run.
+- The Node 20 actions deprecation warning still appears for current GitHub actions, but it is non-failing and unrelated to the Node runtime selected for project commands.
+
+### What was tricky to build
+- There are two different Node versions in play: the JavaScript runtime used internally by GitHub Actions, and the Node runtime installed for repository commands. Setting `node-version: '24'` fixes the latter but does not remove the former deprecation warning from action implementations.
+- A dry-run against an already-published version validates setup and skip behavior, but it intentionally does not exercise npm's final OIDC publish acceptance path.
+
+### What warrants a second pair of eyes
+- Confirm whether the repository should start committing `pnpm-lock.yaml`. If yes, restore `cache: pnpm` and `pnpm install --frozen-lockfile`.
+- Confirm whether Node 24 is acceptable for all package build scripts before the first real publish.
+
+### What should be done in the future
+- Bump a low-risk package version and perform the first real trusted publish.
+- After the first real publish, document the exact release runbook and verification commands.
+
+### Code review instructions
+- Review commits `c07df2b` and `738c4c3` for the CI setup fixes.
+- Review GitHub Actions run `25705092100` for the successful dry-run.
+- Validate locally with:
+
+```bash
+node --check scripts/packages/publish-npm-package-set.mjs
+pnpm --filter @go-go-golems/os-core run build:dist
+node scripts/packages/publish-npm-package-set.mjs --package packages/os-core --tag latest --dry-run --skip-existing
+```
+
+### Technical details
+- Successful workflow run:
+
+```text
+https://github.com/go-go-golems/go-go-os-frontend/actions/runs/25705092100
+```
+
+- Failed setup runs retained for evidence:
+  - `25705047151` — setup-node pnpm cache failed due to missing tracked pnpm lockfile.
+  - `25705070699` — npm self-upgrade failed under Node 22.22.2.

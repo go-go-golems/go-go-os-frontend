@@ -35,3 +35,14 @@ Added publish-npm.yml and npmjs package-set publish helper for Trusted Publishin
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/scripts/packages/package-sets.mjs — Package-set definitions
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/scripts/packages/publish-npm-package-set.mjs — Publish helper
 
+
+## 2026-05-11
+
+Ran the first single-package publish-npm dry-run; fixed setup-node/pnpm cache and Node/npm setup issues; successful run 25705092100.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/.github/workflows/publish-npm.yml — Workflow fixes for successful dry-run
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/ttmp/2026/05/11/npm-trusted-publishing-cicd--set-up-npmjs-trusted-publishing-ci-cd-for-public-packages/reference/01-diary.md — Backfilled dry-run results and failures
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/ttmp/2026/05/11/npm-trusted-publishing-cicd--set-up-npmjs-trusted-publishing-ci-cd-for-public-packages/tasks.md — Marked single-package dry-run task complete
+
