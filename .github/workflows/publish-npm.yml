@@ -64,7 +64,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: pnpm
           registry-url: 'https://registry.npmjs.org'
 
       - name: Upgrade npm for trusted publishing
@@ -90,7 +89,7 @@ jobs:
           fi
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Check generated VM source modules
         run: pnpm run check:vm-sources
