@@ -737,3 +737,121 @@ npm view @go-go-golems/os-chat@0.1.1 version --registry=https://registry.npmjs.o
 ```text
 https://search.sigstore.dev/?logIndex=1513414083
 ```
+
+## Step 7: Published the full package stack with aligned os-core dependencies
+
+I continued from the examples-app dependency conflict and published coordinated patch versions for the packages that still depended on `@go-go-golems/os-core@0.1.1`. Updating only the root examples app to `os-core@0.1.2` failed because published dependent packages still pinned or peered against `0.1.1`. The correct fix was to publish a consistent package stack that depends on the newly published `os-core@0.1.2` and `os-chat@0.1.1`.
+
+The full package-set workflow completed successfully. Existing versions were skipped, and the new coordinated package versions were published with GitHub Actions Trusted Publishing and provenance.
+
+### Prompt Context
+
+**User prompt (verbatim):** "continue"
+
+**Assistant interpretation:** Continue the next practical release hardening step: make the newly published `os-core@0.1.2` usable by consumers without peer/dependency conflicts by publishing dependent packages with aligned dependency metadata.
+
+**Inferred user intent:** Finish the public package update chain rather than leaving the examples app unable to install the newer `os-core` cleanly.
+
+**Commit (code):** b61b634 — "Bump package stack for os-core patch"
+
+### What I did
+- Attempted to update the examples app to `@go-go-golems/os-core@^0.1.2`.
+- npm failed because `@go-go-golems/os-widgets@0.1.2` peers `@go-go-golems/os-core@0.1.1` and several VM packages depended on `os-core@0.1.1`.
+- Bumped coordinated package versions:
+  - `@go-go-golems/os-confirm@0.1.1`
+  - `@go-go-golems/os-shell@0.1.1`
+  - `@go-go-golems/os-scripting@0.1.3`
+  - `@go-go-golems/os-ui-cards@0.1.3`
+  - `@go-go-golems/os-widgets@0.1.3`
+  - `@go-go-golems/os-kanban@0.1.4`
+- Verified local dist manifests rewrite workspace dependencies to the aligned public versions:
+  - `os-confirm` and `os-shell` depend on `os-core@0.1.2`;
+  - `os-scripting` depends on `os-core@0.1.2`, `os-chat@0.1.1`, `os-repl@0.1.5`;
+  - `os-ui-cards` depends on `os-core@0.1.2` and `os-scripting@0.1.3`;
+  - `os-widgets` peers `os-core@0.1.2` and `os-shell@0.1.1`;
+  - `os-kanban` depends on `os-core@0.1.2`, `os-scripting@0.1.3`, `os-widgets@0.1.3`, and `os-ui-cards@0.1.3`.
+- Ran local validation:
+
+```bash
+pnpm install --lockfile-only
+pnpm run check:vm-sources
+pnpm run build:publish-v1
+node scripts/packages/pack-smoke.mjs packages/os-confirm packages/os-shell packages/os-scripting packages/os-ui-cards packages/os-widgets packages/os-kanban
+```
+
+- Committed and pushed the stack bump to `main`.
+- Ran full package-set dry-run workflow `25705955562`.
+- Ran real full package-set publish workflow `25706017029` with `skip_existing=true` and `confirm_latest_publish=CONFIRM_LATEST`.
+- Verified registry metadata for all target versions.
+
+### Why
+- Consumer apps should not need `--legacy-peer-deps` to install the newest `os-core` with the rest of the package family.
+- npm package versions are immutable, so downstream packages needed new patch versions with updated dependency metadata.
+- Running the full package-set workflow proved package-set release behavior, not just single-package release behavior.
+
+### What worked
+- Full package-set dry-run `25705955562` succeeded.
+- Full package-set real publish `25706017029` succeeded.
+- The workflow skipped already-published versions:
+  - `@go-go-golems/os-core@0.1.2`
+  - `@go-go-golems/os-repl@0.1.5`
+  - `@go-go-golems/os-chat@0.1.1`
+- The workflow published:
+  - `@go-go-golems/os-scripting@0.1.3`
+  - `@go-go-golems/os-ui-cards@0.1.3`
+  - `@go-go-golems/os-confirm@0.1.1`
+  - `@go-go-golems/os-shell@0.1.1`
+  - `@go-go-golems/os-widgets@0.1.3`
+  - `@go-go-golems/os-kanban@0.1.4`
+- Registry verification showed trusted publisher metadata for all new package versions.
+
+### What didn't work
+- Updating the examples app directly to `@go-go-golems/os-core@^0.1.2` failed before the dependent package stack was published:
+
+```text
+npm error ERESOLVE unable to resolve dependency tree
+npm error Found: @go-go-golems/os-core@0.1.2
+npm error Could not resolve dependency:
+npm error peer @go-go-golems/os-core@"0.1.1" from @go-go-golems/os-widgets@0.1.2
+```
+
+### What I learned
+- Patch releases for foundational packages such as `os-core` often require coordinated downstream package patch releases, even when the source change is metadata-only.
+- The full package-set workflow is useful because it can skip existing versions and publish only the missing coordinated patch versions.
+
+### What was tricky to build
+- `os-repl@0.1.5` remains an existing package originally published by `wesen3000`, not GitHub Actions, because it was skipped as already existing. That is expected; a future `os-repl@0.1.6` would prove trusted publishing for `os-repl` itself.
+- The package stack had to preserve dependency order so packages that depend on newly bumped packages are built and published against the correct versions.
+
+### What warrants a second pair of eyes
+- Confirm whether exact internal dependency versions are desired long-term, or whether some internal dependencies should use caret ranges in published dist manifests.
+- Confirm whether `os-repl` should receive a no-op or docs patch release later to prove Trusted Publishing for that package as well.
+
+### What should be done in the future
+- Update the public examples app dependencies to the newly aligned package stack and rerun its build/e2e validation.
+- Consider a small install-smoke workflow that creates a clean consumer project and installs the full current package stack.
+
+### Code review instructions
+- Review `packages/*/package.json` version bumps in commit `b61b634`.
+- Review workflow runs:
+  - `25705955562` — full package-set dry-run;
+  - `25706017029` — full package-set real publish.
+- Verify registry versions with:
+
+```bash
+npm view @go-go-golems/os-scripting@0.1.3 version --registry=https://registry.npmjs.org/
+npm view @go-go-golems/os-ui-cards@0.1.3 version --registry=https://registry.npmjs.org/
+npm view @go-go-golems/os-confirm@0.1.1 version --registry=https://registry.npmjs.org/
+npm view @go-go-golems/os-shell@0.1.1 version --registry=https://registry.npmjs.org/
+npm view @go-go-golems/os-widgets@0.1.3 version --registry=https://registry.npmjs.org/
+npm view @go-go-golems/os-kanban@0.1.4 version --registry=https://registry.npmjs.org/
+```
+
+### Technical details
+- Provenance transparency log indexes from the full publish run:
+  - `os-scripting@0.1.3`: `1513569688`
+  - `os-ui-cards@0.1.3`: `1513570254`
+  - `os-confirm@0.1.1`: `1513570738`
+  - `os-shell@0.1.1`: `1513571277`
+  - `os-widgets@0.1.3`: `1513571856`
+  - `os-kanban@0.1.4`: `1513572491`

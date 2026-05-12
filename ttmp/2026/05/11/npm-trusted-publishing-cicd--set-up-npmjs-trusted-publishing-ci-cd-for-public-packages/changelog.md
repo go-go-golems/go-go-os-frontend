@@ -69,3 +69,17 @@ Cleaned local npm scope config, fixed vm-stack package set, published @go-go-gol
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/scripts/packages/package-sets.mjs — vm-stack package-set fix
 - /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/ttmp/2026/05/11/npm-trusted-publishing-cicd--set-up-npmjs-trusted-publishing-ci-cd-for-public-packages/playbooks/01-npm-trusted-publishing-release-runbook.md — Release runbook
 
+
+## 2026-05-11
+
+Published coordinated package stack for os-core@0.1.2 dependency alignment via full package-set workflow run 25706017029.
+
+### Related Files
+
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-confirm/package.json — Version 0.1.1 published with os-core 0.1.2 dependency
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-kanban/package.json — Version 0.1.4 published with aligned dependencies
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-scripting/package.json — Version 0.1.3 published with aligned dependencies
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-shell/package.json — Version 0.1.1 published with os-core 0.1.2 dependency
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-ui-cards/package.json — Version 0.1.3 published with aligned dependencies
+- /home/manuel/workspaces/2026-05-11/npm-packages-go-go-os/go-go-os-frontend/packages/os-widgets/package.json — Version 0.1.3 published with aligned peers
+
