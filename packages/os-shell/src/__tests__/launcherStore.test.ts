@@ -36,9 +36,9 @@ describe('createLauncherStore', () => {
     expect(state).toHaveProperty('windowing');
     expect(state).toHaveProperty('notifications');
     expect(state).toHaveProperty('debug');
+    expect(state).toHaveProperty('runtimeSessions');
+    expect(state).toHaveProperty('hypercardArtifacts');
     expect(state).toHaveProperty('app_inventory');
-    expect(state).not.toHaveProperty('runtimeSessions');
-    expect(state).not.toHaveProperty('hypercardArtifacts');
 
     expect(selectModuleState<{ count: number }>(state, 'app_inventory')).toEqual({ count: 1 });
   });

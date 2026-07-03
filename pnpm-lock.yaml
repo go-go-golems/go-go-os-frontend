@@ -511,6 +511,9 @@ importers:
       '@go-go-golems/os-core':
         specifier: workspace:*
         version: link:../os-core
+      '@go-go-golems/os-scripting':
+        specifier: workspace:*
+        version: link:../os-scripting
       '@reduxjs/toolkit':
         specifier: ^2.0.0
         version: 2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.6)(redux@5.0.1))(react@19.2.6)
