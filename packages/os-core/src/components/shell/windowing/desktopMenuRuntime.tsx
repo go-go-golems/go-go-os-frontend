@@ -1,4 +1,9 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo } from 'react';
+import {
+  DesktopWindowScopeProvider,
+  useDesktopWindowId,
+  type DesktopWindowScopeProviderProps,
+} from '@go-go-golems/macos1-react/shell';
 import { normalizeContextTargetRef } from './contextActionRegistry';
 import type { DesktopActionEntry, DesktopActionSection } from './types';
 import type { DesktopContextMenuOpenRequest, DesktopContextTargetRef } from './types';
@@ -19,7 +24,6 @@ const DesktopWindowMenuRegistrationRuntimeContext =
   createContext<DesktopWindowMenuRegistrationRuntime | null>(null);
 const DesktopWindowContextMenuRuntimeContext =
   createContext<DesktopWindowMenuRuntime['openContextMenu'] | null>(null);
-const DesktopWindowScopeContext = createContext<string | null>(null);
 
 export interface DesktopWindowMenuRuntimeProviderProps extends DesktopWindowMenuRuntime {
   children: ReactNode;
@@ -63,18 +67,8 @@ export function DesktopWindowMenuRuntimeProvider({
   );
 }
 
-export interface DesktopWindowScopeProviderProps {
-  windowId: string;
-  children: ReactNode;
-}
-
-export function DesktopWindowScopeProvider({ windowId, children }: DesktopWindowScopeProviderProps) {
-  return <DesktopWindowScopeContext.Provider value={windowId}>{children}</DesktopWindowScopeContext.Provider>;
-}
-
-export function useDesktopWindowId(): string | null {
-  return useContext(DesktopWindowScopeContext);
-}
+export { DesktopWindowScopeProvider, type DesktopWindowScopeProviderProps };
+export { useDesktopWindowId };
 
 export function useOpenDesktopContextMenu():
   | ((request: DesktopContextMenuOpenRequest) => void)

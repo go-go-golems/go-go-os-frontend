@@ -197,7 +197,7 @@ function SelectionPatternsInner() {
           columns={ITEM_COLUMNS}
           rowKey="id"
           mode="multiple"
-          selectedIds={tableSel}
+          selectedRowKeys={tableSel}
           onSelectionChange={setTableSel}
         />
       </div>

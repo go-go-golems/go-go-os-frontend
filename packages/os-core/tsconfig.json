@@ -4,6 +4,15 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@go-go-golems/macos1-react": ["../macos1-react/dist/index.d.ts"],
+      "@go-go-golems/macos1-react/theme": ["../macos1-react/dist/theme/index.d.ts"],
+      "@go-go-golems/macos1-react/primitives": ["../macos1-react/dist/primitives/index.d.ts"],
+      "@go-go-golems/macos1-react/rich": ["../macos1-react/dist/rich/index.d.ts"],
+      "@go-go-golems/macos1-react/shell": ["../macos1-react/dist/shell/index.d.ts"],
+      "@go-go-golems/macos1-react/parts": ["../macos1-react/dist/parts/index.d.ts"]
+    },
     "strict": true,
     "jsx": "react-jsx",
     "declaration": true,

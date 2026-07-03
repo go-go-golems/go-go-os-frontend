@@ -45,6 +45,7 @@ export function createHypercardViteConfig(options: HypercardViteConfigOptions = 
     resolve: {
       alias: {
         '@go-go-golems/os-core': path.resolve(__dirname, '../../packages/os-core/src'),
+        '@go-go-golems/macos1-react': path.resolve(__dirname, '../../packages/macos1-react/src'),
         '@go-go-golems/os-shell': path.resolve(__dirname, '../../packages/os-shell/src'),
         '@go-go-golems/os-confirm': path.resolve(__dirname, '../../packages/os-confirm/src'),
       },

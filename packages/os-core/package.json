@@ -45,6 +45,7 @@
     "test:watch": "node ../../scripts/storybook/check-taxonomy.mjs && vitest"
   },
   "dependencies": {
+    "@go-go-golems/macos1-react": "workspace:*",
     "debug": "^4.4.3"
   },
   "peerDependencies": {

@@ -27,12 +27,30 @@
     "registry": "https://npm.pkg.github.com"
   },
   "exports": {
-    ".": "./dist/index.js",
-    "./theme": "./dist/theme/index.js",
-    "./primitives": "./dist/primitives/index.js",
-    "./rich": "./dist/rich/index.js",
-    "./shell": "./dist/shell/index.js",
-    "./parts": "./dist/parts/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./theme": {
+      "types": "./dist/theme/index.d.ts",
+      "default": "./dist/theme/index.js"
+    },
+    "./primitives": {
+      "types": "./dist/primitives/index.d.ts",
+      "default": "./dist/primitives/index.js"
+    },
+    "./rich": {
+      "types": "./dist/rich/index.d.ts",
+      "default": "./dist/rich/index.js"
+    },
+    "./shell": {
+      "types": "./dist/shell/index.d.ts",
+      "default": "./dist/shell/index.js"
+    },
+    "./parts": {
+      "types": "./dist/parts/index.d.ts",
+      "default": "./dist/parts/index.js"
+    }
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

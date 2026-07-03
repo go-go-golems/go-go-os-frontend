@@ -114,7 +114,9 @@ function WindowManagerPatternsInner() {
   const focusWindow = useCallback((windowId: string) => {
     setWindows((prev) => {
       const maxZ = Math.max(...prev.map((w) => w.zIndex));
-      return prev.map((w) => (w.id === windowId ? { ...w, zIndex: maxZ + 1, focused: true } : { ...w, focused: false })););
+      return prev.map((w) =>
+        w.id === windowId ? { ...w, zIndex: maxZ + 1, focused: true } : { ...w, focused: false },
+      );
     });
   }, []);
 
@@ -129,7 +131,7 @@ function WindowManagerPatternsInner() {
       const win = windows.find((w) => w.id === windowId);
       if (!win) return;
       dragState.current = { windowId, startX: event.clientX, startY: event.clientY, origX: win.x, origY: win.y };
-      (event.target as HTMLElement).setPointerCapture(event.pointerId);
+      event.currentTarget.setPointerCapture(event.pointerId);
       log(`Drag start: ${windowId}`);
     },
     [focusWindow, windows],
@@ -156,7 +158,7 @@ function WindowManagerPatternsInner() {
       const win = windows.find((w) => w.id === windowId);
       if (!win) return;
       resizeState.current = { windowId, startX: event.clientX, startY: event.clientY, origW: win.width, origH: win.height };
-      event.target.setPointerCapture(event.pointerId);
+      event.currentTarget.setPointerCapture(event.pointerId);
       log(`Resize start: ${windowId}`);
     },
     [focusWindow, windows],
@@ -213,7 +215,26 @@ function WindowManagerPatternsInner() {
               border: '2px solid #7f8899',
               overflow: 'hidden',
             }}
-            onPointerMove={(e) => { handleDragMove(e); handleResizeMove(e as unknown as React.PointerEvent<HTMLButtonElement>); }}
+            onPointerMove={(e) => {
+              handleDragMove(e);
+              handleResizeMove(e as unknown as React.PointerEvent<HTMLButtonElement>);
+            }}
+            onPointerUp={() => {
+              if (dragState.current) {
+                handleDragEnd(dragState.current.windowId);
+              }
+              if (resizeState.current) {
+                handleResizeEnd(resizeState.current.windowId);
+              }
+            }}
+            onPointerCancel={() => {
+              if (dragState.current) {
+                handleDragEnd(dragState.current.windowId);
+              }
+              if (resizeState.current) {
+                handleResizeEnd(resizeState.current.windowId);
+              }
+            }}
           >
             <WindowLayer
               windows={windows}

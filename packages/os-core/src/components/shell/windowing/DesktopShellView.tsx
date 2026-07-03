@@ -1,11 +1,8 @@
-import { PARTS } from '../../../parts';
-import { HyperCardTheme } from '../../../theme/HyperCardTheme';
-import { ContextMenu } from '../../widgets/ContextMenu';
-import { Toast } from '../../widgets/Toast';
+import { Macos1Theme } from '@go-go-golems/macos1-react';
+import { PARTS } from '@go-go-golems/macos1-react/parts';
+import { ContextMenu, Toast } from '@go-go-golems/macos1-react/primitives';
+import { DesktopIconLayer, DesktopMenuBar, WindowLayer } from '@go-go-golems/macos1-react/shell';
 import { DesktopWindowMenuRuntimeProvider } from './desktopMenuRuntime';
-import { DesktopIconLayer } from './DesktopIconLayer';
-import { DesktopMenuBar } from './DesktopMenuBar';
-import { WindowLayer } from './WindowLayer';
 import type { DesktopShellControllerResult } from './useDesktopShellController';
 
 export interface DesktopShellViewProps extends DesktopShellControllerResult {}
@@ -45,7 +42,7 @@ export function DesktopShellView({
   onToastDone,
 }: DesktopShellViewProps) {
   return (
-    <HyperCardTheme theme={themeClass}>
+    <Macos1Theme theme={themeClass}>
       <div data-part={PARTS.windowingDesktopShell} onClick={onDesktopBackgroundClick}>
         <DesktopMenuBar
           sections={menus}
@@ -92,6 +89,6 @@ export function DesktopShellView({
         ) : null}
         {toast && <Toast message={toast} onDone={onToastDone} />}
       </div>
-    </HyperCardTheme>
+    </Macos1Theme>
   );
 }

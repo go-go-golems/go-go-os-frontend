@@ -1,9 +1,7 @@
-// Import this module once in app entry to load default HyperCard desktop + widget CSS packs.
-// Optional theme layers can be added on top (classic / modern / desktop theme-macos1).
-import './desktop/tokens.css';
-import './desktop/shell.css';
-import './desktop/primitives.css';
-import './desktop/syntax.css';
-import './desktop/animations.css';
+// Compatibility facade: load extracted macos1-react theme pack through os-core/theme.
+import '@go-go-golems/macos1-react/theme';
 
-export { HyperCardTheme, type HyperCardThemeProps } from './HyperCardTheme';
+export { Macos1Theme } from '@go-go-golems/macos1-react';
+export type { Macos1ThemeProps } from '@go-go-golems/macos1-react';
+export { Macos1Theme as HyperCardTheme } from '@go-go-golems/macos1-react';
+export type { Macos1ThemeProps as HyperCardThemeProps } from '@go-go-golems/macos1-react';

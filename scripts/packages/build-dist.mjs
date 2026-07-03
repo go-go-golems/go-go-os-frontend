@@ -138,6 +138,27 @@ async function readWorkspacePackages() {
   return packages;
 }
 
+function resolveExportTarget(value) {
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    if (typeof value.types === 'string') {
+      return value.types;
+    }
+    if (typeof value.default === 'string') {
+      return value.default;
+    }
+    if (typeof value.import === 'string') {
+      return value.import;
+    }
+    if (typeof value.require === 'string') {
+      return value.require;
+    }
+  }
+  return null;
+}
+
 function collectExportTargets(packageName, packageDirname, packageJson) {
   const targets = new Map();
   const exportsField = packageJson.exports;
@@ -149,17 +170,18 @@ function collectExportTargets(packageName, packageDirname, packageJson) {
 
   if (exportsField && typeof exportsField === 'object' && !Array.isArray(exportsField)) {
     for (const [key, value] of Object.entries(exportsField)) {
-      if (typeof value !== 'string') {
+      const target = resolveExportTarget(value);
+      if (!target) {
         continue;
       }
       if (key === '.') {
-        targets.set(packageName, value);
+        targets.set(packageName, target);
         continue;
       }
       if (!key.startsWith('./')) {
         continue;
       }
-      targets.set(`${packageName}/${key.slice(2)}`, value);
+      targets.set(`${packageName}/${key.slice(2)}`, target);
     }
   }
 

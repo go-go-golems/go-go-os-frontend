@@ -13,7 +13,7 @@ export * from './app';
 // ── Card DSL ──
 export * from './cards';
 // ── Widgets ──
-export * from './components/widgets';
+export * from '@go-go-golems/macos1-react/primitives';
 // ── Debug utilities ──
 export * from './debug';
 // ── Diagnostics (Redux perf / FPS) ──
@@ -25,8 +25,9 @@ export {
   showToast,
 } from './features/notifications/notificationsSlice';
 export * from './features/notifications/selectors';
-export * from './parts';
 // ── Theme ──
+export { Macos1Theme } from '@go-go-golems/macos1-react';
+export type { Macos1ThemeProps } from '@go-go-golems/macos1-react';
 export { HyperCardTheme, type HyperCardThemeProps } from './theme/HyperCardTheme';
 // ── Types ──
 export * from './types';

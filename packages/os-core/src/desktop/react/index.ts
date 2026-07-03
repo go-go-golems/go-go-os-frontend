@@ -2,11 +2,11 @@ export { RuntimeDebugPane, type RuntimeDebugPaneProps } from '../../components/s
 export {
   DesktopIconLayer,
   type DesktopIconLayerProps,
-} from '../../components/shell/windowing/DesktopIconLayer';
+} from '@go-go-golems/macos1-react/shell';
 export {
   DesktopMenuBar,
   type DesktopMenuBarProps,
-} from '../../components/shell/windowing/DesktopMenuBar';
+} from '@go-go-golems/macos1-react/shell';
 export { DesktopShell, type DesktopShellProps } from '../../components/shell/windowing/DesktopShell';
 export {
   DesktopShellView,
@@ -95,10 +95,10 @@ export {
 export {
   WindowLayer,
   type WindowLayerProps,
-} from '../../components/shell/windowing/WindowLayer';
+} from '@go-go-golems/macos1-react/shell';
 export {
   WindowResizeHandle,
   type WindowResizeHandleProps,
-} from '../../components/shell/windowing/WindowResizeHandle';
-export { WindowSurface, type WindowSurfaceProps } from '../../components/shell/windowing/WindowSurface';
-export { WindowTitleBar, type WindowTitleBarProps } from '../../components/shell/windowing/WindowTitleBar';
+} from '@go-go-golems/macos1-react/shell';
+export { WindowSurface, type WindowSurfaceProps } from '@go-go-golems/macos1-react/shell';
+export { WindowTitleBar, type WindowTitleBarProps } from '@go-go-golems/macos1-react/shell';
