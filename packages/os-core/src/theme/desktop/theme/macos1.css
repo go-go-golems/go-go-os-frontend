@@ -1,6 +1,6 @@
 /* macOS-1 desktop skin variables for HyperCard desktop shell */
 [data-widget="hypercard"].theme-macos1 {
-  --hc-font-family: "Geneva", "Chicago", "Monaco", monospace;
+  --hc-font-family: "Geneva", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --hc-font-size: 11px;
   --hc-border-radius: 0px;
   --hc-color-bg: #fff;

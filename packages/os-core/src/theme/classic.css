@@ -1,7 +1,7 @@
 /* ─── Classic Mac HyperCard Theme ─ Layer on top of theme/index packs ─── */
 
 [data-widget="hypercard"].theme-classic {
-  --hc-font-family: 'Chicago', 'Geneva', 'Helvetica', monospace;
+  --hc-font-family: "Geneva", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --hc-border-radius: 0;
   --hc-color-bg: #fff;
   --hc-color-fg: #000;
