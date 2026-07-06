@@ -12,7 +12,6 @@
     "paths": {
       "@go-go-golems/os-shell": ["../../packages/os-shell/src"],
       "@go-go-golems/os-core": ["../../packages/os-core/src"],
-      "@go-go-golems/os-chat": ["../../packages/os-chat/src"],
       "@go-go-golems/os-scripting": ["../../packages/os-scripting/src"]
     }
   },
@@ -20,7 +19,6 @@
   "references": [
     { "path": "../../packages/os-shell" },
     { "path": "../../packages/os-core" },
-    { "path": "../../packages/os-chat" },
     { "path": "../../packages/os-scripting" }
   ]
 }

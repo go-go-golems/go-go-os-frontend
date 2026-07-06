@@ -8,7 +8,7 @@ import {
   onRegistryChange,
   type RuntimeSurfaceDefinition,
 } from '../../plugin-runtime';
-import { SyntaxHighlight } from '@go-go-golems/os-chat';
+import { SyntaxHighlight } from '../../devtools/SyntaxHighlight';
 import type { ArtifactRecord } from '../artifacts/artifactsSlice';
 import { openCodeEditor } from '../editor/editorLaunch';
 import { useRegisteredRuntimeDebugStacks } from './runtimeDebugRegistry';

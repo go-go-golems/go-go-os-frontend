@@ -16,7 +16,7 @@ on:
           - vm-stack
           - all
       package_name:
-        description: Package name or dir when package_set=single, e.g. @go-go-golems/os-chat or packages/os-chat
+        description: Package name or dir when package_set=single, e.g. @go-go-golems/os-core or packages/os-core
         required: false
         default: ''
         type: string
@@ -78,13 +78,19 @@ jobs:
 
       - name: Validate workflow inputs
         shell: bash
+        env:
+          PACKAGE_SET: ${{ inputs.package_set }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          NPM_TAG: ${{ inputs.npm_tag }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          CONFIRM_LATEST_INPUT: ${{ inputs.confirm_latest_publish }}
         run: |
           set -euo pipefail
-          if [ "${{ inputs.package_set }}" = "single" ] && [ -z "${{ inputs.package_name }}" ]; then
+          if [ "$PACKAGE_SET" = "single" ] && [ -z "$PACKAGE_NAME" ]; then
             echo "package_name is required when package_set=single" >&2
             exit 1
           fi
-          if [ "${{ inputs.dry_run }}" = "false" ] && [ "${{ inputs.npm_tag }}" = "latest" ] && [ "${{ inputs.confirm_latest_publish }}" != "CONFIRM_LATEST" ]; then
+          if [ "$DRY_RUN" = "false" ] && [ "$NPM_TAG" = "latest" ] && [ "$CONFIRM_LATEST_INPUT" != "CONFIRM_LATEST" ]; then
             echo "Real latest publishes require confirm_latest_publish=CONFIRM_LATEST" >&2
             exit 1
           fi
@@ -100,7 +106,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${{ inputs.package_set }}" = "single" ]; then
+          if [ "$PACKAGE_SET" = "single" ]; then
             node - <<'NODE' >> "$GITHUB_OUTPUT"
           import { readFileSync, readdirSync } from 'node:fs';
           import path from 'node:path';
@@ -174,18 +180,23 @@ jobs:
       - name: Publish selected packages to npmjs
         shell: bash
         env:
+          PACKAGE_SET: ${{ inputs.package_set }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          NPM_TAG: ${{ inputs.npm_tag }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          SKIP_EXISTING: ${{ inputs.skip_existing }}
           CONFIRM_LATEST_PUBLISH: ${{ inputs.confirm_latest_publish == 'CONFIRM_LATEST' && 'true' || 'false' }}
         run: |
           set -euo pipefail
-          PUBLISH_ARGS=(--tag "${{ inputs.npm_tag }}")
-          if [ "${{ inputs.skip_existing }}" = "true" ]; then
+          PUBLISH_ARGS=(--tag "$NPM_TAG")
+          if [ "$SKIP_EXISTING" = "true" ]; then
             PUBLISH_ARGS+=(--skip-existing)
           fi
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             PUBLISH_ARGS+=(--dry-run)
           fi
-          if [ "${{ inputs.package_set }}" = "single" ]; then
-            node scripts/packages/publish-npm-package-set.mjs --package "${{ inputs.package_name }}" "${PUBLISH_ARGS[@]}"
+          if [ "$PACKAGE_SET" = "single" ]; then
+            node scripts/packages/publish-npm-package-set.mjs --package "$PACKAGE_NAME" "${PUBLISH_ARGS[@]}"
           else
-            node scripts/packages/publish-npm-package-set.mjs "${{ inputs.package_set }}" "${PUBLISH_ARGS[@]}"
+            node scripts/packages/publish-npm-package-set.mjs "$PACKAGE_SET" "${PUBLISH_ARGS[@]}"
           fi

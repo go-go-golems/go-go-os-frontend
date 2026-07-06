@@ -16,3 +16,5 @@ export * from './runtime-packs';
 export * from './runtime-packages';
 export { RuntimeSurfaceSessionHost, type RuntimeSurfaceSessionHostProps } from './runtime-host/RuntimeSurfaceSessionHost';
 export { dispatchRuntimeAction } from './runtime-host/pluginIntentRouting';
+export { SyntaxHighlight, type SyntaxHighlightProps } from './devtools/SyntaxHighlight';
+export { toYaml } from './utils/yamlFormat';

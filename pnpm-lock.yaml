@@ -50,9 +50,6 @@ importers:
 
   apps/apps-browser:
     dependencies:
-      '@go-go-golems/os-chat':
-        specifier: workspace:*
-        version: link:../../packages/os-chat
       '@go-go-golems/os-core':
         specifier: workspace:*
         version: link:../../packages/os-core
@@ -145,9 +142,6 @@ importers:
 
   apps/crm:
     dependencies:
-      '@go-go-golems/os-chat':
-        specifier: workspace:*
-        version: link:../../packages/os-chat
       '@go-go-golems/os-core':
         specifier: workspace:*
         version: link:../../packages/os-core
@@ -453,9 +447,6 @@ importers:
       '@codemirror/view':
         specifier: ^6.39.15
         version: 6.42.1
-      '@go-go-golems/os-chat':
-        specifier: workspace:*
-        version: link:../os-chat
       '@go-go-golems/os-core':
         specifier: workspace:*
         version: link:../os-core

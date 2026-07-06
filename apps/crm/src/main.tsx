@@ -5,7 +5,6 @@ import { App } from './App';
 import { store } from './app/store';
 
 import '@go-go-golems/os-core/theme';
-import '@go-go-golems/os-chat/theme';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -16,7 +16,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@go-go-golems/os-chat": "workspace:*",
     "@go-go-golems/os-shell": "workspace:*",
     "@go-go-golems/os-core": "workspace:*",
     "@go-go-golems/os-scripting": "workspace:*",

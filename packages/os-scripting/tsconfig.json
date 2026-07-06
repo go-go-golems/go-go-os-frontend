@@ -17,13 +17,11 @@
     "paths": {
       "@go-go-golems/os-core": ["../os-core/src"],
       "@go-go-golems/os-core/*": ["../os-core/src/*"],
-      "@go-go-golems/os-chat": ["../os-chat/src"],
-      "@go-go-golems/os-chat/*": ["../os-chat/src/*"],
       "@go-go-golems/os-repl": ["../os-repl/src"],
       "@go-go-golems/os-repl/*": ["../os-repl/src/*"]
     }
   },
   "include": ["src"],
   "exclude": ["src/**/*.test.ts", "src/**/*.stories.tsx", "src/__tests__"],
-  "references": [{ "path": "../os-core" }, { "path": "../os-chat" }, { "path": "../os-repl" }]
+  "references": [{ "path": "../os-core" }, { "path": "../os-repl" }]
 }

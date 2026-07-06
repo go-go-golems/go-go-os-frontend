@@ -1,14 +1,19 @@
-import { createListenerMiddleware, type PayloadAction } from '@reduxjs/toolkit';
-import { timelineSlice, type TimelineEntity } from '@go-go-golems/os-chat';
+import { createListenerMiddleware, type PayloadAction, type UnknownAction } from '@reduxjs/toolkit';
 import { registerRuntimeSurface } from '../../plugin-runtime';
 import { extractArtifactUpsertFromTimelineEntity } from './artifactRuntime';
 import { upsertArtifact } from './artifactsSlice';
 
-function runtimeSurfaceEntityIsFinal(entity: TimelineEntity): boolean {
-  const rawStatus =
-    entity.props && typeof entity.props === 'object'
-      ? (entity.props as Record<string, unknown>).status
-      : undefined;
+export interface TimelineEntityLike {
+  id: string;
+  kind: string;
+  createdAt?: number;
+  updatedAt?: number;
+  version?: number;
+  props: Record<string, unknown>;
+}
+
+function runtimeSurfaceEntityIsFinal(entity: TimelineEntityLike): boolean {
+  const rawStatus = entity.props.status;
   if (typeof rawStatus !== 'string') {
     return true;
   }
@@ -16,7 +21,7 @@ function runtimeSurfaceEntityIsFinal(entity: TimelineEntity): boolean {
   return status !== 'streaming' && status !== 'pending';
 }
 
-function projectArtifactFromEntity(dispatch: (action: unknown) => unknown, entity: TimelineEntity | undefined) {
+function projectArtifactFromEntity(dispatch: (action: unknown) => unknown, entity: TimelineEntityLike | undefined) {
   if (!entity) {
     return;
   }
@@ -43,38 +48,40 @@ function projectArtifactFromEntity(dispatch: (action: unknown) => unknown, entit
   }
 }
 
-type ConversationEntityPayload = PayloadAction<{ convId: string; entity: TimelineEntity }>;
-type SnapshotPayload = PayloadAction<{ convId: string; entities: TimelineEntity[] }>;
+type ConversationEntityPayload = { convId: string; entity: TimelineEntityLike };
+type SnapshotPayload = { convId: string; entities: TimelineEntityLike[] };
+
+type ConversationEntityAction = PayloadAction<ConversationEntityPayload>;
+type SnapshotAction = PayloadAction<SnapshotPayload>;
+
+const ENTITY_ACTION_TYPES = new Set(['timeline/addEntity', 'timeline/upsertEntity']);
+const SNAPSHOT_ACTION_TYPES = new Set(['timeline/applySnapshot', 'timeline/mergeSnapshot']);
+
+function hasRecordPayload(action: UnknownAction): action is UnknownAction & { payload: Record<string, unknown> } {
+  return Boolean(action.payload && typeof action.payload === 'object' && !Array.isArray(action.payload));
+}
+
+function isTimelineEntityAction(action: UnknownAction): action is ConversationEntityAction {
+  return ENTITY_ACTION_TYPES.has(action.type) && hasRecordPayload(action) && 'entity' in action.payload;
+}
+
+function isTimelineSnapshotAction(action: UnknownAction): action is SnapshotAction {
+  return SNAPSHOT_ACTION_TYPES.has(action.type) && hasRecordPayload(action) && Array.isArray(action.payload.entities);
+}
 
 export function createArtifactProjectionMiddleware() {
   const listener = createListenerMiddleware();
 
   listener.startListening({
-    actionCreator: timelineSlice.actions.addEntity,
-    effect: (action: ConversationEntityPayload, api) => {
+    predicate: isTimelineEntityAction,
+    effect: (action, api) => {
       projectArtifactFromEntity(api.dispatch, action.payload.entity);
     },
   });
 
   listener.startListening({
-    actionCreator: timelineSlice.actions.upsertEntity,
-    effect: (action: ConversationEntityPayload, api) => {
-      projectArtifactFromEntity(api.dispatch, action.payload.entity);
-    },
-  });
-
-  listener.startListening({
-    actionCreator: timelineSlice.actions.applySnapshot,
-    effect: (action: SnapshotPayload, api) => {
-      for (const entity of action.payload.entities) {
-        projectArtifactFromEntity(api.dispatch, entity);
-      }
-    },
-  });
-
-  listener.startListening({
-    actionCreator: timelineSlice.actions.mergeSnapshot,
-    effect: (action: SnapshotPayload, api) => {
+    predicate: isTimelineSnapshotAction,
+    effect: (action, api) => {
       for (const entity of action.payload.entities) {
         projectArtifactFromEntity(api.dispatch, entity);
       }
