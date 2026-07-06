@@ -1,6 +1,6 @@
 {
   "name": "@go-go-golems/os-shell",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Public desktop shell, launcher, app-registry, and window-manager APIs for go-go-os React apps.",
   "private": false,
   "type": "module",

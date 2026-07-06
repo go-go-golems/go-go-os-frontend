@@ -1,6 +1,6 @@
 {
   "name": "@go-go-golems/os-confirm",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "plz-confirm integration components for go-go-os hosts and apps.",
   "private": false,
   "type": "module",

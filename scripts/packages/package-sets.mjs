@@ -1,7 +1,6 @@
-const allPublicPackages = [
+const activePublicPackages = [
   'packages/os-core',
   'packages/os-repl',
-  'packages/os-chat',
   'packages/os-scripting',
   'packages/os-ui-cards',
   'packages/os-confirm',
@@ -20,22 +19,20 @@ export const packageSets = {
     'packages/os-widgets',
     'packages/os-kanban',
   ],
-  'all': allPublicPackages,
+  'all': activePublicPackages,
   'os-shell-stack': [
     'packages/os-core',
-    'packages/os-chat',
     'packages/os-repl',
     'packages/os-scripting',
     'packages/os-shell',
   ],
   'shell-stack': [
     'packages/os-core',
-    'packages/os-chat',
     'packages/os-repl',
     'packages/os-scripting',
     'packages/os-shell',
   ],
-  'os-inventory-stack': allPublicPackages,
+  'os-inventory-stack': activePublicPackages,
 };
 
 export function listPackageSetNames() {

@@ -1,6 +1,6 @@
 import type { OpenWindowPayload } from '@go-go-golems/os-core/desktop-core';
 import type { ArtifactSource } from './artifactsSlice';
-import { recordField, stringField, structuredRecordFromUnknown } from '@go-go-golems/os-chat';
+import { recordField, stringField, structuredRecordFromUnknown } from '../../utils/structured';
 
 export interface ArtifactUpsert {
   id: string;

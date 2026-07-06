@@ -1,15 +1,17 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { timelineSlice, type TimelineEntity } from '@go-go-golems/os-chat';
 import { clearRuntimeSurfaceRegistry, hasRuntimeSurface } from '../../plugin-runtime';
-import { createArtifactProjectionMiddleware } from './artifactProjectionMiddleware';
+import { createArtifactProjectionMiddleware, type TimelineEntityLike } from './artifactProjectionMiddleware';
 import { hypercardArtifactsReducer } from './artifactsSlice';
+
+function timelineAction(type: string, payload: unknown) {
+  return { type: `timeline/${type}`, payload };
+}
 
 function createStore() {
   const artifactProjection = createArtifactProjectionMiddleware();
   return configureStore({
     reducer: {
-      timeline: timelineSlice.reducer,
       hypercardArtifacts: hypercardArtifactsReducer,
     },
     middleware: (getDefault) => getDefault().concat(artifactProjection.middleware),
@@ -27,7 +29,7 @@ describe('artifactProjectionMiddleware', () => {
 
   it('projects artifacts from snapshot entities and registers runtime surfaces', async () => {
     const store = createStore();
-    const entities: TimelineEntity[] = [
+    const entities: TimelineEntityLike[] = [
       {
         id: 'evt-card:result',
         kind: 'hypercard.card.v2',
@@ -53,7 +55,7 @@ describe('artifactProjectionMiddleware', () => {
       },
     ];
 
-    store.dispatch(timelineSlice.actions.applySnapshot({ convId: 'conv-1', entities }));
+    store.dispatch(timelineAction('applySnapshot', { convId: 'conv-1', entities }));
     await flushListeners();
 
     const artifact = store.getState().hypercardArtifacts.byId['low-stock-drilldown'];
@@ -66,7 +68,7 @@ describe('artifactProjectionMiddleware', () => {
 
   it('projects artifacts from mergeSnapshot entities for first-class card kinds', async () => {
     const store = createStore();
-    const entities: TimelineEntity[] = [
+    const entities: TimelineEntityLike[] = [
       {
         id: 'evt-card:result',
         kind: 'hypercard.card.v2',
@@ -92,7 +94,7 @@ describe('artifactProjectionMiddleware', () => {
       },
     ];
 
-    store.dispatch(timelineSlice.actions.mergeSnapshot({ convId: 'conv-2', entities }));
+    store.dispatch(timelineAction('mergeSnapshot', { convId: 'conv-2', entities }));
     await flushListeners();
 
     const artifact = store.getState().hypercardArtifacts.byId['inventory-status-current'];
@@ -107,7 +109,7 @@ describe('artifactProjectionMiddleware', () => {
     const store = createStore();
 
     store.dispatch(
-      timelineSlice.actions.upsertEntity({
+      timelineAction('upsertEntity', {
         convId: 'conv-3',
         entity: {
           id: 'evt-card:streaming',
@@ -143,7 +145,7 @@ describe('artifactProjectionMiddleware', () => {
     expect(hasRuntimeSurface('runtimeStreamingCard')).toBe(false);
 
     store.dispatch(
-      timelineSlice.actions.upsertEntity({
+      timelineAction('upsertEntity', {
         convId: 'conv-3',
         entity: {
           id: 'evt-card:streaming',

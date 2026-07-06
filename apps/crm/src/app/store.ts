@@ -1,4 +1,3 @@
-import { chatSessionReducer, chatWindowReducer, timelineReducer } from '@go-go-golems/os-chat';
 import { createAppStore } from '@go-go-golems/os-scripting';
 import { activitiesReducer } from '../features/activities/activitiesSlice';
 import { companiesReducer } from '../features/companies/companiesSlice';
@@ -10,9 +9,6 @@ export const { store, createStore: createCrmStore } = createAppStore({
   companies: companiesReducer,
   deals: dealsReducer,
   activities: activitiesReducer,
-  timeline: timelineReducer,
-  chatSession: chatSessionReducer,
-  chatWindow: chatWindowReducer,
 });
 
 export type RootState = ReturnType<typeof store.getState>;

@@ -1,6 +1,7 @@
 import { useDispatch } from 'react-redux';
-import type { RenderContext, RenderEntity } from '@go-go-golems/os-chat';
-import { SyntaxHighlight, recordField, stringField } from '@go-go-golems/os-chat';
+import { SyntaxHighlight } from '../../devtools/SyntaxHighlight';
+import { recordField, stringField } from '../../utils/structured';
+import type { RenderContext, RenderEntity } from './types';
 import { openWindow } from '@go-go-golems/os-core/desktop-core';
 import { buildArtifactOpenWindowPayload, normalizeArtifactId } from '../artifacts/artifactRuntime';
 import { openCodeEditor } from '../editor/editorLaunch';

@@ -2,7 +2,6 @@
   "files": [],
   "references": [
     { "path": "packages/os-core" },
-    { "path": "packages/os-chat" },
     { "path": "packages/os-repl" },
     { "path": "packages/os-scripting" },
     { "path": "packages/os-ui-cards" },

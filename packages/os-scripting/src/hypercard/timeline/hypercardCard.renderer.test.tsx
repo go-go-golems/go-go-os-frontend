@@ -4,7 +4,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { createRoot, type Root } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import type { RenderEntity } from '@go-go-golems/os-chat';
+import type { RenderEntity } from './types';
 import { HypercardCardRenderer } from './hypercardCard';
 
 const roots: Root[] = [];

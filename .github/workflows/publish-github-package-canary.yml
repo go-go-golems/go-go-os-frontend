@@ -12,6 +12,7 @@ on:
           - os-core
           - os-shell-stack
           - os-inventory-stack
+          - all
       npm_tag:
         description: npm dist-tag to publish under
         required: true
@@ -62,23 +63,10 @@ jobs:
       - name: Resolve package set
         id: package_set
         run: |
-          case "$PACKAGE_SET" in
-            os-core)
-              PACKAGE_DIRS=(packages/os-core)
-              ;;
-            os-shell-stack)
-              PACKAGE_DIRS=(packages/os-core packages/os-chat packages/os-repl packages/os-scripting packages/os-shell)
-              ;;
-            os-inventory-stack)
-              PACKAGE_DIRS=(packages/os-core packages/os-chat packages/os-repl packages/os-scripting packages/os-shell packages/os-confirm packages/os-ui-cards packages/os-widgets packages/os-kanban)
-              ;;
-            *)
-              echo "Unknown package set: $PACKAGE_SET" >&2
-              exit 1
-              ;;
-          esac
-
-          printf 'package_dirs=%s\n' "$(IFS=,; echo "${PACKAGE_DIRS[*]}")" >> "$GITHUB_OUTPUT"
+          node - <<'NODE' >> "$GITHUB_OUTPUT"
+          import { getPackageSet } from './scripts/packages/package-sets.mjs';
+          console.log(`package_dirs=${getPackageSet(process.env.PACKAGE_SET).join(',')}`);
+          NODE
 
       - name: Typecheck selected package set
         run: |
